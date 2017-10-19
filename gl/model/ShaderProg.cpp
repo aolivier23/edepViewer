@@ -17,7 +17,7 @@
 
 namespace mygl
 {
-  ShaderProg::ShaderProg(const std::string& vertStr, const std::string& fragStr)
+  ShaderProg::ShaderProg(const std::string& fragStr, const std::string& vertStr)
   {
     //Check for passing fragment shader source for vertex shader
     //You are welcome to add more conventions here!

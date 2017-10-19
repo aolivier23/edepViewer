@@ -30,8 +30,8 @@ namespace mygl
       virtual ~Camera() = default; //TODO: Call DisconnectSignals when implemented
 
       //Results for the GL renderer that every Camera must produce
-      const glm::mat4 GetView(); 
-      virtual const glm::mat4 GetPerspective(const int width, const int height) = 0;
+      glm::mat4 GetView(); 
+      virtual glm::mat4 GetPerspective(const int width, const int height) = 0;
 
       //Record results of signals from user that came from GLArea.
       bool on_key_press(const GdkEventKey* evt);

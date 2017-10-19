@@ -16,11 +16,16 @@
 //GLEW include(s)
 #include "GL/glew.h" //for GL types
 
+//gl includes
+#include "gl/model/Drawable.h"
+
+class TGeoVolume;
+
 namespace mygl
 {
   class ShaderProg;
 
-  class PolyMesh
+  class PolyMesh: public Drawable
   {
     public:
       //Note: I have to implement template members in the class header
@@ -30,34 +35,10 @@ namespace mygl
       PolyMesh(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color): fVertices(vertices.begin(), vertices.end()), 
                                                                                            fColor(color)
       {
-        //Construct containers of all of the indices concatenated and the number of indices in each index array
-        for(const auto& indexArr: indices)
-        {
-          fIndexData.insert(fIndexData.end(), indexArr.begin(), indexArr.end());
-          fNVertices.push_back(indexArr.size());
-        }
-
-        //Set up vertices for drawing. 
-        glGenVertexArrays(1, &fVAO);
-        glBindVertexArray(fVAO);
-
-        //Set up indices for drawing
-        glGenBuffers(1, &fEBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndexData.size()*sizeof(GLuint), &fIndexData[0], GL_STATIC_DRAW); 
-        
-        //Construct buffer for vertices 
-        glGenBuffers(1, &fVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, fVBO);
-         
-        glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(glm::vec3), &fVertices[0], GL_STATIC_DRAW);
-     
-        //Set up vertex attributes expected by vertex shader
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)(0));    
-
-        //glBindVertexArray(0); //TODO: This freezes the TreeView.  Is there a memory leak here?  
+        Init(vertices, indices, color);
       }
+
+      PolyMesh(TGeoVolume* vol, const glm::vec4& color);
 
       //PolyMesh(const std::initializer_list<glm::vec3>&& list, const glm::vec3& color); //Removing support for this because of how 
                                                                                          //complicated it would become.
@@ -79,7 +60,44 @@ namespace mygl
                                             //its elements are contiguous.  I just have 
                                             //to keep track of where each index array begins.  
                                             //This is handled by fNVertices.
-      const glm::vec4 fColor; //Color to render this whole object.  Passed as a uniform to fragment shader.
+      glm::vec4 fColor; //Color to render this whole object.  Passed as a uniform to fragment shader.
+
+    private:
+      template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
+                                                //INDICES is any container with begin() and end() members 
+                                                //whose elements ALSO have begin() and end() members
+      void Init(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
+      {
+        fVertices.assign(vertices.begin(), vertices.end());
+        fColor = color;
+        //Construct containers of all of the indices concatenated and the number of indices in each index array
+        for(const auto& indexArr: indices)
+        {
+          fIndexData.insert(fIndexData.end(), indexArr.begin(), indexArr.end());
+          fNVertices.push_back(indexArr.size());
+        }
+
+        //Set up vertices for drawing. 
+        glGenVertexArrays(1, &fVAO);
+        glBindVertexArray(fVAO);
+
+        //Set up indices for drawing
+        glGenBuffers(1, &fEBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndexData.size()*sizeof(GLuint), &fIndexData[0], GL_STATIC_DRAW);
+
+        //Construct buffer for vertices 
+        glGenBuffers(1, &fVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, fVBO);
+
+        glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(glm::vec3), &fVertices[0], GL_STATIC_DRAW);
+
+        //Set up vertex attributes expected by vertex shader
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)(0));
+
+        //glBindVertexArray(0); //TODO: This freezes the TreeView.  Is there a memory leak here?
+      }
   };
 }
 

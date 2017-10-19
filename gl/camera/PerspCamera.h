@@ -26,7 +26,7 @@ namespace mygl
              fZoom(1.0), fFarPlane(farPlane), fScrollSpeed(0.1) { }
       virtual ~PerspCamera() = default;
 
-      virtual const glm::mat4 GetPerspective(const int height, const int width);
+      virtual glm::mat4 GetPerspective(const int height, const int width);
 
     private:
       //Data needed for calculating perspective matrix

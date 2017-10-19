@@ -11,12 +11,18 @@ find_package( GLEW REQUIRED )
 #Set up to build against ROOT
 #I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake
 list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})
-find_package(ROOT REQUIRED COMPONENTS Core Geom)
+find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer)
 include(${ROOT_USE_FILE})
 
 #gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
 link_directories( ${GTKMM_LIBRARY_DIRS} )
 include_directories( ${GTKMM_INCLUDE_DIRS} )
+
+#Set up edep-sim?
+#TODO: Figure out how to do this with a CMake find command
+set( PATH_TO_EDEPSIM "/home/aolivier/app/edep-sim/edep-gcc-5.4.0-x86_64-linux-gnu/" )
+include_directories( "${PATH_TO_EDEPSIM}/include" )
+link_directories( "${PATH_TO_EDEPSIM}/lib" )
 
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
@@ -42,3 +48,12 @@ install( TARGETS GeoDrawWindow DESTINATION lib )
 add_executable( GeoDraw GeoDraw.cpp )
 target_link_libraries( GeoDraw GeoDrawWindow )
 install( TARGETS GeoDraw DESTINATION bin )
+
+#Libraries for final EDepSim visualization window
+add_library( EvdWindow EvdWindow.cpp )
+target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path ColorIter edepsim)
+install( TARGETS EvdWindow DESTINATION lib )
+
+add_executable( EvdDraw EvdDraw.cpp )
+target_link_libraries( EvdDraw EvdWindow )
+install( TARGETS EvdDraw DESTINATION bin )

@@ -27,8 +27,8 @@ namespace mygl
   {
     public:
       GeoDrawer(): fGeoms(),
-              fShader("/home/aolivier/app/opengl/gtkmm/src/ROOTGeo/shaders/camera.vert", 
-                      "/home/aolivier/app/opengl/gtkmm/src/ROOTGeo/shaders/userColor.frag")
+              fShader("/home/aolivier/app/opengl/gtkmm/src/ROOTGeo/shaders/userColor.frag", 
+                      "/home/aolivier/app/opengl/gtkmm/src/ROOTGeo/shaders/camera.vert")
       {
         //auto man = TGeoManager::Import("/home/aolivier/ND_Studies/geo/maindet.gdml");
         //AddGeo(gGeoManager->GetVolume("KLOESolenoidCryostatOuterWall_volume")); //TODO: If I add this in the constructor, it gets drawn!  

@@ -10,7 +10,7 @@
 
 namespace mygl
 {
-  const glm::mat4 Camera::GetView()
+  glm::mat4 Camera::GetView()
   {
     if(fModified)
     {

@@ -11,7 +11,7 @@
 
 namespace mygl
 {
-  const glm::mat4 OrthoCamera::GetPerspective(const int width, const int height)
+  glm::mat4 OrthoCamera::GetPerspective(const int width, const int height)
   {
 
     return glm::ortho(-width/2/fZoom, width/2/fZoom, -height/2/fZoom, height/2/fZoom, 0.1f, fFarPlane);    
