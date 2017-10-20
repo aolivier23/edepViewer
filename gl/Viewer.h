@@ -61,8 +61,11 @@ namespace mygl
         scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id);
       }
 
+      //User access to Scenes
       void MakeScene(const std::string& name, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
+
+      std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
     protected:
       //TODO: Allow the user to set the camera to use in the future

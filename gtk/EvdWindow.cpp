@@ -9,7 +9,7 @@
 //gl includes
 #include "gl/model/PolyMesh.h"
 #include "gl/model/Path.h"
-#include "gl/camera/FPSCam.h"
+#include "gl/camera/PlaneCam.h"
 
 //ROOT includes
 #include "TGeoManager.h"
@@ -20,11 +20,11 @@
 
 namespace evd
 {
-  EvdWindow::EvdWindow(const std::string& fileName/*, const Glib::RefPtr<Gtk::Application>& app*/): Gtk::/*Application*/Window(/*app*/), 
-    fBox(Gtk::ORIENTATION_HORIZONTAL), 
-    fViewer(std::shared_ptr<mygl::Camera>(new mygl::FPSCam(glm::vec3(0., 0., -1000.), glm::vec3(0.0, 0.0, 1.0), 2000., 200.)), 10., 10., 10.),
-    fFileName(fileName), fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
-    fNextID(0, 0, 0), fColor(), fPDGToColor()
+  EvdWindow::EvdWindow(const std::string& fileName): Gtk::Window(), 
+    fBox(Gtk::ORIENTATION_HORIZONTAL),
+    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., -500.), glm::vec3(0.0, 1.0, 0.0), 5000., 50.)), 10., 10., 10.),
+    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
+    fFileName(fileName), fNextID(0, 0, 0), fColor(), fPDGToColor()
   {
     set_title("Geometry Display Window");
     set_border_width(5);
@@ -36,12 +36,10 @@ namespace evd
     fVBox.pack_start(fNavBar, Gtk::PACK_SHRINK);
     fVBox.pack_end(fBox);
 
-    fBox.set_homogeneous(false);
-
     fScroll.add(fTree);
     fScroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    fBox.pack_start(fViewer);
-    fBox.pack_start(fScroll); //, Gtk::PACK_SHRINK);
+    fBox.pack1(fViewer);
+    fBox.pack2(fScroll);
 
     fRefTreeModel = Gtk::TreeStore::create(fCols);
     fTree.set_model(fRefTreeModel);
@@ -61,9 +59,6 @@ namespace evd
     fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
                                                                                  //children are realize()d
 
-    //SetFile(fileName);
-
-    //fViewer.MakeScene("Geometry");
 
     show_all_children();
   }
@@ -82,6 +77,10 @@ namespace evd
 
   void EvdWindow::ReadGeo()
   {
+    //Remove the old geometry
+    fViewer.GetScenes().find("Geometry")->second.RemoveAll();
+    //TODO: Also remove from list tree -> further support for scene-by-scene list trees
+
     auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
     std::cout << "Sucessfully got TGeoManager\n";
     if(man != nullptr)
@@ -94,6 +93,12 @@ namespace evd
   void EvdWindow::ReadEvent()
   {
     //std::map<mygl::VisID, TG4Trajectory*> fIDToTraj;
+    //First, remove the previous event from all scenes except geometry
+    for(auto& scenePair: fViewer.GetScenes())
+    {
+      if(scenePair.first != "Geometry") scenePair.second.RemoveAll();
+    }
+
     const auto& trajs = (*fCurrentEvt)->Trajectories;
     for(const auto traj: trajs)
     {
@@ -109,7 +114,7 @@ namespace evd
         vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
 
-      fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, vertices, glm::vec4((glm::vec3)color, 1.0)); //TODO: color from PDG code
+      fViewer.AddDrawable<mygl::Path>("Event", fNextID, vertices, glm::vec4((glm::vec3)color, 1.0)); //TODO: color from PDG code
       //fIDToTraj.emplace(fNextID, traj);
       ++fNextID;
     }
@@ -148,10 +153,10 @@ namespace evd
 
   void EvdWindow::make_scenes()
   {
-    fTree.columns_autosize(); //TODO: Prevent the TreeView from taking over (half of) the world
+    fBox.set_position(get_width()*0.8);
     //TODO: A TreeView for each Scene and a master TreeView of Scenes (per Viewer?)
     fViewer.MakeScene("Geometry");
-    fViewer.MakeScene("Trajectories", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
+    fViewer.MakeScene("Event", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     SetFile(fFileName.c_str());
   }
   
@@ -159,7 +164,11 @@ namespace evd
   {
     auto window = Gdk::Window::get_default_root_window(); //get_window() //TODO: Why does the main window crash this function?   
     const auto image = Gdk::Pixbuf::create(window, 0, 0, window->get_width(), window->get_height());
-    image->save("test.png", "png");
+    const std::string type = "png"; //TODO: Let the user choose this
+    std::stringstream name;
+    auto strippedName = fFileName.substr(0, fFileName.find_first_of('.')); 
+    name << "evd_" << strippedName.substr(strippedName.find_last_of("/")+1, std::string::npos) << "_event_" << fReader->GetCurrentEntry() << "." << type;
+    image->save(name.str(), type);
   }
 
   void EvdWindow::build_toolbar()
@@ -197,16 +206,19 @@ namespace evd
 
   void EvdWindow::next_event()
   {
-    //TODO: Handle end of file?
-    fReader->Next();
-    ReadEvent(); //TODO: delete old Drawables from previous event in ReadEvent()
+    if(fReader->Next()) ReadEvent();
+    else fReader->Restart(); //hopefully avoids disaster on next attempt to seek to an event
   }
 
   void EvdWindow::goto_event()
   {
     const auto newEvt = std::stoi(fEvtNum.get_text());
-    fReader->SetEntry(newEvt);
-    ReadEvent();
+    if(fReader->SetEntry(newEvt) == TTreeReader::kEntryValid) 
+    {
+      ReadEvent();
+    }
+    else std::cerr << "Failed to get event " << newEvt << " from file " << fFileName << "\n";
   }
 }
+
 

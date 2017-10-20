@@ -14,6 +14,6 @@ include_directories( "${PROJECT_SOURCE_DIR}/gl/model" )
 
 
 #Build my own libraries for old camera system
-add_library( Camera GLCameraArea.cpp Camera.cpp PerspCamera.cpp OrthoCamera.cpp FPSCam.cpp )
+add_library( Camera GLCameraArea.cpp Camera.cpp PerspCamera.cpp OrthoCamera.cpp FPSCam.cpp PlaneCam.cpp )
 target_link_libraries( Camera ${GLEW_LIBRARIES} )
 install( TARGETS Camera DESTINATION lib )

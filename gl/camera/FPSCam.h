@@ -18,6 +18,9 @@
 //gtkmm includes
 #include <gtkmm.h>
 
+#ifndef MYGL_FPSCAM_H
+#define MYGL_FPSCAM_H
+
 namespace mygl
 {
   class FPSCam: public OrthoCamera
@@ -38,3 +41,5 @@ namespace mygl
       const float fPosSens; //Sensitivity of translations in position to a single arrow key press
   };
 }
+
+#endif //MYGL_FPSCAM_H

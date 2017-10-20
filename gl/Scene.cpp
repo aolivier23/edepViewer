@@ -65,4 +65,9 @@ namespace mygl
                                                             //Drawables are now responsible for binding their own 
                                                             //model matrices.
   }
+
+  void Scene::RemoveAll() //Might be useful when updating event
+  {
+    fDrawables.erase(fDrawables.begin(), fDrawables.end());
+  }
 }

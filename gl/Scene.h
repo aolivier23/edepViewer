@@ -40,6 +40,7 @@ namespace mygl
       //         not called just before.  
       virtual void AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id);
       virtual void RemoveDrawable(const VisID& id);
+      virtual void RemoveAll();
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
       virtual void Render(const glm::mat4& view, const glm::mat4& persp);

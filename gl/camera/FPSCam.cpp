@@ -27,7 +27,7 @@ namespace mygl
   void FPSCam::do_key_press()
   {    
     //Move the camera position
-    if(fUpArr == FPSCam::keyState::down)  fPosition += fPosSens*fFront; //glm problem here
+    if(fUpArr == FPSCam::keyState::down)  fPosition += fPosSens*fFront; 
     if(fDwnArr == FPSCam::keyState::down) fPosition -= fPosSens*fFront;
     if(fLftArr == FPSCam::keyState::down) fPosition -= glm::normalize(glm::cross(fFront, fUp))*fPosSens;
     if(fRgtArr == FPSCam::keyState::down) fPosition += glm::normalize(glm::cross(fFront, fUp))*fPosSens;

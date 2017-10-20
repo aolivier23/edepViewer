@@ -68,7 +68,8 @@ namespace evd
       ModelColumns fCols;
 
       //Child Widgets
-      Gtk::Box fBox;
+      //Gtk::Box fBox;
+      Gtk::Paned fBox;
       Gtk::ScrolledWindow fScroll;
       Gtk::TreeView fTree;
       Gtk::CellRendererText fNameRender;

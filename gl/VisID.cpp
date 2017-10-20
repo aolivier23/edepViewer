@@ -47,11 +47,12 @@ namespace mygl
 
   bool VisID::operator <(const VisID& rhs) const
   {
-    if(rhs.fR < fR) return false;
-    if(rhs.fG < fG) return false;
-    if(rhs.fB < fB) return false;
-    return true;
+    if(fR < rhs.fR) return true;
+    if(fG < rhs.fG) return true;
+    if(fB < rhs.fB) return true;
+    return false;
   }
+
 
   //Printing interface for VisID
   std::ostream& operator <<(std::ostream& os, const VisID& id)
