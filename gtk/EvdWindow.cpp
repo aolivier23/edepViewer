@@ -8,8 +8,12 @@
 
 //gl includes
 #include "gl/model/PolyMesh.h"
+#include "gl/model/Placed.cpp"
 #include "gl/model/Path.h"
 #include "gl/camera/PlaneCam.h"
+
+//glm includes
+#include <glm/gtc/type_ptr.hpp>
 
 //ROOT includes
 #include "TGeoManager.h"
@@ -17,6 +21,7 @@
 #include "TGeoVolume.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
+#include "TBuffer3D.h"
 
 namespace evd
 {
@@ -145,7 +150,18 @@ namespace evd
     std::cout << "Called EvdWindow::DrawSelected()\n";
     TGeoNode* node = (*(fSelection->get_selected()))[fCols.fNode];
     std::cout << "Adding drawable with ID " << fNextID << "\n";
-    fViewer.AddDrawable<mygl::PolyMesh>("Geometry", fNextID, node->GetVolume(), glm::vec4((glm::vec3)fColor, 0.2)); 
+    //This doesn't seem to work.  
+    auto vol = node->GetVolume();
+    //const auto mat = glm::make_mat4(vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true).fLocalMaster);
+  
+    //TODO: I have to get the product of this Node's parents' matrices.  This problem will go away when I update to make Drawers for all Nodes 
+    //      in ReadGeo and just disable most Drawers.  
+    double matPtr[16] = {};
+    node->GetMatrix()->GetHomogenousMatrix(matPtr);
+    const auto mat = glm::make_mat4(matPtr);    
+  
+    fViewer.AddDrawable<mygl::Placed<mygl::PolyMesh>>("Geometry", fNextID, mat, vol, glm::vec4((glm::vec3)fColor, 0.2));  
+    //fViewer.AddDrawable<mygl::PolyMesh>("Geometry", fNextID, node->GetVolume(), glm::vec4((glm::vec3)fColor, 0.2));
     ++fNextID;
     std::cout << "fNextID is now " << fNextID << "\n";
     ++fColor;
