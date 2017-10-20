@@ -39,6 +39,7 @@ namespace evd
       void SetFile(const std::string& fileName); //Set the file to be processed
       //TODO: Overhaul drawing model to use boolean widgets in TreeView
       void DrawSelected(); //Append children of selected row to list tree
+      void Print(); //Print the current window to a file
 
       virtual void make_scenes();
 
@@ -75,6 +76,16 @@ namespace evd
       Glib::RefPtr<Gtk::TreeSelection> fSelection;
       mygl::Viewer fViewer;
 
+      //Toolbar for event navigation and printing
+      //TODO: event navigation
+      Gtk::Box fVBox; //Vertical Box widget for positioning tool bar above drawing area
+      Gtk::Toolbar fNavBar;
+      Gtk::ToolButton fPrint; 
+      Gtk::ToolButton fNext;
+      Gtk::ToolItem fEvtNumWrap; 
+      Gtk::Entry fEvtNum; 
+      Gtk::ToolButton fFileChoose;  
+
       //Source of data for drawing
       std::string fFileName;
       std::unique_ptr<TFile> fFile;
@@ -89,6 +100,13 @@ namespace evd
 
       mygl::VisID fNextID;
       mygl::ColorIter fColor;
+
+      std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
+
+      void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
+      void choose_file(); 
+      void goto_event();
+      void next_event();
   };
 }
 
