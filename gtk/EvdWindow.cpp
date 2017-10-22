@@ -25,6 +25,10 @@
 
 namespace mygl
 {
+  //TODO: Something is wrong with starting camera position.  I seem to be placing the camera at what ROOT calls x=-200 by default.  
+  //      The camera direction is supposed to be along the z direction as well.  Maybe this is related to the reason why true 
+  //      trajectories seem to be reflected?  I like the current starting camera position, but I need to understand it to 
+  //      unravel the reason why trajectories seem to be drawn incorrectly.  
   EvdWindow::EvdWindow(const std::string& fileName): Gtk::Window(), 
     fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., -200.), glm::vec3(0.0, 1.0, 0.0), 5000., 50.)), 10., 10., 10.),
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
@@ -162,6 +166,7 @@ namespace mygl
         const auto& pos = point.Position;
         vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
+      std::cout << "First point of trajectory is (" << vertices[0].x << ", " << vertices[0].y << ", " << vertices[0].z << ")\n";
 
       auto row = fViewer.AddDrawable<mygl::Path>("Event", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;

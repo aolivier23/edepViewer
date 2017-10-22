@@ -13,8 +13,8 @@ namespace mygl
 {
   glm::mat4 OrthoCamera::GetPerspective(const int width, const int height)
   {
-
     return glm::ortho(-width/2/fZoom, width/2/fZoom, -height/2/fZoom, height/2/fZoom, 0.1f, fFarPlane);    
+    //return glm::ortho(-1000.f/fZoom, 1000.f/fZoom, -1000.f/fZoom, 1000.f/fZoom, 0.1f, 1000.f);
   }
 
   void OrthoCamera::do_scroll(const double scrollSign)

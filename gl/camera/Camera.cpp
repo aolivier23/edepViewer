@@ -14,10 +14,20 @@ namespace mygl
   {
     if(fModified)
     {
-      //std::cout << "In mygl::Camera::GetView(), recalculated the view matrix before drawing.\n";
       ReCalcView();
       //Find the new view matrix
-      fView = glm::lookAt(fPosition, fPosition+fFront, fUp);
+      const auto right = glm::normalize(glm::cross(fFront, fUp));
+      fView = glm::lookAt(fPosition, fPosition+fFront, glm::normalize(glm::cross(right, fFront)));
+      std::cout << "In mygl::Camrea::GetView(), the view matrix is now:\n";
+      for(size_t y = 0; y < 4; ++y)
+      {
+        std::cout << "(";
+        for(size_t x = 0; x < 4; ++x) std::cout << fView[y][x] << ", ";
+        std::cout << ")\n";
+      }
+      std::cout << "fFront is (" << fFront.x << ", " << fFront.y << ", " << fFront.z << ")\n";
+      std::cout << "fPosition is (" << fPosition.x << ", " << fPosition.y << ", " << fPosition.z << ")\n";
+      std::cout << "right is (" << right.x << ", " << right.y << ", " << right.z << ")\n";
       fModified = false;
     }
     return fView;
@@ -25,7 +35,6 @@ namespace mygl
 
   bool Camera::on_key_press(const GdkEventKey* evt)
   {
-    //std::cout << "mygl::Camera detected key press event.\n";
     auto key = evt->keyval;
     if(key == GDK_KEY_Up) fUpArr = Camera::keyState::down;
     else if(key == GDK_KEY_Down) fDwnArr = Camera::keyState::down;
@@ -39,7 +48,6 @@ namespace mygl
   
   bool Camera::on_key_release(const GdkEventKey* evt)
   {
-    //std::cout << "mygl::Camera detected key release event.\n";
     auto key = evt->keyval;
     if(key == GDK_KEY_Up) fUpArr = Camera::keyState::up;
     else if(key == GDK_KEY_Down) fDwnArr = Camera::keyState::up;
@@ -52,7 +60,6 @@ namespace mygl
 
   bool Camera::on_button_press(const GdkEventButton* evt)
   {
-    //std::cout << "mygl::Camera detected button press event.\n";
     if(evt->button != 1) return false; //1 is normally the left mouse button
     fMouse = Camera::keyState::down;
     fPrevMousePos = std::make_pair(evt->x, evt->y);
@@ -62,7 +69,6 @@ namespace mygl
 
   bool Camera::on_button_release(const GdkEventButton* evt)
   {
-    //std::cout << "mygl::Camera detected button release event.\n";
     if(evt->button != 1) return false;
     fMouse = Camera::keyState::up;
     fModified = true;
@@ -71,7 +77,6 @@ namespace mygl
 
   bool Camera::on_motion(const GdkEventMotion* evt)
   {
-    //std::cout << "mygl::Camera detected motion event.\n";
     if(fMouse != Camera::keyState::down) return false;
     auto pos = std::make_pair(evt->x, evt->y);
     do_motion(pos);
@@ -82,7 +87,6 @@ namespace mygl
 
   bool Camera::on_scroll(const GdkEventScroll* evt)
   {
-    //std::cout << "mygl::Camera detected scroll event.\n";
     const auto dir = evt->direction;
     const auto scrollSign = (dir==GDK_SCROLL_UP)?1.0:-1.0; //TODO: Are there other options for scroll sign?
     do_scroll(scrollSign);

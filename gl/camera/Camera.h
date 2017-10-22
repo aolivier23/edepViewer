@@ -23,8 +23,9 @@ namespace mygl
   class Camera
   {
     public:
+      //Specifying fFront here might not do anything if a derived class recalculates fFront in ReCalcView().
       Camera(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f)):
-             fModified(true), fPosition(pos), fUp(up), fFront(0.0f, 0.0f, -1.0f),
+             fModified(true), fPosition(pos), fUp(up), fFront(0.0f, 0.0f, -1.0f), 
              fUpArr(keyState::up), fDwnArr(keyState::up), fLftArr(keyState::up), fRgtArr(keyState::up), 
              fMouse(keyState::up) {}
       virtual ~Camera() = default; //TODO: Call DisconnectSignals when implemented
