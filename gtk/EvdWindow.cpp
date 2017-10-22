@@ -23,43 +23,21 @@
 #include "TLorentzVector.h"
 #include "TBuffer3D.h"
 
-namespace evd
+namespace mygl
 {
   EvdWindow::EvdWindow(const std::string& fileName): Gtk::Window(), 
-    fBox(Gtk::ORIENTATION_HORIZONTAL),
-    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., -500.), glm::vec3(0.0, 1.0, 0.0), 5000., 50.)), 10., 10., 10.),
+    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., -200.), glm::vec3(0.0, 1.0, 0.0), 5000., 50.)), 10., 10., 10.),
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
-    fFileName(fileName), fNextID(0, 0, 0), fColor(), fPDGToColor()
+    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor()
   {
     set_title("Geometry Display Window");
     set_border_width(5);
     set_default_size(1400, 1000);
 
-    //fNavBar.add(fPrint);
     build_toolbar();
     add(fVBox);
     fVBox.pack_start(fNavBar, Gtk::PACK_SHRINK);
-    fVBox.pack_end(fBox);
-
-    fScroll.add(fTree);
-    fScroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    fBox.pack1(fViewer);
-    fBox.pack2(fScroll);
-
-    fRefTreeModel = Gtk::TreeStore::create(fCols);
-    fTree.set_model(fRefTreeModel);
-
-    //TODO: Get text color based on ColorIter working.  This will mean coupling object adding and text adding.  I think I will need object hiding first.
-    fNameRender = Gtk::CellRendererText();
-    fTree.append_column("Name", fCols.fNodeName); //fNameRender);
-    //TODO: Make colors of entry names match colors of Drawables
-    /*auto col = fTree.get_column(0);
-    col->add_attribute(fNameRender.property_text(), fCols.fNodeName);
-    col->add_attribute(fNameRender.property_background_rgba(), fCols.fVisID);*/
-    fTree.append_column("Material", fCols.fMaterial);
-
-    fSelection = fTree.get_selection();
-    fSelection->signal_changed().connect(sigc::mem_fun(*this, &EvdWindow::DrawSelected));
+    fVBox.pack_end(fViewer);
 
     fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
                                                                                  //children are realize()d
@@ -84,31 +62,97 @@ namespace evd
   {
     //Remove the old geometry
     fViewer.GetScenes().find("Geometry")->second.RemoveAll();
-    //TODO: Also remove from list tree -> further support for scene-by-scene list trees
 
     auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
-    std::cout << "Sucessfully got TGeoManager\n";
     if(man != nullptr)
     {
       std::cout << "Top node is named " << man->GetTopNode()->GetName() << "\n";
-      AppendNode(man->GetTopNode(), fRefTreeModel->append());
+      TGeoIdentity id;
+      auto top = *(fViewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
+      top[fGeoRecord.fName] = "Top";
+      top[fGeoRecord.fMaterial] = "FIXME";
+      std::cout << "Generating gemoetry drawing instructions.  This could take a while depending on "
+                << "the number of nodes to draw since I currently have to multiply each node's matrix "
+                << "by its' parent in c++. This should only happen once per file.  Consider reducing the "
+                << "number of nodes in your geometry if this step is prohibitively long since you "
+                << "might not even enable them all.  I usually just need to draw the first 5 or so "
+                << "layers of the hierarchy.\n";
+      AppendNode(man->GetTopNode(), id, top);
+      std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
   }
 
   void EvdWindow::ReadEvent()
-  {
-    //std::map<mygl::VisID, TG4Trajectory*> fIDToTraj;
+  { 
     //First, remove the previous event from all scenes except geometry
     for(auto& scenePair: fViewer.GetScenes())
     {
       if(scenePair.first != "Geometry") scenePair.second.RemoveAll();
     }
 
-    const auto& trajs = (*fCurrentEvt)->Trajectories;
-    for(const auto traj: trajs)
+    //Next, make maps of trackID to particle and parent ID to particle
+    std::map<int, std::vector<TG4Trajectory>> parentID;
+
+    for(auto& traj: (*fCurrentEvt)->Trajectories)
+    {
+      parentID[traj.ParentId].push_back(traj);
+    }
+
+    //Then, add particles to list tree and viewer
+    auto& primaries = (*fCurrentEvt)->Primaries;
+    for(auto& prim: primaries)
+    {
+      auto row = *(fViewer.GetScenes().find("Event")->second.NewTopLevelNode());
+      row[fTrajRecord.fPartName] = prim.Reaction;
+      row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
+      AppendTrajectories(row, -1, parentID);
+    }
+
+    //Last, set current event number for GUI
+    fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
+  }
+
+  //Passing "mat" BY VALUE in the following recursive function call might cause this application to take up a lot 
+  //of memory when opening a file (I estimated O(10MB) in matrix elements for the KLOE geometry with ~120000 nodes), but I think it is 
+  //worth the tradeoff for speed which is currently holding the application back at startup.  If I get worried about 
+  //the memory these function calls take, I could take an approac like LArSoft's AuxDetGeo constructor that passes around 
+  //a list of ancestor node pointers and multiplies all ancestors' matrices for each node.
+  Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent)
+  {
+    //Get the model matrix for node using it's parent's matrix
+    TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
+    local.MultiplyLeft(&mat);
+    double matPtr[16] = {};
+    local.GetHomogenousMatrix(matPtr);
+
+    //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
+    //TODO: My trajectories seem to be drawn reflected in x!  
+    auto row = fViewer.AddDrawable<Placed<mygl::PolyMesh>>("Geometry", fNextID++, parent, false, glm::make_mat4(matPtr),
+                                                           node->GetVolume(), glm::vec4((glm::vec3)fGeoColor, 0.2));
+    row[fGeoRecord.fName] = node->GetName();
+    row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
+    //mat = mat*(*(node->GetMatrix())); //Update TGeoMatrix for this node.  This seems to be what LArSoft does in AuxDetGeo's constructor?
+    AppendChildren(row, node, local);
+    
+    return row;
+  }  
+  
+  void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat)
+  {
+    auto children = parentNode->GetNodes();
+    if(children != nullptr && children->GetEntries() != 0) ++fGeoColor; //One color for each level of the geometry hierarchy instead of per node
+    for(auto child: *children) AppendNode((TGeoNode*)(child), mat, parent); 
+  }
+
+  void EvdWindow::AppendTrajectories(const Gtk::TreeModel::Row& parent, const int trackID, 
+                                     std::map<int, std::vector<TG4Trajectory>>& parentToTraj)
+  {
+    auto trajs = parentToTraj[trackID];
+    for(auto& traj: trajs)
     {
       const int pdg = traj.PDGCode;
-      if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fColor++;
+      //TODO: End Process
+      if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
       auto color = fPDGToColor[pdg];
 
       const auto& points = traj.Points;
@@ -119,60 +163,30 @@ namespace evd
         vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
 
-      fViewer.AddDrawable<mygl::Path>("Event", fNextID, vertices, glm::vec4((glm::vec3)color, 1.0)); //TODO: color from PDG code
-      //fIDToTraj.emplace(fNextID, traj);
+      auto row = fViewer.AddDrawable<mygl::Path>("Event", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
+      row[fTrajRecord.fPartName] = traj.Name;
+      row[fTrajRecord.fEnergy] = traj.InitialMomentum.E();
       ++fNextID;
+      AppendTrajectories(row, traj.TrackId, parentToTraj);
     }
-    fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-  }
-
-  Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, const Gtk::TreeModel::iterator& it)
-  {
-    auto row = *it;
-    row[fCols.fNodeName] = node->GetName();
-    row[fCols.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
-    row[fCols.fVisID] = fNextID++;
-    row[fCols.fNode] = node;
-    AppendChildren(row);
-    
-    return row;
-  }  
-  
-  void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent)
-  {
-    TGeoNode* parentNode = parent[fCols.fNode];
-    auto children = parentNode->GetNodes();
-    for(auto child: *children) AppendNode((TGeoNode*)(child), fRefTreeModel->append(parent.children())); 
-  }
-
-  void EvdWindow::DrawSelected()
-  {
-    std::cout << "Called EvdWindow::DrawSelected()\n";
-    TGeoNode* node = (*(fSelection->get_selected()))[fCols.fNode];
-    std::cout << "Adding drawable with ID " << fNextID << "\n";
-    //This doesn't seem to work.  
-    auto vol = node->GetVolume();
-    //const auto mat = glm::make_mat4(vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true).fLocalMaster);
-  
-    //TODO: I have to get the product of this Node's parents' matrices.  This problem will go away when I update to make Drawers for all Nodes 
-    //      in ReadGeo and just disable most Drawers.  
-    double matPtr[16] = {};
-    node->GetMatrix()->GetHomogenousMatrix(matPtr);
-    const auto mat = glm::make_mat4(matPtr);    
-  
-    fViewer.AddDrawable<mygl::Placed<mygl::PolyMesh>>("Geometry", fNextID, mat, vol, glm::vec4((glm::vec3)fColor, 0.2));  
-    //fViewer.AddDrawable<mygl::PolyMesh>("Geometry", fNextID, node->GetVolume(), glm::vec4((glm::vec3)fColor, 0.2));
-    ++fNextID;
-    std::cout << "fNextID is now " << fNextID << "\n";
-    ++fColor;
   }
 
   void EvdWindow::make_scenes()
   {
-    fBox.set_position(get_width()*0.8);
     //TODO: A TreeView for each Scene and a master TreeView of Scenes (per Viewer?)
-    fViewer.MakeScene("Geometry");
-    fViewer.MakeScene("Event", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
+    //Configure Geometry Scene
+    fViewer.MakeScene("Geometry", fGeoRecord);
+    auto& geoTree = fViewer.GetScenes().find("Geometry")->second.fTreeView;
+    geoTree.append_column("Volume Name", fGeoRecord.fName);
+    geoTree.append_column("Material", fGeoRecord.fMaterial);
+ 
+    //Configure Event Scene
+    fViewer.MakeScene("Event", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
+    auto& trajTree = fViewer.GetScenes().find("Event")->second.fTreeView;
+    trajTree.append_column("Particle Type", fTrajRecord.fPartName);
+    trajTree.append_column("Energy", fTrajRecord.fEnergy);
+    //trajTree.append_column("Process", fTrajRecord.fProcess);
+
     SetFile(fFileName.c_str());
   }
   

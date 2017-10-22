@@ -18,8 +18,7 @@ namespace mygl
 {
   PolyMesh::PolyMesh(TGeoVolume* vol, const glm::vec4& color)
   {
-    std::cout << "Entering mygl::GeoDrawer::AddGeo()\n";
-    if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n";
+    if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
     auto points = buf.fPnts; //Points to draw?
     auto nPts = buf.NbPnts(); //Number of points to draw?

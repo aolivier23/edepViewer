@@ -10,6 +10,7 @@
 //gl includes
 #include "gl/Viewer.h"
 #include "gl/Scene.h"
+#include "gl/ColRecord.cpp"
 
 //gtk directory includes
 #include "ColorIter.cxx"
@@ -17,6 +18,7 @@
 //ROOT includes
 #include "TFile.h"
 #include "TTreeReader.h"
+#include "TGeoMatrix.h"
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
@@ -28,7 +30,7 @@
 //Forward declaration of ROOT classes
 class TGeoNode;
 
-namespace evd
+namespace mygl
 {
   class EvdWindow: public Gtk::Window //Gtk::ApplicationWindow 
   {
@@ -38,42 +40,12 @@ namespace evd
 
       void SetFile(const std::string& fileName); //Set the file to be processed
       //TODO: Overhaul drawing model to use boolean widgets in TreeView
-      void DrawSelected(); //Append children of selected row to list tree
       void Print(); //Print the current window to a file
 
       virtual void make_scenes();
 
     protected:
-      //TODO: Boolean for whether to draw each object
-      class ModelColumns: public Gtk::TreeModel::ColumnRecord
-      {
-        public:
-          ModelColumns()
-          {
-            add(fNodeName);
-            add(fVisID);
-            add(fMaterial);
-            add(fNode);
-          }
-
-          //Visible columns
-          Gtk::TreeModelColumn<Glib::ustring> fNodeName;
-          Gtk::TreeModelColumn<Glib::ustring> fMaterial; 
-
-          //Hidden columns
-          Gtk::TreeModelColumn<mygl::VisID>         fVisID;
-          Gtk::TreeModelColumn<TGeoNode*>     fNode;
-      };
-
-      ModelColumns fCols;
-
       //Child Widgets
-      //Gtk::Box fBox;
-      Gtk::Paned fBox;
-      Gtk::ScrolledWindow fScroll;
-      Gtk::TreeView fTree;
-      Gtk::CellRendererText fNameRender;
-      Glib::RefPtr<Gtk::TreeStore> fRefTreeModel;
       Glib::RefPtr<Gtk::TreeSelection> fSelection;
       mygl::Viewer fViewer;
 
@@ -94,13 +66,15 @@ namespace evd
       std::unique_ptr<TTreeReaderValue<TG4Event>> fCurrentEvt; //The current event being drawn.
 
     private:
-      Gtk::TreeModel::Row AppendNode(TGeoNode* node, const Gtk::TreeModel::iterator& it);
-      void AppendChildren(const Gtk::TreeModel::Row& parent);
+      Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent);
+      void AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat);
+      void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj);
       void ReadGeo();
       void ReadEvent();
 
       mygl::VisID fNextID;
-      mygl::ColorIter fColor;
+      mygl::ColorIter fGeoColor;
+      mygl::ColorIter fPDGColor;
 
       std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
 
@@ -108,6 +82,39 @@ namespace evd
       void choose_file(); 
       void goto_event();
       void next_event();
+
+      //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
+      class GeoRecord: public ColRecord
+      {
+        public:
+          GeoRecord(): ColRecord()
+          {
+            add(fName);
+            add(fMaterial);
+          }
+  
+          Gtk::TreeModelColumn<std::string> fName;
+          Gtk::TreeModelColumn<std::string> fMaterial;
+      };
+
+      GeoRecord fGeoRecord;
+
+      class TrajRecord: public ColRecord
+      {
+        public:
+          TrajRecord(): ColRecord()
+          {
+            add(fPartName);
+            add(fEnergy);
+            //add(fProcess); //TODO: Learn to get end process from Track
+          }
+       
+          Gtk::TreeModelColumn<std::string> fPartName; 
+          Gtk::TreeModelColumn<double> fEnergy;
+          //Gtk::TreeModelColumn<std::string> fProcess;
+      };
+
+      TrajRecord fTrajRecord;
   };
 }
 

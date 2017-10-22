@@ -27,7 +27,7 @@ namespace mygl
 {
   struct VisID;
   
-  class Viewer: public Gtk::Box //Instead of deriving from Gtk::GLArea, derive from Gtk::Box.  This suggestion to do this 
+  class Viewer: public Gtk::Paned //Instead of deriving from Gtk::GLArea, derive from Gtk::Box.  This suggestion to do this 
                                       //that I used is at https://github.com/mschwan/glarea-animation/blob/master/glarea.cc
   {
     protected:
@@ -43,8 +43,12 @@ namespace mygl
       Viewer(std::shared_ptr<Camera> cam, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); //TODO: Camera mode GUI
       virtual ~Viewer();
 
+      //TODO: At first, this function seems superfluous if I give the user access to the map of scenes.  However, the Gtk::GLArea::make_current() call 
+      //      here is essential to properly managing the opengl resources in a Drawable.  So, maybe I should remove user access to the scenes a Viewer 
+      //      owns?  This will require adding entry points for basically all of the Scene public functions as well as each Scene's TreeView.
       template <class T, class ...ARGS>
-      void AddDrawable(const std::string& scene, const VisID& id, ARGS... args) //Add a drawable to a scene
+      Gtk::TreeModel::Row AddDrawable(const std::string& scene, const VisID& id, const Gtk::TreeModel::Row& parent, 
+                                      const bool active = true, ARGS... args) //Add a drawable to a scene
       {
         auto scenePair = fSceneMap.find(scene);
         if(scenePair == fSceneMap.end())
@@ -53,29 +57,36 @@ namespace mygl
           for(const auto& scenePair: fSceneMap) scenes << scenePair.first << "\n";
           throw util::GenException("No Such Scene") << "In mygl::Viewer::AddDrawable(), could not add Drawable because scene " << scene << " does not exist.  "
                                                     << "The current list of scenes is:\n" << scenes.str() << "\n";
-          return;
         }
 
         fArea.make_current(); //Make sure the resources allocated by the new Drawable go to the right Gdk::GLContext!
         fArea.throw_if_error();
-        scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id);
+        auto row = scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
+        return row;
       }
 
       //User access to Scenes
-      void MakeScene(const std::string& name, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
+      void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
 
+      //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
     protected:
       //TODO: Allow the user to set the camera to use in the future
       std::shared_ptr<Camera> fCamera; //Camera used by this GLArea
   
-      virtual void realize();
+      virtual void area_realize();
       virtual void unrealize();
       virtual bool on_motion_notify_event(GdkEventMotion* /*evt*/);
 
       virtual bool render(const Glib::RefPtr<Gdk::GLContext>& /*context*/);
+
+      //GUI elements
+      Gtk::Notebook fNotebook;
+      std::vector<Gtk::ScrolledWindow> fScrolls; //One for each Scene
+      Gtk::Box fCamControl;
+      Gtk::Button fCenterOnInt;
 
     private:
       float fXPerPixel; //x units per pixel

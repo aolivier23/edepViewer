@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
   auto app = Gtk::Application::create(argc, argv, "test.EvdWindow");
   
-  evd::EvdWindow window("/home/aolivier/ND_Studies/100_in_KLOE_tracker_g4.root"); //, app);
+  mygl::EvdWindow window("/home/aolivier/ND_Studies/100_in_KLOE_tracker_g4.root"); //, app);
   
   return app->run(window);
 }

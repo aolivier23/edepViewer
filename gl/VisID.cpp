@@ -47,10 +47,9 @@ namespace mygl
 
   bool VisID::operator <(const VisID& rhs) const
   {
-    if(fR < rhs.fR) return true;
-    if(fG < rhs.fG) return true;
-    if(fB < rhs.fB) return true;
-    return false;
+    if(fR != rhs.fR) return (fR < rhs.fR);
+    if(fG != rhs.fG) return (fG < rhs.fG);
+    return (fB < rhs.fB);
   }
 
 

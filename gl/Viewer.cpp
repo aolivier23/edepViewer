@@ -28,10 +28,18 @@
 namespace mygl
 {
   Viewer::Viewer(std::shared_ptr<Camera> cam, const float xPerPixel, const float yPerPixel, const float zPerPixel): //TODO: Camera mode GUI
-                Gtk::Box(Gtk::ORIENTATION_VERTICAL), fArea(), fCamera(cam), fSceneMap(), fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
+                Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL), fSceneMap(), fArea(), fCamera(cam), fScrolls(), 
+                fCamControl(Gtk::ORIENTATION_VERTICAL), fCenterOnInt("Center on Interaction"), 
+                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
   {
     //Setup GLArea
-    add(fArea);        
+    fNotebook.set_hexpand(false);
+    fCamControl.pack_start(fCenterOnInt);
+    fNotebook.append_page(fCamControl, "Camera Control");  
+    fArea.set_hexpand(true);
+
+    pack1(fArea, Gtk::EXPAND);        
+    pack2(fNotebook, Gtk::SHRINK); //TODO: fNotebook is eating all of the space in this Paned object
 
     //TODO: Key press/release is still not working in GLArea
     add_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
@@ -51,7 +59,7 @@ namespace mygl
     
     //GLArea signals
     //TODO: Confirm that these work.  I am now overriding these methods directly for Gtk::GLArea
-    fArea.signal_realize().connect(sigc::mem_fun(*this, &Viewer::realize), false);
+    fArea.signal_realize().connect(sigc::mem_fun(*this, &Viewer::area_realize), false);
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
     fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
 
@@ -64,7 +72,7 @@ namespace mygl
 
   Viewer::~Viewer() {}
 
-  void Viewer::MakeScene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc)
+  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
   {
     auto found = fSceneMap.find(name);
     if(found != fSceneMap.end())
@@ -76,11 +84,23 @@ namespace mygl
     //fSceneMap.emplace(name, Scene(name, fragSrc, vertSrc));
     fArea.throw_if_error();
     fArea.make_current();
-    fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(name, fragSrc, vertSrc)); //lol
+    auto& scene = fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
+                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second; //lol
+
+    //Now, tell this Viewer's GUI about the Scene's GUI
+    auto& treeView = scene.fTreeView;
+    fScrolls.emplace_back();
+    auto& scroll = fScrolls.back();
+    scroll.add(treeView);
+    fNotebook.append_page(scroll, name);
+    fNotebook.show_all_children();
   }
 
-  void Viewer::realize()
+  void Viewer::area_realize()
   {
+    //Quick GUI interlude in a convenient place
+    set_position(get_width()*0.8); //Set default relative size of GLArea
+
     fArea.make_current();
     try
     {
@@ -91,8 +111,6 @@ namespace mygl
         std::cerr << "Failed to initialize GLEW\n";
       }
 
-      std::cout << "In mygl::Viewer::realize(), got viewer width of " << fArea.get_allocated_width() << " and viewer "
-                << "height of " << fArea.get_allocated_height() << "\n";
       glViewport(0, 0, fArea.get_allocated_width(), fArea.get_allocated_height());
 
       //enable depth testing
