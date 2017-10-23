@@ -17,8 +17,9 @@ namespace mygl
       ReCalcView();
       //Find the new view matrix
       const auto right = glm::normalize(glm::cross(fFront, fUp));
-      fView = glm::lookAt(fPosition, fPosition+fFront, glm::normalize(glm::cross(right, fFront)));
-      std::cout << "In mygl::Camrea::GetView(), the view matrix is now:\n";
+      const auto up = glm::normalize(glm::cross(right, fFront));
+      fView = glm::lookAt(fPosition, fPosition+fFront, up);
+      /*std::cout << "In mygl::Camrea::GetView(), the view matrix is now:\n";
       for(size_t y = 0; y < 4; ++y)
       {
         std::cout << "(";
@@ -28,6 +29,8 @@ namespace mygl
       std::cout << "fFront is (" << fFront.x << ", " << fFront.y << ", " << fFront.z << ")\n";
       std::cout << "fPosition is (" << fPosition.x << ", " << fPosition.y << ", " << fPosition.z << ")\n";
       std::cout << "right is (" << right.x << ", " << right.y << ", " << right.z << ")\n";
+      std::cout << "The initial fUp is (" << fUp.x << ", " << fUp.y << ", " << fUp.z << ")\n";
+      std::cout << "The current up vector is (" << up.x << ", " << up.y << ", " << up.z << ")\n";*/
       fModified = false;
     }
     return fView;

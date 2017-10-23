@@ -38,7 +38,7 @@ namespace mygl
   void PlaneCam::do_motion(const std::pair<double, double>& pos)
   {
     fYaw += pos.first - fPrevMousePos.first;
-    fPitch += pos.second - fPrevMousePos.second;
+    fPitch += fPrevMousePos.second - pos.second;
 
     //Make sure pitch cannot get too large
     if(fPitch < -89.) fPitch = -89.;

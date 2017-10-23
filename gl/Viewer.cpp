@@ -39,9 +39,8 @@ namespace mygl
     fArea.set_hexpand(true);
 
     pack1(fArea, Gtk::EXPAND);        
-    pack2(fNotebook, Gtk::SHRINK); //TODO: fNotebook is eating all of the space in this Paned object
+    pack2(fNotebook, Gtk::SHRINK); 
 
-    //TODO: Key press/release is still not working in GLArea
     add_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
                      | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK | Gdk::POINTER_MOTION_MASK);
     fArea.add_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK 
@@ -89,8 +88,11 @@ namespace mygl
 
     //Now, tell this Viewer's GUI about the Scene's GUI
     auto& treeView = scene.fTreeView;
+    treeView.set_enable_search(true);
     fScrolls.emplace_back();
     auto& scroll = fScrolls.back();
+    scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
+                                                                     //rows are added.
     scroll.add(treeView);
     fNotebook.append_page(scroll, name);
     fNotebook.show_all_children();

@@ -13,12 +13,10 @@ namespace mygl
 {
   glm::mat4 OrthoCamera::GetPerspective(const int width, const int height)
   {
-    std::cout << "fFarPlane is " << fFarPlane << "\n";
     return glm::ortho(-width/2/fZoom, width/2/fZoom, -height/2/fZoom, height/2/fZoom, -fFarPlane, fFarPlane); 
-    //TODO: Drawing things behind the camera indicates that something is VERY wrong with my view matrix.  
-    //      I think BOTH z and x are "reversed" in some way in the view matrix.  I also noticed that I am adding 
-    //      fFront, a normalized vector, to fPosition, an unormalized vector, to get the "target" position for 
-    //      glm::lookAt(). 
+    //TODO: I am doing something strange by allowing objects to be drawn at -fFarPlane which should be behind the camera.  
+    //      After examining the viewer's behavior with and without drawing objects "behind" the camera, I decided that I 
+    //      DO want to draw objects behind the camera to prevent cutting off parts of tracks.  
   }
 
   void OrthoCamera::do_scroll(const double scrollSign)
@@ -26,7 +24,8 @@ namespace mygl
     fZoom += fScrollSpeed*scrollSign;
 
     //Clamp zoom values
-    if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
+    //if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
+    if(fZoom < 1.0) fZoom = 1.0;
     if(fZoom > 45.*fScrollSpeed) fZoom = 45.*fScrollSpeed;
   }
 }

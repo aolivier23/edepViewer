@@ -100,10 +100,8 @@ namespace mygl
     const auto& id = row[fIDCol];
     const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
                                         //opposite of what it was when the user selected it.
-    std::cout << "In mygl::Scene::draw_self(), processing " << id << " with status " << status << "\n";
     if(status) Transfer(fActive, fHidden, id);
     else Transfer(fHidden, fActive, id);
-    std::cout << id << "'s status is now " << !status << "\n";
     //TODO: activate/deactivate children
   }
 
@@ -123,7 +121,6 @@ namespace mygl
                                                     << ", but there is no such object.  The IDs currently "
                                                     << "registered are:\n" << str.str() << "\n";
     }
-    std::cout << "Moved a Drawable with ID " << id << ".\n";
     //Very manual memory management, but it (hopefully) works...
     auto copyPtr = found->second.release(); //Aha!
     from.erase(found);
