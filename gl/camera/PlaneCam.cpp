@@ -27,8 +27,10 @@ namespace mygl
   void PlaneCam::do_key_press()
   {    
     //Move the camera position
-    if(fUpArr == PlaneCam::keyState::down)  fPosition += fPosSens*fUp; 
-    if(fDwnArr == PlaneCam::keyState::down) fPosition -= fPosSens*fUp;
+    const auto right = glm::normalize(glm::cross(fFront, fUp));
+    const auto top = glm::normalize(glm::cross(right, fFront));
+    if(fUpArr == PlaneCam::keyState::down)  fPosition += fPosSens*top; 
+    if(fDwnArr == PlaneCam::keyState::down) fPosition -= fPosSens*top;
     if(fLftArr == PlaneCam::keyState::down) fPosition -= glm::normalize(glm::cross(fFront, fUp))*fPosSens;
     if(fRgtArr == PlaneCam::keyState::down) fPosition += glm::normalize(glm::cross(fFront, fUp))*fPosSens;
   }

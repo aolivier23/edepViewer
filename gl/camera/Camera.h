@@ -61,7 +61,7 @@ namespace mygl
 
       //Camera attributes in space being viewed
       glm::vec3 fPosition; //Vector to the position of this camera
-      const glm::vec3 fUp; //The up direction for this camera
+      const glm::vec3 fUp; //The initial up direction for this camera
       glm::vec3 fFront; //Vector to the front of the camera
 
       //Camera control state
