@@ -40,7 +40,7 @@ namespace mygl
 
     public:
   
-      Viewer(std::shared_ptr<Camera> cam, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); //TODO: Camera mode GUI
+      Viewer(std::shared_ptr<Camera> cam, const Gdk::RGBA& background, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
       virtual ~Viewer();
 
       //TODO: At first, this function seems superfluous if I give the user access to the map of scenes.  However, the Gtk::GLArea::make_current() call 
@@ -73,20 +73,26 @@ namespace mygl
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
     protected:
+      //Viewer parameters the user can customize
       //TODO: Allow the user to set the camera to use in the future
       std::shared_ptr<Camera> fCamera; //Camera used by this GLArea
+      Gdk::RGBA fBackgroundColor; //The background color for the display
   
       virtual void area_realize();
       virtual void unrealize();
-      virtual bool on_motion_notify_event(GdkEventMotion* /*evt*/);
+      virtual bool my_motion_notify_event(GdkEventMotion* /*evt*/);
 
       virtual bool render(const Glib::RefPtr<Gdk::GLContext>& /*context*/);
+
+      //Other signals to react to 
+      virtual void set_background();
 
       //GUI elements
       Gtk::Notebook fNotebook;
       std::vector<Gtk::ScrolledWindow> fScrolls; //One for each Scene
       Gtk::Box fCamControl;
       Gtk::Button fCenterOnInt;
+      Gtk::ColorButton fBackgroundButton;
 
     private:
       float fXPerPixel; //x units per pixel

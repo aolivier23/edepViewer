@@ -29,8 +29,9 @@ namespace mygl
   //      The camera direction is supposed to be along the z direction as well.  Maybe this is related to the reason why true 
   //      trajectories seem to be reflected?  I like the current starting camera position, but I need to understand it to 
   //      unravel the reason why trajectories seem to be drawn incorrectly.  
-  EvdWindow::EvdWindow(const std::string& fileName): Gtk::Window(), 
-    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., -200.), glm::vec3(0.0, 1.0, 0.0), 10000., 50.)), 10., 10., 10.),
+  EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
+    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 50.)), 
+            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor()
   {
@@ -108,6 +109,7 @@ namespace mygl
       auto row = *(fViewer.GetScenes().find("Event")->second.NewTopLevelNode());
       row[fTrajRecord.fPartName] = prim.Reaction;
       row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
+      row[fTrajRecord.fColor] = Gdk::RGBA("(0., 0., 0.)");
       AppendTrajectories(row, -1, parentID);
     }
 
@@ -134,6 +136,7 @@ namespace mygl
                                                            node->GetVolume(), glm::vec4((glm::vec3)fGeoColor, 0.2));
     row[fGeoRecord.fName] = node->GetName();
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
+    ++fGeoColor;
     //mat = mat*(*(node->GetMatrix())); //Update TGeoMatrix for this node.  This seems to be what LArSoft does in AuxDetGeo's constructor?
     AppendChildren(row, node, local);
     
@@ -143,7 +146,7 @@ namespace mygl
   void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat)
   {
     auto children = parentNode->GetNodes();
-    if(children != nullptr && children->GetEntries() != 0) ++fGeoColor; //One color for each level of the geometry hierarchy instead of per node
+    //if(children != nullptr && children->GetEntries() != 0) ++fGeoColor; //One color for each level of the geometry hierarchy instead of per node
     for(auto child: *children) AppendNode((TGeoNode*)(child), mat, parent); 
   }
 
@@ -169,6 +172,9 @@ namespace mygl
       auto row = fViewer.AddDrawable<mygl::Path>("Event", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
       row[fTrajRecord.fEnergy] = traj.InitialMomentum.E();
+      Gdk::RGBA gdkColor;
+      gdkColor.set_rgba(color.r, color.g, color.b, 1.0);
+      row[fTrajRecord.fColor] = gdkColor;
       ++fNextID;
       AppendTrajectories(row, traj.TrackId, parentToTraj);
     }
@@ -176,7 +182,6 @@ namespace mygl
 
   void EvdWindow::make_scenes()
   {
-    //TODO: A TreeView for each Scene and a master TreeView of Scenes (per Viewer?)
     //Configure Geometry Scene
     fViewer.MakeScene("Geometry", fGeoRecord);
     auto& geoTree = fViewer.GetScenes().find("Geometry")->second.fTreeView;
@@ -187,7 +192,9 @@ namespace mygl
     fViewer.MakeScene("Event", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     auto& trajTree = fViewer.GetScenes().find("Event")->second.fTreeView;
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
+    //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     trajTree.append_column("Energy", fTrajRecord.fEnergy);
+    trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("Process", fTrajRecord.fProcess);
 
     SetFile(fFileName.c_str());
@@ -251,6 +258,14 @@ namespace mygl
       ReadEvent();
     }
     else std::cerr << "Failed to get event " << newEvt << " from file " << fFileName << "\n";
+  }
+
+  void EvdWindow::ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it)
+  {
+    Gdk::RGBA color = (*it)[fTrajRecord.fColor];
+    std::cout << "Got color " << color.to_string() << " from TreeView.\n";
+    auto textRender = ((Gtk::CellRendererText*)render);
+    textRender->property_background_rgba().set_value(color);
   }
 }
 

@@ -35,7 +35,7 @@ namespace mygl
   class EvdWindow: public Gtk::Window //Gtk::ApplicationWindow 
   {
     public: 
-      EvdWindow(const std::string& fileName); //, const Glib::RefPtr<Gtk::Application>& app);
+      EvdWindow(const std::string& fileName, const bool darkColors = true); //, const Glib::RefPtr<Gtk::Application>& app);
       virtual ~EvdWindow();
 
       void SetFile(const std::string& fileName); //Set the file to be processed
@@ -106,15 +106,19 @@ namespace mygl
           {
             add(fPartName);
             add(fEnergy);
+            add(fColor);
             //add(fProcess); //TODO: Learn to get end process from Track
           }
        
           Gtk::TreeModelColumn<std::string> fPartName; 
           Gtk::TreeModelColumn<double> fEnergy;
+          Gtk::TreeModelColumn<Gdk::RGBA> fColor;
           //Gtk::TreeModelColumn<std::string> fProcess;
       };
 
       TrajRecord fTrajRecord;
+      Gtk::CellRendererText fColorRender; //Customized renderer for particle name to write name in color
+      void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
   };
 }
 

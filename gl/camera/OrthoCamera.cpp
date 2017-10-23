@@ -25,7 +25,7 @@ namespace mygl
 
     //Clamp zoom values
     //if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
-    if(fZoom < 1.0) fZoom = 1.0;
-    if(fZoom > 45.*fScrollSpeed) fZoom = 45.*fScrollSpeed;
+    if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
+    if(fZoom > 60.*fScrollSpeed) fZoom = 60.*fScrollSpeed;
   }
 }

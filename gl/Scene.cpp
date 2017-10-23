@@ -22,6 +22,7 @@ namespace mygl
     fTreeView.set_model(fModel);
 
     //Standard columns.  fVisID is also present, but it should not be visible.
+    //TODO: TreeModelFilter is awesome!  Consider using it here.
     fTreeView.append_column_editable("Draw", fSelfCol);
     auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
     renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
