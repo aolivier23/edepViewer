@@ -263,7 +263,6 @@ namespace mygl
   void EvdWindow::ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it)
   {
     Gdk::RGBA color = (*it)[fTrajRecord.fColor];
-    std::cout << "Got color " << color.to_string() << " from TreeView.\n";
     auto textRender = ((Gtk::CellRendererText*)render);
     textRender->property_background_rgba().set_value(color);
   }

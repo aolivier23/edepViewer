@@ -19,13 +19,26 @@ namespace mygl
                                                                                                                         fIDCol(cols.fVisID)
   {
     fModel = Gtk::TreeStore::create(cols);
-    fTreeView.set_model(fModel);
+    fFilter = Gtk::TreeModelFilter::create(fModel); 
+    fTreeView.set_model(fFilter);
+
+    //TODO: Remove this
+    const int nTypes = cols.size();
+    for(int pos = 0; pos < nTypes; ++pos)
+    {
+      std::cout << g_type_name((cols.types())[pos]) << "\n";
+    }
 
     //Standard columns.  fVisID is also present, but it should not be visible.
-    //TODO: TreeModelFilter is awesome!  Consider using it here.
     fTreeView.append_column_editable("Draw", fSelfCol);
     auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
     renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
+
+    //Configure filter
+    //TODO: Experimenting with this for now, but a user-callable function would be ideal
+    //fFilter->set_visible_func(sigc::mem_fun(//*this, &Scene::filter));
+
+    //fFormulaEntry.signal_activate().connect(sigc::mem_fun(, )); //TODO: Call function that resets filter function
   }
 
   Scene::~Scene() {}
@@ -105,6 +118,26 @@ namespace mygl
     else Transfer(fHidden, fActive, id);
     //TODO: activate/deactivate children
   }
+
+  /*bool Scene::filter(const Gtk::TreeModel::const_iterator& iter)
+  {
+    //TODO: Set up a grammar for the user to "write" this function at runtime
+    const auto row = *iter;
+    std::string name;
+    row.get_value(2, name);
+    std::cout << "Calling mygl::Scene::filter() on a row with column 2 = " << name << "\n";
+    const VisID id = row[fIDCol];
+    const bool result = (name != "neutron");
+    if(!result) 
+    {
+      try 
+      {
+        Transfer(fActive, fHidden, id); 
+      }
+      catch(util::GenException& e) {} //If the object is already hidden, that's OK
+    }
+    return result;
+  }*/
 
   //All of the magic happens here.  Moving a unique_ptr from one container to another seems like a very difficult task... 
   void Scene::Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id)

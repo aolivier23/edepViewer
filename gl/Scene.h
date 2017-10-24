@@ -54,6 +54,7 @@ namespace mygl
                                //standard columns in evd::ColRecord.
 
       void draw_self(const Glib::ustring& path);
+      //bool filter(const Gtk::TreeModel::const_iterator& iter);
 
     protected:
       //opengl components
@@ -63,6 +64,8 @@ namespace mygl
 
       //GUI components
       Glib::RefPtr<Gtk::TreeStore> fModel; //The TreeModel that has each element in this Scene.  
+      Glib::RefPtr<Gtk::TreeModelFilter> fFilter; //Only shows certain nodes from fModel
+      Gtk::Entry fFilterFormula; //User-defined filter formula
 
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
