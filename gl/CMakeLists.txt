@@ -15,7 +15,7 @@ include_directories( ${GTKMM_INCLUDE_DIRS} )
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Build my own libraries for Viewer system
-add_library( Scene VisID.cpp ColRecord.cpp Scene.cpp )
+add_library( Scene VisID.cpp ColRecord.cpp UserCut.cpp Scene.cpp )
 target_link_libraries( Scene ${GLEW_LIBRARIES} Drawable exception Shader )
 install( TARGETS Scene DESTINATION lib )
 

@@ -89,7 +89,8 @@ namespace mygl
 
       //GUI elements
       Gtk::Notebook fNotebook;
-      std::vector<Gtk::ScrolledWindow> fScrolls; //One for each Scene
+      //std::vector<std::pair<Gtk::Box, Gtk::ScrolledWindow>> fScrolls; //One for each Scene
+      std::vector<Gtk::ScrolledWindow> fScrolls;
       Gtk::Box fCamControl;
       Gtk::Button fCenterOnInt;
       Gtk::ColorButton fBackgroundButton;

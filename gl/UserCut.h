@@ -31,23 +31,27 @@
 #ifndef MYGL_USERCUT_H
 #define MYGL_USERCUT_H
 
-class TFormula;
-
 namespace mygl
 {
   class UserCut: public Gtk::Entry
   {
     public:
-      UserCut(Gtk::TreeModelColumnRecord& cols, const std::string& initial = "true");
-      virtual UserCut() = default;
+      UserCut(Gtk::TreeModel::ColumnRecord& cols, const std::string& initial = "true");
+      virtual ~UserCut() = default;
 
-      bool do_filter(const Gtk::TreeRow::const_iterator& iter) const;
+      bool do_filter(const Gtk::TreeModel::const_iterator& iter);
     
     protected:
-      Gtk::TreeModelColumnRecord fCols;
+      std::vector<GType> fTypes; //observer pointer
+      const size_t fNTypes;
+
+      bool ev(std::string expr);
+      std::string subexpr(std::string expr);
+      std::string strip_spaces(std::string expr);
+      
 
     private:
-      std::string get_col_value(const int col);
+      std::string get_col_value(const int col, const Gtk::TreeRow& row);
   };
 }
 

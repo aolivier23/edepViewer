@@ -16,7 +16,8 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
                                                                                                                         fSelfCol(cols.fDrawSelf), 
-                                                                                                                        fIDCol(cols.fVisID)
+                                                                                                                        fIDCol(cols.fVisID)//, 
+                                                                                                                        //fCutBar(cols, "")
   {
     fModel = Gtk::TreeStore::create(cols);
     fFilter = Gtk::TreeModelFilter::create(fModel); 
@@ -26,7 +27,10 @@ namespace mygl
     const int nTypes = cols.size();
     for(int pos = 0; pos < nTypes; ++pos)
     {
+      auto typeChars = g_type_name((cols.types())[pos]);
+      std::string typeName(typeChars);
       std::cout << g_type_name((cols.types())[pos]) << "\n";
+      std::cout << typeName << "\n";
     }
 
     //Standard columns.  fVisID is also present, but it should not be visible.
@@ -35,10 +39,15 @@ namespace mygl
     renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
 
     //Configure filter
-    //TODO: Experimenting with this for now, but a user-callable function would be ideal
     //fFilter->set_visible_func(sigc::mem_fun(//*this, &Scene::filter));
-
-    //fFormulaEntry.signal_activate().connect(sigc::mem_fun(, )); //TODO: Call function that resets filter function
+    //fTreeView.add(fCutBar); //Widgets can't be added to a TreeView
+    //fFilter->set_visible_func(sigc::mem_fun(&fCutBar, &mygl::UserCut::do_filter)); //TODO: Sadly, GObject causes a lot of trouble 
+                                                                                     //      for this approach.  The interpretter 
+                                                                                     //      seemed to work in a few simple tests, 
+                                                                                     //      but I don't think it's getting the 
+                                                                                     //      data it needs from the tree model.   
+    //TODO: Make sure rows hidden by filter function have their drawables hidden.  I might be able to connect to 
+    //      signal_row_changed() if signal_toggled() isn't already called.
   }
 
   Scene::~Scene() {}

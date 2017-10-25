@@ -10,6 +10,7 @@
 
 //local includes
 #include "gl/Viewer.h"
+#include "gl/UserCut.h"
 #include "gl/camera/Camera.h"
 
 //gtk includes
@@ -99,10 +100,14 @@ namespace mygl
     auto& treeView = scene.fTreeView;
     treeView.set_enable_search(true);
     fScrolls.emplace_back();
-    auto& scroll = fScrolls.back();
+    auto& scroll = fScrolls.back(); //fScrolls.back().second;
     scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
                                                                      //rows are added.
     scroll.add(treeView);
+    /*auto& box = fScrolls.back().first;
+    box.pack_start(scene.fCutBar);
+    box.pack_end(scroll);
+    fNotebook.append_page(box, name);*/
     fNotebook.append_page(scroll, name);
     fNotebook.show_all_children();
   }

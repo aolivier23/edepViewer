@@ -197,7 +197,9 @@ namespace mygl
     trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("Process", fTrajRecord.fProcess);
 
-    SetFile(fFileName.c_str());
+    //SetFile(fFileName.c_str());
+    //TODO: Make fFileName a command line option to the application that runs this window.
+    choose_file();
   }
   
   void EvdWindow::Print()

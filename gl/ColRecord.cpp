@@ -19,8 +19,8 @@ namespace mygl
     public:
       ColRecord()
       {
-        add(fDrawSelf);
         add(fVisID);
+        add(fDrawSelf);
       }
 
       //Visible columns
