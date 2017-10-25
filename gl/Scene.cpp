@@ -16,22 +16,25 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
                                                                                                                         fSelfCol(cols.fDrawSelf), 
-                                                                                                                        fIDCol(cols.fVisID)//, 
-                                                                                                                        //fCutBar(cols, "")
+                                                                                                                        fIDCol(cols.fVisID),
+                                                                                                                        fCutBar("")
   {
     fModel = Gtk::TreeStore::create(cols);
     fFilter = Gtk::TreeModelFilter::create(fModel); 
     fTreeView.set_model(fFilter);
 
-    //TODO: Remove this
+    //TODO: Simplify this when I'm more comfortable with what's going on
     const int nTypes = cols.size();
+    std::vector<std::string> types;
     for(int pos = 0; pos < nTypes; ++pos)
     {
       auto typeChars = g_type_name((cols.types())[pos]);
       std::string typeName(typeChars);
-      std::cout << g_type_name((cols.types())[pos]) << "\n";
-      std::cout << typeName << "\n";
+      //std::cout << g_type_name((cols.types())[pos]) << "\n";
+      //std::cout << typeName << "\n";
+      types.push_back(typeName);
     }
+    fCutBar.SetTypes(types);
 
     //Standard columns.  fVisID is also present, but it should not be visible.
     fTreeView.append_column_editable("Draw", fSelfCol);
@@ -40,12 +43,13 @@ namespace mygl
 
     //Configure filter
     //fFilter->set_visible_func(sigc::mem_fun(//*this, &Scene::filter));
-    //fTreeView.add(fCutBar); //Widgets can't be added to a TreeView
-    //fFilter->set_visible_func(sigc::mem_fun(&fCutBar, &mygl::UserCut::do_filter)); //TODO: Sadly, GObject causes a lot of trouble 
+    fFilter->set_visible_func(sigc::mem_fun(&fCutBar, &mygl::UserCut::do_filter)); //TODO: Sadly, GObject causes a lot of trouble 
                                                                                      //      for this approach.  The interpretter 
                                                                                      //      seemed to work in a few simple tests, 
                                                                                      //      but I don't think it's getting the 
                                                                                      //      data it needs from the tree model.   
+    fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
+    //TODO: Connect to fCutBar's signal activate and call refilter on fFilter
     //TODO: Make sure rows hidden by filter function have their drawables hidden.  I might be able to connect to 
     //      signal_row_changed() if signal_toggled() isn't already called.
   }
@@ -168,5 +172,10 @@ namespace mygl
     auto copyPtr = found->second.release(); //Aha!
     from.erase(found);
     to.emplace(id, std::unique_ptr<Drawable>(copyPtr)).second;
+  }
+
+  void Scene::start_filtering()
+  {
+    fFilter->refilter();
   }
 }

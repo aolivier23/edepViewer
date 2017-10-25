@@ -100,15 +100,16 @@ namespace mygl
     auto& treeView = scene.fTreeView;
     treeView.set_enable_search(true);
     fScrolls.emplace_back();
-    auto& scroll = fScrolls.back(); //fScrolls.back().second;
+    auto& scroll = fScrolls.back().second;
     scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
                                                                      //rows are added.
     scroll.add(treeView);
-    /*auto& box = fScrolls.back().first;
-    box.pack_start(scene.fCutBar);
+    auto& box = fScrolls.back().first;
+    box = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
+    box.pack_start(scene.fCutBar, Gtk::PACK_SHRINK);
     box.pack_end(scroll);
-    fNotebook.append_page(box, name);*/
-    fNotebook.append_page(scroll, name);
+    fNotebook.append_page(box, name);
+    //fNotebook.append_page(scroll, name);
     fNotebook.show_all_children();
   }
 

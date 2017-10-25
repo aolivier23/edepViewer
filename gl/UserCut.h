@@ -36,14 +36,14 @@ namespace mygl
   class UserCut: public Gtk::Entry
   {
     public:
-      UserCut(Gtk::TreeModel::ColumnRecord& cols, const std::string& initial = "true");
+      UserCut(const std::string& initial = "true");
       virtual ~UserCut() = default;
 
       bool do_filter(const Gtk::TreeModel::const_iterator& iter);
+      void SetTypes(std::vector<std::string> types);
     
     protected:
-      std::vector<GType> fTypes; //observer pointer
-      const size_t fNTypes;
+      std::vector<std::string> fTypes; 
 
       bool ev(std::string expr);
       std::string subexpr(std::string expr);

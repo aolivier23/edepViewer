@@ -10,7 +10,7 @@
 #include "gl/model/ShaderProg.h"
 #include "gl/VisID.h"
 #include "gl/ColRecord.cpp"
-//#include "gl/UserCut.h"
+#include "gl/UserCut.h"
 
 //glm includes
 #include <glm/glm.hpp>
@@ -53,10 +53,10 @@ namespace mygl
       //GUI components that the Viewer will arrange
       Gtk::TreeView fTreeView; //The user is responsible for telling this TreeView about columns in cols other than the 
                                //standard columns in evd::ColRecord.
-      //mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
+      mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
 
       void draw_self(const Glib::ustring& path);
-      //bool filter(const Gtk::TreeModel::const_iterator& iter);
+      void start_filtering();
 
     protected:
       //opengl components
