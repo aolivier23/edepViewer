@@ -19,7 +19,7 @@ namespace mygl
                                                                                                                         fIDCol(cols.fVisID),
                                                                                                                         fCutBar("")
   {
-    fModel = Gtk::TreeStore::create(cols);
+    fModel = Gtk::TreeStore::create(cols); //TODO: Should I be using fModel for updating the data to be drawn or fFilter?   
     fFilter = Gtk::TreeModelFilter::create(fModel); 
     fTreeView.set_model(fFilter);
 
@@ -38,20 +38,13 @@ namespace mygl
 
     //Standard columns.  fVisID is also present, but it should not be visible.
     fTreeView.append_column_editable("Draw", fSelfCol);
+
     auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
     renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
 
     //Configure filter
-    //fFilter->set_visible_func(sigc::mem_fun(//*this, &Scene::filter));
-    fFilter->set_visible_func(sigc::mem_fun(&fCutBar, &mygl::UserCut::do_filter)); //TODO: Sadly, GObject causes a lot of trouble 
-                                                                                     //      for this approach.  The interpretter 
-                                                                                     //      seemed to work in a few simple tests, 
-                                                                                     //      but I don't think it's getting the 
-                                                                                     //      data it needs from the tree model.   
+    fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
     fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
-    //TODO: Connect to fCutBar's signal activate and call refilter on fFilter
-    //TODO: Make sure rows hidden by filter function have their drawables hidden.  I might be able to connect to 
-    //      signal_row_changed() if signal_toggled() isn't already called.
   }
 
   Scene::~Scene() {}
@@ -117,12 +110,16 @@ namespace mygl
 
   void Scene::RemoveAll() //Might be useful when updating event
   {
+    fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 
+                          //      numeric values propagated between calls to RemoveAll().
     fActive.erase(fActive.begin(), fActive.end());
     fModel->clear();
+    fFilter->clear_cache();
   }
 
   void Scene::draw_self(const Glib::ustring& path)
   {
+    std::cout << "mygl::Scene::draw_self() called.\n";
     auto row = *(fModel->get_iter(path));
     const auto& id = row[fIDCol];
     const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
@@ -131,26 +128,6 @@ namespace mygl
     else Transfer(fHidden, fActive, id);
     //TODO: activate/deactivate children
   }
-
-  /*bool Scene::filter(const Gtk::TreeModel::const_iterator& iter)
-  {
-    //TODO: Set up a grammar for the user to "write" this function at runtime
-    const auto row = *iter;
-    std::string name;
-    row.get_value(2, name);
-    std::cout << "Calling mygl::Scene::filter() on a row with column 2 = " << name << "\n";
-    const VisID id = row[fIDCol];
-    const bool result = (name != "neutron");
-    if(!result) 
-    {
-      try 
-      {
-        Transfer(fActive, fHidden, id); 
-      }
-      catch(util::GenException& e) {} //If the object is already hidden, that's OK
-    }
-    return result;
-  }*/
 
   //All of the magic happens here.  Moving a unique_ptr from one container to another seems like a very difficult task... 
   void Scene::Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id)
@@ -174,8 +151,37 @@ namespace mygl
     to.emplace(id, std::unique_ptr<Drawable>(copyPtr)).second;
   }
 
+  //TODO: I don't need this function
   void Scene::start_filtering()
   {
     fFilter->refilter();
+  }
+
+  //Intercept the result of UserCut::do_filter() to disable the Drawables for filtered rows.
+  bool Scene::filter(const Gtk::TreeModel::iterator& iter)
+  {
+    const bool result = fCutBar.do_filter(iter);
+    std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
+    auto& row = *iter;
+    if(!row) return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.   
+    if(!result) 
+    {
+      std::cout << "Cutting this row in mygl::Scene::filter().\n";
+      //row[fSelfCol] = false; //TODO: This line causes a segmentation fault
+                               //TODO: Adding seemingly unrelated code causes segmentation faults with otherwise-working configurations 
+                               //      of the source code.  This sounds like a misuse of memory somewhere.  
+                               //TODO: With new code in EvdWindow, I got an error about invalid iterators before a segmentation fault.  
+                               //      This sounds like fFilter is getting corrupted somewhere
+      //row.set_value(1, false); //This also causes a segmentation fault
+      try
+      {
+        Transfer(fActive, fHidden, row[fIDCol]);
+        row[fSelfCol] = false;
+      }
+      catch(const util::GenException& e)
+      {
+      }
+    }
+    return result;
   }
 }

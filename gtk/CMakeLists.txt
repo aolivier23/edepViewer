@@ -11,7 +11,7 @@ find_package( GLEW REQUIRED )
 #Set up to build against ROOT
 #I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake
 list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})
-find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer)
+find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer EG)
 include(${ROOT_USE_FILE})
 
 #gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake

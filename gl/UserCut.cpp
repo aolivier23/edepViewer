@@ -29,7 +29,7 @@ namespace
     std::string chars;
     row.get_value(col, chars);
 
-    /*if(true) //chars != nullptr)
+    /*if(chars != nullptr)
     {
       //Find out why I am getting empty strings
       char current = chars[0];
@@ -74,15 +74,19 @@ namespace mygl
     auto& row = *iter;
 
     //First, substitute in variables
-    for(size_t pos = 1; pos < fTypes.size(); ++pos) //Starting at column 1 because column 0 is a custom type that is related to picking
+    for(size_t pos = 2; pos < fTypes.size(); ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
+                                                    //object is visible.
     {
-      const auto val = get_col_value(pos, row);
-      //std::cout << "substituting @" << pos << " with " << val << "\n";
-      //TODO: Replace std::regex so I don't have to recompile it each time do_filter is called
-      std::regex replace("(@"+std::to_string(pos)+")");
-      copy = std::regex_replace(copy, replace, val);
+      if(copy.find("@"+std::to_string(pos)) != std::string::npos)
+      {
+        const auto val = get_col_value(pos, row);
+        std::cout << "substituting @" << pos << " with " << val << "\n";
+        //TODO: Replace std::regex so I don't have to recompile it each time do_filter is called
+        std::regex replace("(@"+std::to_string(pos)+")"); 
+        copy = std::regex_replace(copy, replace, val); 
+      }
     }
-    //std::cout << "Expression after parameter substitution is:\n" << copy << "\n";
+    std::cout << "Expression after parameter substitution is:\n" << copy << "\n";
 
     try
     {
@@ -126,8 +130,8 @@ namespace mygl
     //Dispatch to proper function if type is know.  If not, throw an exception. 
     //TODO: I could priobably write some TMP trickery to hide even this dispatch function...
     if(typeName == "gchararray") return get_from_col<gchararray>(col, row);
-    if(typeName == "gdouble") return get_from_col<gdouble>(col, row);
-    if(typeName == "gboolean") return get_from_col<gboolean>(col, row);
+    if(typeName == "gdouble") return get_from_col<double>(col, row);
+    if(typeName == "gboolean") return get_from_col<bool>(col, row);
     //TODO: The documentation at https://developer.gnome.org/glib/stable/glib-Basic-Types.html claims these exist...
     if(typeName == "gint") return get_from_col<gint>(col, row);
     if(typeName == "guint") return get_from_col<guint>(col, row);
@@ -148,7 +152,7 @@ namespace mygl
     //std::cout << "Expression " << expr << " was passed to subexpr().\n";
     size_t firstRight = expr.find_first_of(")");
     size_t firstLeft = expr.find_first_of("(", 1);
-    while(firstLeft < firstRight)
+    while(firstLeft < firstRight && firstLeft != std::string::npos)
     {
       if(firstRight == std::string::npos)
       {
@@ -159,7 +163,7 @@ namespace mygl
       firstRight = expr.find_first_of(")");
       firstLeft = expr.find_first_of("(", 1);
     }
-    const bool result = ev(expr.substr(1, firstRight-1));
+    const bool result = ev(expr.substr(1, firstRight-1)); //TODO: Is this the source of the small-size-string crash?
     expr.replace(0, firstRight+1, result?"true":"false");
     //std::cout << "After substituting " << std::boolalpha << result << ", expression is " << expr << "\n";
     return expr;
@@ -185,10 +189,17 @@ namespace mygl
   {
     //std::cout << "Evaluating expression:\n" << expr << "\n";
   
-    if(expr == "") return true; //Special case
+    if(expr == "") return true; //Special cases
+    if(expr == "true") return true;
+    if(expr == "false") return false;
   
     const std::string comp = "<>=&|!";
     size_t firstComp = expr.find_first_of(comp);
+    if(firstComp == std::string::npos)
+    {
+      throw util::GenException("Invalid Expression") << "Got expresssion " << expr << " with no comparison operators in mygl::UserCut::ev().\n";
+    }
+
     size_t nextNonComp = expr.find_first_not_of(comp, firstComp+1);
     size_t nextComp = expr.find_first_of(comp, nextNonComp+1);
   

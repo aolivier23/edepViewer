@@ -22,6 +22,11 @@
 #include "TFile.h"
 #include "TLorentzVector.h"
 #include "TBuffer3D.h"
+#include "TDatabasePDG.h"
+#include "TParticlePDG.h"
+
+//c++ includes
+#include <regex>
 
 namespace mygl
 {
@@ -33,7 +38,7 @@ namespace mygl
     fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 50.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
-    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor()
+    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7) //TODO: Make fMaxGeoDepth a user parameter
   {
     set_title("Geometry Display Window");
     set_border_width(5);
@@ -81,7 +86,7 @@ namespace mygl
                 << "number of nodes in your geometry if this step is prohibitively long since you "
                 << "might not even enable them all.  I usually just need to draw the first 5 or so "
                 << "layers of the hierarchy.\n";
-      AppendNode(man->GetTopNode(), id, top);
+      AppendNode(man->GetTopNode(), id, top, 0);
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
   }
@@ -103,11 +108,24 @@ namespace mygl
     }
 
     //Then, add particles to list tree and viewer
+    std::regex genieToEvd(R"(nu:(-?[[:digit:]]+);tgt:([[:digit:]]+);N:([[:digit:]]+)(.*);proc:Weak\[([[:alpha:]]+)\],([[:alpha:]]+);(.*))");
     auto& primaries = (*fCurrentEvt)->Primaries;
     for(auto& prim: primaries)
     {
       auto row = *(fViewer.GetScenes().find("Event")->second.NewTopLevelNode());
-      row[fTrajRecord.fPartName] = prim.Reaction;
+      
+      //Turn GENIE's interaction string into something easier to read
+      std::smatch match;
+      if(!std::regex_match(prim.Reaction, match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
+                                                                        << prim.Reaction << "\n";
+
+      std::cout << "GENIE interaction is " << prim.Reaction << "\n";
+      std::cout << "neutrino PDG code is " << match[1].str() << "\n";
+      const std::string nu = fPdgDB.GetParticle(std::stoi(match[1].str()))->GetName();
+      //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
+      std::cout << "Target nucleon PDG code is " << match[3].str() << "\n";
+      const std::string nucleon = fPdgDB.GetParticle(std::stoi(match[3].str()))->GetName(); 
+      row[fTrajRecord.fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
       row[fTrajRecord.fColor] = Gdk::RGBA("(0., 0., 0.)");
       AppendTrajectories(row, -1, parentID);
@@ -115,6 +133,13 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
+    fViewer.GetScenes().find("Event")->second.fTreeView.expand_all();
+  }
+  
+  //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
+  //center of the screen broken into mm for now.  
+  void DrawGuides()
+  {
   }
 
   //Passing "mat" BY VALUE in the following recursive function call might cause this application to take up a lot 
@@ -122,7 +147,7 @@ namespace mygl
   //worth the tradeoff for speed which is currently holding the application back at startup.  If I get worried about 
   //the memory these function calls take, I could take an approac like LArSoft's AuxDetGeo constructor that passes around 
   //a list of ancestor node pointers and multiplies all ancestors' matrices for each node.
-  Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent)
+  Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
@@ -138,16 +163,17 @@ namespace mygl
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++fGeoColor;
     //mat = mat*(*(node->GetMatrix())); //Update TGeoMatrix for this node.  This seems to be what LArSoft does in AuxDetGeo's constructor?
-    AppendChildren(row, node, local);
+    AppendChildren(row, node, local, depth);
     
     return row;
   }  
   
-  void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat)
+  void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
   {
     auto children = parentNode->GetNodes();
     //if(children != nullptr && children->GetEntries() != 0) ++fGeoColor; //One color for each level of the geometry hierarchy instead of per node
-    for(auto child: *children) AppendNode((TGeoNode*)(child), mat, parent); 
+    if(depth == fMaxGeoDepth) return;
+    for(auto child: *children) AppendNode((TGeoNode*)(child), mat, parent, depth+1); 
   }
 
   void EvdWindow::AppendTrajectories(const Gtk::TreeModel::Row& parent, const int trackID, 
@@ -158,6 +184,7 @@ namespace mygl
     {
       const int pdg = traj.PDGCode;
       //TODO: End Process
+      //TODO: Legend
       if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
       auto color = fPDGToColor[pdg];
 
@@ -171,7 +198,11 @@ namespace mygl
 
       auto row = fViewer.AddDrawable<mygl::Path>("Event", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
-      row[fTrajRecord.fEnergy] = traj.InitialMomentum.E();
+      auto p = traj.InitialMomentum;
+      const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
+                                                                       //photons because of floating point precision behavior.  Never trust a computer to 
+                                                                       //calculate 0...
+      row[fTrajRecord.fEnergy] = p.E()-invariantMass; //Kinetic energy
       Gdk::RGBA gdkColor;
       gdkColor.set_rgba(color.r, color.g, color.b, 1.0);
       row[fTrajRecord.fColor] = gdkColor;
@@ -193,7 +224,7 @@ namespace mygl
     auto& trajTree = fViewer.GetScenes().find("Event")->second.fTreeView;
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
-    trajTree.append_column("Energy", fTrajRecord.fEnergy);
+    trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
     trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("Process", fTrajRecord.fProcess);
 

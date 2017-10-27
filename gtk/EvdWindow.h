@@ -19,6 +19,7 @@
 #include "TFile.h"
 #include "TTreeReader.h"
 #include "TGeoMatrix.h"
+#include "TDatabasePDG.h"
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
@@ -66,17 +67,20 @@ namespace mygl
       std::unique_ptr<TTreeReaderValue<TG4Event>> fCurrentEvt; //The current event being drawn.
 
     private:
-      Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent);
-      void AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat);
+      Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth);
+      void AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
       void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj);
       void ReadGeo();
       void ReadEvent();
+      void DrawGuides();
 
       mygl::VisID fNextID;
       mygl::ColorIter fGeoColor;
       mygl::ColorIter fPDGColor;
+      const size_t fMaxGeoDepth; //The maximum recursion depth when processing a geometry file
 
       std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
+      TDatabasePDG fPdgDB;
 
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 

@@ -57,6 +57,8 @@ namespace mygl
 
       void draw_self(const Glib::ustring& path);
       void start_filtering();
+      bool filter(const Gtk::TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
+      void remove_row(const Gtk::TreeModel::Path& path);
 
     protected:
       //opengl components

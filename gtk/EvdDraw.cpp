@@ -10,7 +10,7 @@
 
 int main(int argc, char** argv)
 {
-  auto app = Gtk::Application::create(argc, argv, "test.EvdWindow");
+  auto app = Gtk::Application::create(argc, argv); //, "test.EvdWindow", Gio::ApplicationFlags::NON_UNIQUE);
 
   mygl::EvdWindow window("/home/aolivier/ND_Studies/100_in_volKLOESTT_edepsim.root"); //, darkColors); 
   
