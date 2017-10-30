@@ -72,7 +72,7 @@ namespace mygl
       void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj);
       void ReadGeo();
       void ReadEvent();
-      void DrawGuides();
+      //void DrawGuides(); //TODO: Move this to Viewer
 
       mygl::VisID fNextID;
       mygl::ColorIter fGeoColor;
@@ -123,6 +123,19 @@ namespace mygl
       TrajRecord fTrajRecord;
       Gtk::CellRendererText fColorRender; //Customized renderer for particle name to write name in color
       void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
+
+     /*class GuideRecord: public ColRecord
+     {
+       public:
+         GuideRecord(): ColRecord()
+         {
+           add(fName);
+         }
+
+         Gtk::TreeModelColumn<std::string> fName;
+     };
+
+     GuideRecord fGuideRecord;*/
   };
 }
 

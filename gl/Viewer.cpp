@@ -134,7 +134,7 @@ namespace mygl
       //glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glLineWidth(2.0f); //TODO: User parameter
+      glLineWidth(3.0f); //TODO: User parameter
     }
     catch(const Gdk::GLError& err)
     {
@@ -171,9 +171,11 @@ namespace mygl
 
       for(auto& scenePair: fSceneMap)
       {
-        const auto view = glm::scale(fCamera->GetView(), glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel));
+        //const auto view = glm::scale(fCamera->GetView(), glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel));
+        const auto view = fCamera->GetView();
 
-        scenePair.second.Render(view, fCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()));
+        scenePair.second.Render(view, glm::scale(fCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()), 
+                                                 glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
       }
       glFlush();
 

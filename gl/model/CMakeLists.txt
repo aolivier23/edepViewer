@@ -24,11 +24,11 @@ add_library( Shader    ShaderProg.cpp )
 add_library( Drawable  Drawable.cpp )
 add_library( PolyMesh  PolyMesh.cpp )
 add_library( Path      Path.cpp )
-add_library( Placed    Placed.cpp )
+add_library( Traits    Placed.cpp)
 
 target_link_libraries( exception )
 target_link_libraries( Shader exception ${GTKMM_LIBRARIES} ${GLEW_LIBRARIES} )
 target_link_libraries( Drawable Shader )
 target_link_libraries( PolyMesh Drawable ${ROOT_LIBRARIES})
 target_link_libraries( Path Drawable )
-target_link_libraries( Placed Shader ) #This is a weird case since Placed is a class template
+target_link_libraries( Traits Shader ) #This is a weird case since Placed is a class template

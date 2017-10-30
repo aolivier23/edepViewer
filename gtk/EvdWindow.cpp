@@ -35,7 +35,7 @@ namespace mygl
   //      trajectories seem to be reflected?  I like the current starting camera position, but I need to understand it to 
   //      unravel the reason why trajectories seem to be drawn incorrectly.  
   EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
-    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 50.)), 
+    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7) //TODO: Make fMaxGeoDepth a user parameter
@@ -96,7 +96,7 @@ namespace mygl
     //First, remove the previous event from all scenes except geometry
     for(auto& scenePair: fViewer.GetScenes())
     {
-      if(scenePair.first != "Geometry") scenePair.second.RemoveAll();
+      if(scenePair.first != "Geometry" && scenePair.first != "Guides") scenePair.second.RemoveAll();
     }
 
     //Next, make maps of trackID to particle and parent ID to particle
@@ -133,14 +133,31 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-    fViewer.GetScenes().find("Event")->second.fTreeView.expand_all();
+    //fViewer.GetScenes().find("Event")->second.fTreeView.expand_all();
+    fViewer.GetScenes().find("Event")->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
   }
   
   //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
   //center of the screen broken into mm for now.  
-  void DrawGuides()
+  /*void EvdWindow::DrawGuides() //TODO: This should become a Viewer function
   {
-  }
+    auto root = *(fViewer.GetScenes().find("Guides")->second.NewTopLevelNode());
+    root[fGuideRecord.fName] = "HUD objects";
+  
+    //A 1m line
+    std::vector<glm::vec3> vertices;
+    vertices.emplace_back(-500.f, 10.f, 0.0f);
+    vertices.emplace_back(500.f, 10.f, 0.0f);
+    auto row = fViewer.AddDrawable<mygl::Path>("Guides", fNextID, root, true, vertices, glm::vec4(0.3f, 0.0f, 0.9f, 1.0f));
+    //TODO: Color seems to be based on colors of objects around it
+    row[fGuideRecord.fName] = "1 meter";
+
+    //TODO: model class
+    //End lines that are 2cm tall
+    //vertices.clear();
+    //vertices.emplace_back(-500.f, 0.0f, 0.0f);
+    //vertices.emplace_back(-500.f, 0.0f, 0.0f);
+  }*/
 
   //Passing "mat" BY VALUE in the following recursive function call might cause this application to take up a lot 
   //of memory when opening a file (I estimated O(10MB) in matrix elements for the KLOE geometry with ~120000 nodes), but I think it is 
@@ -227,6 +244,11 @@ namespace mygl
     trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
     trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("Process", fTrajRecord.fProcess);
+
+    //Configure guide scene
+    //fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
+
+    //DrawGuides();
 
     //SetFile(fFileName.c_str());
     //TODO: Make fFileName a command line option to the application that runs this window.
