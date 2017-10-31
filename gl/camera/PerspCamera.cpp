@@ -13,7 +13,6 @@ namespace mygl
 {
   glm::mat4 PerspCamera::GetPerspective(const int width, const int height)
   {
-
     return glm::perspective(fZoom, (float)width/(float)height, 0.1f, fFarPlane);    
   }
 

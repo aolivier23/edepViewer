@@ -30,16 +30,17 @@ namespace mygl
 {
   Viewer::Viewer(std::shared_ptr<Camera> cam, const Gdk::RGBA& background, const float xPerPixel, const float yPerPixel, const float zPerPixel):
                 Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL), fSceneMap(), fArea(), fCamera(cam), fBackgroundColor(background), fScrolls(), 
-                fCamControl(Gtk::ORIENTATION_VERTICAL), fCenterOnInt("Center on Interaction"), fBackgroundButton(background),
-                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
+                fControl(Gtk::ORIENTATION_VERTICAL), fBackColorLabel("Background Color"), 
+                fBackgroundButton(background), fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
   {
     //Setup control widgets
     //TODO: More sophisticated camera interface
     //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
     fNotebook.set_hexpand(false);
-    fCamControl.pack_start(fCenterOnInt);
-    fCamControl.pack_start(fBackgroundButton);
-    fNotebook.append_page(fCamControl, "Camera Control");  
+    fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
+    fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
+    fControl.pack_start(*fCamera);
+    fNotebook.append_page(fControl, "Viewer");  
     fBackgroundButton.signal_color_set().connect(sigc::mem_fun(*this, &Viewer::set_background));
     //fBackgroundButton.set_label("Background Color"); //TODO: This crashes the GUI with a segmentation violation and some 
                                                        //      assertion from GTK in at least one case

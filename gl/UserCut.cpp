@@ -73,6 +73,10 @@ namespace mygl
     std::string copy = get_text();
     auto& row = *iter;
 
+    //Do not cut out "root" nodes.  Could add some flag for "organization" nodes later, but having a heterogeneous 
+    //set of objects in a Scene already seems to violate the model in which do_filter() makes sense.  
+    if(!(row.parent())) return true;
+
     //First, substitute in variables
     for(size_t pos = 2; pos < fTypes.size(); ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
                                                     //object is visible.

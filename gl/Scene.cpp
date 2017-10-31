@@ -113,7 +113,9 @@ namespace mygl
     fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 
                           //      numeric values propagated between calls to RemoveAll().
     fActive.erase(fActive.begin(), fActive.end());
+    fHidden.erase(fHidden.begin(), fHidden.end());
     fModel->clear();
+    //fModel->erase(fModel->get_iter("0")); //This was recommended online, but it doesn't change anything.
     fFilter->clear_cache();
   }
 
@@ -121,11 +123,17 @@ namespace mygl
   {
     std::cout << "mygl::Scene::draw_self() called.\n";
     auto row = *(fModel->get_iter(path));
+    if(!row) return;
     const auto& id = row[fIDCol];
     const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
                                         //opposite of what it was when the user selected it.
-    if(status) Transfer(fActive, fHidden, id);
-    else Transfer(fHidden, fActive, id);
+
+    //Do not attempt to show/hide top nodes
+    if(row.parent())
+    {
+      if(status) Transfer(fActive, fHidden, id);
+      else Transfer(fHidden, fActive, id);
+    }
     //TODO: activate/deactivate children
   }
 
@@ -160,10 +168,14 @@ namespace mygl
   //Intercept the result of UserCut::do_filter() to disable the Drawables for filtered rows.
   bool Scene::filter(const Gtk::TreeModel::iterator& iter)
   {
-    const bool result = fCutBar.do_filter(iter);
-    std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
     auto& row = *iter;
-    if(!row) return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.   
+    if(!row) 
+    {
+      std::cerr << "Avoided processing a \"zombie\" row in mygl::Scene::filter().\n";
+      return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.
+    }
+    const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
+    std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
     if(!result) 
     {
       std::cout << "Cutting this row in mygl::Scene::filter().\n";

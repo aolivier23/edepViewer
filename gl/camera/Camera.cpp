@@ -32,6 +32,8 @@ namespace mygl
       std::cout << "The initial fUp is (" << fUp.x << ", " << fUp.y << ", " << fUp.z << ")\n";
       std::cout << "The current up vector is (" << up.x << ", " << up.y << ", " << up.z << ")\n";*/
       fModified = false;
+      fTargetEntry.set_value(fPosition+fFront);
+      fPosEntry.set_value(fPosition);
     }
     return fView;
   }
@@ -105,5 +107,19 @@ namespace mygl
     area.signal_button_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_release), false);
     area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_motion), false);
     area.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
+  }
+
+  void Camera::UpdatePosition()
+  {
+    fPosition = fPosEntry.get_value();
+    fModified = true;
+  }
+
+  void Camera::UpdateTarget()
+  {
+    //Give the illusion of setting the camera target while actually working with a front vector that is more convenient for 
+    //calculations.
+    fFront = fTargetEntry.get_value()-fPosition; //target = fFront+fPosition from GetView() above
+    fModified = true;
   }
 }

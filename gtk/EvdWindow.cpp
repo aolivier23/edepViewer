@@ -38,7 +38,8 @@ namespace mygl
     fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
-    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7) //TODO: Make fMaxGeoDepth a user parameter
+    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), //TODO: Make fMaxGeoDepth a user parameter
+    fPalette(1.0, 50.)
   {
     set_title("Geometry Display Window");
     set_border_width(5);
@@ -87,8 +88,10 @@ namespace mygl
                 << "might not even enable them all.  I usually just need to draw the first 5 or so "
                 << "layers of the hierarchy.\n";
       AppendNode(man->GetTopNode(), id, top, 0);
+      fAfterLastGeo = fNextID;
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
+    else std::cerr << "Failed to read geometry manager from file.\n";
   }
 
   void EvdWindow::ReadEvent()
@@ -98,6 +101,7 @@ namespace mygl
     {
       if(scenePair.first != "Geometry" && scenePair.first != "Guides") scenePair.second.RemoveAll();
     }
+    fNextID = fAfterLastGeo;
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -112,18 +116,15 @@ namespace mygl
     auto& primaries = (*fCurrentEvt)->Primaries;
     for(auto& prim: primaries)
     {
-      auto row = *(fViewer.GetScenes().find("Event")->second.NewTopLevelNode());
+      auto row = *(fViewer.GetScenes().find("Trajectories")->second.NewTopLevelNode());
       
       //Turn GENIE's interaction string into something easier to read
       std::smatch match;
       if(!std::regex_match(prim.Reaction, match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
                                                                         << prim.Reaction << "\n";
 
-      std::cout << "GENIE interaction is " << prim.Reaction << "\n";
-      std::cout << "neutrino PDG code is " << match[1].str() << "\n";
       const std::string nu = fPdgDB.GetParticle(std::stoi(match[1].str()))->GetName();
       //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
-      std::cout << "Target nucleon PDG code is " << match[3].str() << "\n";
       const std::string nucleon = fPdgDB.GetParticle(std::stoi(match[3].str()))->GetName(); 
       row[fTrajRecord.fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
@@ -133,8 +134,49 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-    //fViewer.GetScenes().find("Event")->second.fTreeView.expand_all();
-    fViewer.GetScenes().find("Event")->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+    fViewer.GetScenes().find("Trajectories")->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+
+    //Draw true energy deposits color-coded by energy
+    auto edepToDet = (*fCurrentEvt)->SegmentDetectors; //A map from sensitive volume to energy deposition
+
+    for(auto& det: edepToDet)
+    {
+      auto detName = det.first;
+      auto detRow = *(fViewer.GetScenes().find("EDep")->second.NewTopLevelNode());
+      auto edeps = det.second;
+      detRow[fEDepRecord.fPrimName] = detName;
+      //TODO: Map sensitive volume name to detector name and use same VisID?  This would seem to require infrastructure that 
+      //      I don't yet have both in terms of Scenes communicating when an object is toggled (not too hard) and ROOT not 
+      //      knowing about sensitive detector auxiliary tags (potentially very hard).  
+      //TODO: Energy depositions children of sensitive detector?  This doesn't seem so useful at the moment, and sensitive detectors 
+      //      do not have the "properties" I plan to include in the energy deposition tree. I will just cut out energy depositions 
+      //      in volumes by setting the frustrum box from the camera API (hopefully).   
+      double sumE = 0., sumScintE = 0., minT = 1e10;
+      for(auto& edep: edeps)
+      {
+        const auto start = edep.Start;
+        glm::vec3 firstPos(start.X(), start.Y(), start.Z());
+        const auto stop = edep.Stop;
+        glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
+        const auto energy = edep.EnergyDeposit;
+
+        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(energy), 1.0));
+        row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
+        row[fEDepRecord.fEnergy]  = energy;
+        row[fEDepRecord.fT0]      = start.T();
+        row[fEDepRecord.fPrimName] = (*fCurrentEvt)->Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
+        ++fNextID;
+
+        sumE += energy;
+        sumScintE += edep.SecondaryDeposit;
+        if(start.T() < minT) minT = start.T();
+      }
+
+      //Fill values for this sensitive detector with cumulative energy from its' hits and time of earliest hit
+      detRow[fEDepRecord.fEnergy] = sumE;
+      detRow[fEDepRecord.fScintE] = sumScintE;
+      detRow[fEDepRecord.fT0]     = minT;
+    }
   }
   
   //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
@@ -213,7 +255,7 @@ namespace mygl
         vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
 
-      auto row = fViewer.AddDrawable<mygl::Path>("Event", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
+      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
       auto p = traj.InitialMomentum;
       const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
@@ -237,8 +279,8 @@ namespace mygl
     geoTree.append_column("Material", fGeoRecord.fMaterial);
  
     //Configure Event Scene
-    fViewer.MakeScene("Event", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
-    auto& trajTree = fViewer.GetScenes().find("Event")->second.fTreeView;
+    fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
+    auto& trajTree = fViewer.GetScenes().find("Trajectories")->second.fTreeView;
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
@@ -249,6 +291,13 @@ namespace mygl
     //fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
 
     //DrawGuides();
+
+    fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
+    auto& edepTree = fViewer.GetScenes().find("EDep")->second.fTreeView;
+    edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
+    edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
+    edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
+    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
 
     //SetFile(fFileName.c_str());
     //TODO: Make fFileName a command line option to the application that runs this window.
@@ -284,8 +333,7 @@ namespace mygl
 
   void EvdWindow::choose_file()
   {
-    Gtk::FileChooserDialog chooser("Choose an edep-sim file to view");
-    chooser.set_transient_for(*this);
+    Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
 
     chooser.add_button("Open", Gtk::RESPONSE_OK);
 

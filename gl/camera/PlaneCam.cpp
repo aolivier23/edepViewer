@@ -44,5 +44,10 @@ namespace mygl
     if(fPitch < -89.) fPitch = -89.;
     if(fPitch > 89.) fPitch = 89.;
   }
+
+  void PlaneCam::set_move_speed()
+  {
+    fPosSens = std::stof(fMoveSpeedEntry.get_text());
+  }
 }
 

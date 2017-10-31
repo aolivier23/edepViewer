@@ -14,6 +14,7 @@ namespace mygl
   glm::mat4 OrthoCamera::GetPerspective(const int width, const int height)
   {
     return glm::ortho(-width/2/fZoom, width/2/fZoom, -height/2/fZoom, height/2/fZoom, -fFarPlane, fFarPlane); 
+    //return glm::ortho(fLeft/fZoom, fRight/fZoom, fBottom/fZoom, fTop/fZoom, -fFarPlane, fFarPlane);
     //TODO: I am doing something strange by allowing objects to be drawn at -fFarPlane which should be behind the camera.  
     //      After examining the viewer's behavior with and without drawing objects "behind" the camera, I decided that I 
     //      DO want to draw objects behind the camera to prevent cutting off parts of tracks.  
@@ -22,10 +23,34 @@ namespace mygl
   void OrthoCamera::do_scroll(const double scrollSign)
   {
     fZoom += fScrollSpeed*scrollSign;
+    
+    //Make sure zoom value never becomes negative
+    if(fZoom < 1.0*fScrollSpeed) 
+    {
+      fZoom = 1.0*fScrollSpeed;
 
-    //Clamp zoom values
-    //if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
-    if(fZoom < 1.0*fScrollSpeed) fZoom = 1.0*fScrollSpeed;
-    if(fZoom > 60.*fScrollSpeed) fZoom = 60.*fScrollSpeed;
+      //Change the scroll speed so the user can continue to zoom in forever
+      fScrollSpeed *= 0.1;
+    }
+    if(fZoom > 30.*fScrollSpeed) 
+    {
+      fZoom = 30.*fScrollSpeed;
+   
+      //Increase the scroll speed so the user can zoom farther out.
+      fScrollSpeed *= 10.;
+    }
+
+    fZoomEntry.set_text(std::to_string(fZoom));
+    fSpeedEntry.set_text(std::to_string(fScrollSpeed));
+  }
+
+  void OrthoCamera::set_zoom()
+  {
+    fZoom = std::stof(fZoomEntry.get_text());
+  }
+
+  void OrthoCamera::set_speed()
+  {
+    fScrollSpeed = std::stof(fSpeedEntry.get_text());
   }
 }

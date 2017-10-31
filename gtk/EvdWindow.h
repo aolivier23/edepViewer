@@ -78,6 +78,7 @@ namespace mygl
       mygl::ColorIter fGeoColor;
       mygl::ColorIter fPDGColor;
       const size_t fMaxGeoDepth; //The maximum recursion depth when processing a geometry file
+      VisID fAfterLastGeo; //The VisID after the last VisID used for the geometry.  Allows reusing VisIDs for event objects 
 
       std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
       TDatabasePDG fPdgDB;
@@ -136,6 +137,50 @@ namespace mygl
      };
 
      GuideRecord fGuideRecord;*/
+
+     class EDepRecord: public ColRecord
+     {
+       public: 
+         EDepRecord(): ColRecord()
+         {
+           add(fPrimName);
+           add(fEnergy);
+           add(fT0);
+           add(fScintE);
+           //TODO: Is it fair to call energy/length dE/dx?  
+         }
+
+         Gtk::TreeModelColumn<double>      fEnergy;
+         Gtk::TreeModelColumn<std::string> fPrimName;
+         Gtk::TreeModelColumn<double>      fT0;
+         Gtk::TreeModelColumn<double>      fScintE;
+     };
+   
+     EDepRecord fEDepRecord;
+
+     //TODO: If this is useful, consider moving it to its' own file
+     class RedToBluePalette
+     {
+       public:
+         RedToBluePalette(const double min, const double max): fMin(min), fMax(max) {}
+         virtual ~RedToBluePalette() = default;
+
+         glm::vec3 operator ()(const double value) //Returns a color between red and blue.  Red corresponds to high energy, and blue corresponds to low 
+                                                   //energy.
+         {
+           if(value > fMax) return glm::vec3(1.0, 0.0, 0.0);
+           if(value < fMin) return glm::vec3(0.0, 0.0, 1.0);
+
+           const double red = (value - fMin)/(fMax-fMin);
+           return glm::vec3(red, 0, 1.0-red);
+         }
+
+       protected:
+         const double fMax;
+         const double fMin;
+     };
+
+     RedToBluePalette fPalette;
   };
 }
 
