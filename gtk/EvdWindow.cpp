@@ -35,7 +35,7 @@ namespace mygl
   //      trajectories seem to be reflected?  I like the current starting camera position, but I need to understand it to 
   //      unravel the reason why trajectories seem to be drawn incorrectly.  
   EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
-    fViewer(std::shared_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
+    fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), //TODO: Make fMaxGeoDepth a user parameter

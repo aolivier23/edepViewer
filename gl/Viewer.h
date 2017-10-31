@@ -1,6 +1,8 @@
 //File: Viewer.h
 //Brief: Creates an area for opengl drawing in a Gtk Widget.  Expects to be given constructor information for Drawables by 
-//       external code, then draws those Drawables.  User can remove Drawables by VisID.  Drawables are managed by GLScenes.
+//       external code, then draws those Drawables.  User can remove Drawables by VisID.  Drawables are managed by Scenes.
+//       Viewer also provides a GUI area for configuring opengl drawing and Cameras.  Viewer manages the current Camera and 
+//       the list of Cameras configured.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //c++ includes
@@ -40,7 +42,7 @@ namespace mygl
 
     public:
   
-      Viewer(std::shared_ptr<Camera> cam, const Gdk::RGBA& background, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
+      Viewer(std::unique_ptr<Camera>&& cam, const Gdk::RGBA& background, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
       virtual ~Viewer();
 
       //TODO: At first, this function seems superfluous if I give the user access to the map of scenes.  However, the Gtk::GLArea::make_current() call 
@@ -66,16 +68,18 @@ namespace mygl
       }
 
       //User access to Scenes
+      //TODO: Return more information about the scene.  Perhaps return its' TreeView?
       void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
 
       //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
+      void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera);
+    
     protected:
       //Viewer parameters the user can customize
       //TODO: Allow the user to set the camera to use in the future
-      std::shared_ptr<Camera> fCamera; //Camera used by this GLArea
       Gdk::RGBA fBackgroundColor; //The background color for the display
   
       virtual void area_realize();
@@ -90,9 +94,19 @@ namespace mygl
       //GUI elements
       Gtk::Notebook fNotebook;
       std::vector<std::pair<Gtk::Box, Gtk::ScrolledWindow>> fScrolls; //One for each Scene
+
+      //Viewer control GUI
       Gtk::Box fControl;
       Gtk::Label fBackColorLabel;
       Gtk::ColorButton fBackgroundButton;
+      //TODO: Line width control
+
+      //Camera selection GUI.  Camera controls provided by Camera and derived classes.
+      Gtk::Stack fCameras;  //The list of cached Cameras
+      Gtk::StackSwitcher fCameraSwitch; //Controller for fCameras.  Currently viewed Camera GUI is current Camera.   
+      Camera* fCurrentCamera; //Observer pointer to fCameras' currently visible child to make code easier to understand
+
+      void camera_change();
 
     private:
       float fXPerPixel; //x units per pixel

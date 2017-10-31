@@ -28,22 +28,27 @@
 
 namespace mygl
 {
-  Viewer::Viewer(std::shared_ptr<Camera> cam, const Gdk::RGBA& background, const float xPerPixel, const float yPerPixel, const float zPerPixel):
-                Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL), fSceneMap(), fArea(), fCamera(cam), fBackgroundColor(background), fScrolls(), 
-                fControl(Gtk::ORIENTATION_VERTICAL), fBackColorLabel("Background Color"), 
+  Viewer::Viewer(std::unique_ptr<Camera>&& cam, const Gdk::RGBA& background, const float xPerPixel, const float yPerPixel, const float zPerPixel):
+                Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL), fSceneMap(), fArea(), fBackgroundColor(background), fScrolls(), 
+                fControl(Gtk::ORIENTATION_VERTICAL), fBackColorLabel("Background Color"), fCameras(), fCameraSwitch(), fCurrentCamera(cam.release()),
                 fBackgroundButton(background), fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
   {
     //Setup control widgets
-    //TODO: More sophisticated camera interface
     //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
     fNotebook.set_hexpand(false);
     fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
     fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
-    fControl.pack_start(*fCamera);
-    fNotebook.append_page(fControl, "Viewer");  
     fBackgroundButton.signal_color_set().connect(sigc::mem_fun(*this, &Viewer::set_background));
-    //fBackgroundButton.set_label("Background Color"); //TODO: This crashes the GUI with a segmentation violation and some 
-                                                       //      assertion from GTK in at least one case
+
+    //Setup camera selection GUI.  This really needs to be its' own tab in a Gtk::Stack
+    fCameraSwitch.set_stack(fCameras);
+    fCameras.add(*fCurrentCamera, "Default", "Default");
+    fCurrentCamera->ConnectSignals(fArea);
+
+    fControl.pack_start(fCameraSwitch, Gtk::PACK_SHRINK);
+    fControl.pack_start(fCameras, Gtk::PACK_SHRINK);
+
+    fNotebook.append_page(fControl, "Viewer");
 
     //Setup GLArea
     fArea.set_hexpand(true);
@@ -76,8 +81,8 @@ namespace mygl
     //Configure opengl
     //fArea.set_has_depth_buffer(true);
 
-    fCamera->ConnectSignals(fArea);
-    show_all();
+    show_all_children();
+    fCameras.property_visible_child().signal_changed().connect(sigc::mem_fun(*this, &Viewer::camera_change));
   }
 
   Viewer::~Viewer() {}
@@ -170,12 +175,13 @@ namespace mygl
       glClearColor(fBackgroundColor.get_red(), fBackgroundColor.get_green(), fBackgroundColor.get_blue(), 1.0f); //TODO: Allow user to set background color
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+
       for(auto& scenePair: fSceneMap)
       {
-        //const auto view = glm::scale(fCamera->GetView(), glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel));
-        const auto view = fCamera->GetView();
+        const auto view = fCurrentCamera->GetView();
 
-        scenePair.second.Render(view, glm::scale(fCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()), 
+        scenePair.second.Render(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()), 
                                                  glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
       }
       glFlush();
@@ -204,6 +210,20 @@ namespace mygl
     fBackgroundColor = fBackgroundButton.get_rgba();
     fBackgroundColor.set_alpha(0.0);
     //ignore alpha
+    fArea.queue_render();
+  }
+
+  void Viewer::AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera)
+  {
+    std::cout << "Called mygl::Viewer::AddCamera()\n";
+    fCameras.add(*(camera.release()), name, name);
+  }
+
+  void Viewer::camera_change()
+  {
+    std::cout << "Called mygl::Viewer::camera_change()\n";
+    fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
+    fCurrentCamera->ConnectSignals(fArea);
     fArea.queue_render();
   }
 }
