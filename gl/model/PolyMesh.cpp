@@ -39,6 +39,7 @@ namespace mygl
       size_t nVertices = pols[polPos+1]; //The second "component" of each polygon is the number of vertices it contains
       std::vector<unsigned int> thisPol; //Collect the unique vertices in this polygon in the order they were intended for drawing
       std::set<unsigned int> indicesFound; //Make sure that each index appears only once, but in eactly the order they appeared
+      //TODO: This algorithm is STILL wrong
       for(size_t vert = 0; vert < nVertices; ++vert)
       {
         const auto seg = pols[polPos+2+vert];

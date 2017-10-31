@@ -78,7 +78,7 @@ namespace mygl
         }
 
         //Set up vertices for drawing. 
-        glGenVertexArrays(1, &fVAO);
+        glGenVertexArrays(1, &fVAO); //TODO: This line somehow causes the GUI to stop drawing in EvdWindow
         glBindVertexArray(fVAO);
 
         //Set up indices for drawing

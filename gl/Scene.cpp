@@ -175,10 +175,10 @@ namespace mygl
       return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.
     }
     const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
-    std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
+    //std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
     if(!result) 
     {
-      std::cout << "Cutting this row in mygl::Scene::filter().\n";
+      //std::cout << "Cutting this row in mygl::Scene::filter().\n";
       //row[fSelfCol] = false; //TODO: This line causes a segmentation fault
                                //TODO: Adding seemingly unrelated code causes segmentation faults with otherwise-working configurations 
                                //      of the source code.  This sounds like a misuse of memory somewhere.  

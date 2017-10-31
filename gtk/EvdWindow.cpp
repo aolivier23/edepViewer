@@ -73,11 +73,16 @@ namespace mygl
   {
     //Remove the old geometry
     fViewer.GetScenes().find("Geometry")->second.RemoveAll();
+    //TODO: Reset first VisID to (0, 0, 0)?
+    //TODO: Reset geometry color iterator
 
     auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
     if(man != nullptr)
     {
-      TGeoIdentity id;
+      auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
+                                    //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 
+                                    //I have yet to find a way to unregister a TGeoMatrix.  So, it appears that there is no such 
+                                    //thing as a temporary TGeoIdentity.  Good job ROOT... :(
       auto top = *(fViewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
       top[fGeoRecord.fName] = man->GetTitle();
       top[fGeoRecord.fMaterial] = "FIXME";
@@ -87,7 +92,7 @@ namespace mygl
                 << "number of nodes in your geometry if this step is prohibitively long since you "
                 << "might not even enable them all.  I usually just need to draw the first 5 or so "
                 << "layers of the hierarchy.\n";
-      AppendNode(man->GetTopNode(), id, top, 0);
+      AppendNode(man->GetTopNode(), *id, top, 0);
       fAfterLastGeo = fNextID;
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
@@ -215,13 +220,13 @@ namespace mygl
     local.GetHomogenousMatrix(matPtr);
 
     //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
-    //TODO: My trajectories seem to be drawn reflected in x!  
+    //TODO: Adding the line immediately below this causes weird GUI behavior.  The problem does not seem to be in Scene or Polymesh::Draw().  
     auto row = fViewer.AddDrawable<Placed<mygl::PolyMesh>>("Geometry", fNextID++, parent, false, glm::make_mat4(matPtr),
-                                                           node->GetVolume(), glm::vec4((glm::vec3)fGeoColor, 0.2));
+                                                           node->GetVolume(), glm::vec4((glm::vec3)fGeoColor, 0.2)); 
+                                                                                               
     row[fGeoRecord.fName] = node->GetName();
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++fGeoColor;
-    //mat = mat*(*(node->GetMatrix())); //Update TGeoMatrix for this node.  This seems to be what LArSoft does in AuxDetGeo's constructor?
     AppendChildren(row, node, local, depth);
     
     return row;

@@ -84,13 +84,13 @@ namespace mygl
       if(copy.find("@"+std::to_string(pos)) != std::string::npos)
       {
         const auto val = get_col_value(pos, row);
-        std::cout << "substituting @" << pos << " with " << val << "\n";
+        //std::cout << "substituting @" << pos << " with " << val << "\n";
         //TODO: Replace std::regex so I don't have to recompile it each time do_filter is called
         std::regex replace("(@"+std::to_string(pos)+")"); 
         copy = std::regex_replace(copy, replace, val); 
       }
     }
-    std::cout << "Expression after parameter substitution is:\n" << copy << "\n";
+    //std::cout << "Expression after parameter substitution is:\n" << copy << "\n";
 
     try
     {
