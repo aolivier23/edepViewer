@@ -32,20 +32,20 @@ namespace mygl
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
-      PolyMesh(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color): fVertices(vertices.begin(), vertices.end()), 
-                                                                                           fColor(color)
+      PolyMesh(const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
+               const glm::vec4& color): Drawable(model), fVertices(vertices.begin(), vertices.end()), fColor(color)
       {
         Init(vertices, indices, color);
       }
 
-      PolyMesh(TGeoVolume* vol, const glm::vec4& color);
+      PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
 
       //PolyMesh(const std::initializer_list<glm::vec3>&& list, const glm::vec3& color); //Removing support for this because of how 
                                                                                          //complicated it would become.
 
       virtual ~PolyMesh(); //To allow derived classes to override
       
-      void Draw(ShaderProg& shader);
+      void DoDraw(ShaderProg& shader);
 
     protected:
       GLuint fVAO; //Location of vertex array object from opengl. 

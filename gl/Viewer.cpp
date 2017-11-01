@@ -87,13 +87,12 @@ namespace mygl
 
   Viewer::~Viewer() {}
 
-  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
+  Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
   {
     auto found = fSceneMap.find(name);
     if(found != fSceneMap.end())
     {
       throw util::GenException("Duplicate Scene Name") << "In mygl::Viewer::MakeScene(), requested scene name " << name << " is already in use.\n";
-      return;      
     }
 
     //fSceneMap.emplace(name, Scene(name, fragSrc, vertSrc));
@@ -117,6 +116,8 @@ namespace mygl
     fNotebook.append_page(box, name);
     //fNotebook.append_page(scroll, name);
     fNotebook.show_all_children();
+    
+    return treeView;
   }
 
   void Viewer::area_realize()

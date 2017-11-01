@@ -51,7 +51,8 @@ install( TARGETS GeoDraw DESTINATION bin )
 
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
-target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path ColorIter edepsim)
+target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid 
+                                             ColorIter edepsim)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )

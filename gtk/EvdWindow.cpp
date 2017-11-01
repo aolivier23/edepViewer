@@ -8,8 +8,8 @@
 
 //gl includes
 #include "gl/model/PolyMesh.h"
-#include "gl/model/Placed.cpp"
 #include "gl/model/Path.h"
+#include "gl/model/Grid.h"
 #include "gl/camera/PlaneCam.h"
 
 //glm includes
@@ -30,15 +30,12 @@
 
 namespace mygl
 {
-  //TODO: Something is wrong with starting camera position.  I seem to be placing the camera at what ROOT calls x=-200 by default.  
-  //      The camera direction is supposed to be along the z direction as well.  Maybe this is related to the reason why true 
-  //      trajectories seem to be reflected?  I like the current starting camera position, but I need to understand it to 
-  //      unravel the reason why trajectories seem to be drawn incorrectly.  
   EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
-    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), 
-    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), //TODO: Make fMaxGeoDepth a user parameter
+    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
+    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(new mygl::ColorIter()), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), 
+    //TODO: Make fMaxGeoDepth a user parameter
     fPalette(1.0, 50.)
   {
     set_title("Geometry Display Window");
@@ -71,12 +68,15 @@ namespace mygl
 
   void EvdWindow::ReadGeo()
   {
+    fGeoColor.reset(new mygl::ColorIter());
     //Remove the old geometry
     fViewer.GetScenes().find("Geometry")->second.RemoveAll();
     //TODO: Reset first VisID to (0, 0, 0)?
     //TODO: Reset geometry color iterator
 
-    auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
+    //auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
+    fGeoManager = (TGeoManager*)(fFile->Get("EDepSimGeometry"));
+    auto man = fGeoManager;
     if(man != nullptr)
     {
       auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
@@ -94,6 +94,10 @@ namespace mygl
                 << "layers of the hierarchy.\n";
       AppendNode(man->GetTopNode(), *id, top, 0);
       fAfterLastGeo = fNextID;
+
+      //Make sure a sensible fiducial node is set
+      fFiducialName.set_text(man->GetTopNode()->GetName());
+      set_fiducial();
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
     else std::cerr << "Failed to read geometry manager from file.\n";
@@ -139,7 +143,7 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-    fViewer.GetScenes().find("Trajectories")->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+    fViewer.GetScenes().find("Trajectories")->second.fTreeView.expand_to_path(Gtk::TreePath("0")); //TODO: Move this to the Viewer?
 
     //Draw true energy deposits color-coded by energy
     auto edepToDet = (*fCurrentEvt)->SegmentDetectors; //A map from sensitive volume to energy deposition
@@ -165,7 +169,7 @@ namespace mygl
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
         const auto energy = edep.EnergyDeposit;
 
-        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(energy), 1.0));
+        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(energy), 1.0));
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
         row[fEDepRecord.fT0]      = start.T();
@@ -186,31 +190,35 @@ namespace mygl
   
   //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
   //center of the screen broken into mm for now.  
-  /*void EvdWindow::DrawGuides() //TODO: This should become a Viewer function
+  void EvdWindow::DrawGuides() //TODO: This should become a Viewer function
   {
     auto root = *(fViewer.GetScenes().find("Guides")->second.NewTopLevelNode());
-    root[fGuideRecord.fName] = "HUD objects";
+    root[fGuideRecord.fName] = "Measurement Objects";
   
-    //A 1m line
-    std::vector<glm::vec3> vertices;
-    vertices.emplace_back(-500.f, 10.f, 0.0f);
-    vertices.emplace_back(500.f, 10.f, 0.0f);
-    auto row = fViewer.AddDrawable<mygl::Path>("Guides", fNextID, root, true, vertices, glm::vec4(0.3f, 0.0f, 0.9f, 1.0f));
-    //TODO: Color seems to be based on colors of objects around it
-    row[fGuideRecord.fName] = "1 meter";
+    const double gridSize = 1e5;
+    //A 1m grid 
+    auto row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 1000., gridSize, 1000., 
+                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f));
+    row[fGuideRecord.fName] = "1m Grid";
 
-    //TODO: model class
-    //End lines that are 2cm tall
-    //vertices.clear();
-    //vertices.emplace_back(-500.f, 0.0f, 0.0f);
-    //vertices.emplace_back(-500.f, 0.0f, 0.0f);
-  }*/
+    //A 1dm grid 
+    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 100., gridSize, 100.,
+                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f));
+    row[fGuideRecord.fName] = "1dm Grid";
 
-  //Passing "mat" BY VALUE in the following recursive function call might cause this application to take up a lot 
-  //of memory when opening a file (I estimated O(10MB) in matrix elements for the KLOE geometry with ~120000 nodes), but I think it is 
-  //worth the tradeoff for speed which is currently holding the application back at startup.  If I get worried about 
-  //the memory these function calls take, I could take an approac like LArSoft's AuxDetGeo constructor that passes around 
-  //a list of ancestor node pointers and multiplies all ancestors' matrices for each node.
+    //A 1cm grid
+    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 10., gridSize, 10.,
+                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f));
+    row[fGuideRecord.fName] = "1cm Grid";
+
+    //A 1mm grid
+    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 1., gridSize, 1.,
+                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f));
+    row[fGuideRecord.fName] = "1mm Grid";
+    
+    //TODO: Smaller grids, maybe with dashed lines
+  }
+
   Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
@@ -221,12 +229,12 @@ namespace mygl
 
     //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
     //TODO: Adding the line immediately below this causes weird GUI behavior.  The problem does not seem to be in Scene or Polymesh::Draw().  
-    auto row = fViewer.AddDrawable<Placed<mygl::PolyMesh>>("Geometry", fNextID++, parent, false, glm::make_mat4(matPtr),
-                                                           node->GetVolume(), glm::vec4((glm::vec3)fGeoColor, 0.2)); 
+    auto row = fViewer.AddDrawable<mygl::PolyMesh>("Geometry", fNextID++, parent, false, glm::make_mat4(matPtr),
+                                                           node->GetVolume(), glm::vec4((glm::vec3)(*fGeoColor), 0.2)); 
                                                                                                
     row[fGeoRecord.fName] = node->GetName();
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
-    ++fGeoColor;
+    ++(*fGeoColor);
     AppendChildren(row, node, local, depth);
     
     return row;
@@ -257,10 +265,15 @@ namespace mygl
       for(auto& point: points)
       {
         const auto& pos = point.Position;
-        vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
+
+        //Require that point is inside fiducial volume
+        double master[] = {pos.X(), pos.Y(), pos.Z()};
+        double local[3] = {}; 
+        fFiducialMatrix->MasterToLocal(master, local);
+        if(fFiducialNode->GetVolume()->Contains(local)) vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
 
-      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, vertices, glm::vec4((glm::vec3)color, 1.0)); 
+      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
       auto p = traj.InitialMomentum;
       const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
@@ -293,9 +306,11 @@ namespace mygl
     //trajTree.append_column("Process", fTrajRecord.fProcess);
 
     //Configure guide scene
-    //fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
+    fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
+    auto& guideTree = fViewer.GetScenes().find("Guides")->second.fTreeView;
+    guideTree.append_column("Name", fGuideRecord.fName);
 
-    //DrawGuides();
+    DrawGuides(); //Only do this once ever
 
     fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     auto& edepTree = fViewer.GetScenes().find("EDep")->second.fTreeView;
@@ -304,7 +319,6 @@ namespace mygl
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
 
-    //SetFile(fFileName.c_str());
     //TODO: Make fFileName a command line option to the application that runs this window.
     choose_file();
   }
@@ -331,9 +345,20 @@ namespace mygl
 
     fNavBar.add(fNext);
     fNext.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::next_event));
+
+    fNavBar.add(fReload);
+    fReload.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::ReadEvent));
     
     fNavBar.add(fFileChoose);
     fFileChoose.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::choose_file));
+    fFileLabelWrap.add(fFileLabel);
+    fNavBar.add(fFileLabelWrap);
+
+    fFiducialLabelWrap.add(fFiducialLabel);
+    fNavBar.add(fFiducialLabelWrap);
+    fFiducialWrap.add(fFiducialName);
+    fNavBar.add(fFiducialWrap);
+    fFiducialName.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::set_fiducial));
   }
 
   void EvdWindow::choose_file()
@@ -349,6 +374,7 @@ namespace mygl
       fFileName = chooser.get_filename();
       SetFile(fFileName); //TODO: Either remove fFileName or update SetFile() to use fFileName
       std::cout << "Set file to " << fFileName << "\n";
+      fFileLabel.set_text(fFileName);
     }
   }
 
@@ -373,6 +399,43 @@ namespace mygl
     Gdk::RGBA color = (*it)[fTrajRecord.fColor];
     auto textRender = ((Gtk::CellRendererText*)render);
     textRender->property_background_rgba().set_value(color);
+  }
+
+  void EvdWindow::set_fiducial()
+  {
+    const std::string nodeName = fFiducialName.get_text();
+
+    auto id = new TGeoIdentity();
+    if(find_node(nodeName, fGeoManager->GetTopNode(), *id))
+    {
+      std::cout << "Set fiducial node to " << fFiducialNode->GetName() << "\n";
+      ReadEvent();
+    }
+    else
+    {
+      fFiducialName.set_text(fFiducialNode->GetName());
+      std::cerr << "Failed to find node with name " << nodeName << " in file " << fFile->GetName() << "\n";
+    }
+  }
+
+  bool EvdWindow::find_node(const std::string& name, TGeoNode* parent, TGeoMatrix& mat)
+  {
+    TGeoHMatrix local(mat);
+    local.Multiply(parent->GetMatrix());
+    if(std::string(parent->GetName()) == name) 
+    {
+      fFiducialNode = parent;
+      fFiducialMatrix = new TGeoHMatrix(local);
+      return true;
+    }
+
+    auto children = parent->GetNodes();
+    for(auto child: *children)
+    {
+      auto node = (TGeoNode*)child;
+      if(find_node(name, node, local)) return true;
+    }
+    return false;
   }
 }
 

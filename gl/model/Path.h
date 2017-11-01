@@ -30,11 +30,11 @@ namespace mygl
         glm::vec4 color;
       };
 
-      Path(const std::vector<Vertex>& points);
-      Path(const std::vector<glm::vec3>& points, const glm::vec4& color);
+      Path(const glm::mat4& model, const std::vector<Vertex>& points);
+      Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color);
       virtual ~Path() = default;
 
-      virtual void Draw(mygl::ShaderProg& shader);
+      virtual void DoDraw(mygl::ShaderProg& shader);
 
     private:
       GLuint fVAO; //Location of vertex array object from opengl. 

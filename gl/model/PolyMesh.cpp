@@ -16,7 +16,7 @@
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(TGeoVolume* vol, const glm::vec4& color)
+  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model)
   {
     if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
@@ -85,7 +85,7 @@ namespace mygl
     glDeleteBuffers(1, &fEBO);
   }
 
-  void PolyMesh::Draw(ShaderProg& shader)
+  void PolyMesh::DoDraw(ShaderProg& shader)
   {
     shader.Use();
     shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);

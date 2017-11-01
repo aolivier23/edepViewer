@@ -30,6 +30,7 @@
 
 //Forward declaration of ROOT classes
 class TGeoNode;
+class TGeoManager;
 
 namespace mygl
 {
@@ -56,15 +57,19 @@ namespace mygl
       Gtk::Toolbar fNavBar;
       Gtk::ToolButton fPrint; 
       Gtk::ToolButton fNext;
+      Gtk::ToolButton fReload;
       Gtk::ToolItem fEvtNumWrap; 
       Gtk::Entry fEvtNum; 
-      Gtk::ToolButton fFileChoose;  
+      Gtk::ToolButton fFileChoose; 
+      Gtk::ToolItem fFileLabelWrap;
+      Gtk::Label fFileLabel; //Displays the current file name so that it shows up in printouts 
 
       //Source of data for drawing
       std::string fFileName;
       std::unique_ptr<TFile> fFile;
       std::unique_ptr<TTreeReader> fReader;
       std::unique_ptr<TTreeReaderValue<TG4Event>> fCurrentEvt; //The current event being drawn.
+      TGeoManager* fGeoManager; //The current geometry 
 
     private:
       Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth);
@@ -72,10 +77,10 @@ namespace mygl
       void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj);
       void ReadGeo();
       void ReadEvent();
-      //void DrawGuides(); //TODO: Move this to Viewer
+      void DrawGuides(); 
 
       mygl::VisID fNextID;
-      mygl::ColorIter fGeoColor;
+      std::unique_ptr<mygl::ColorIter> fGeoColor; //unique_ptr so I can reset() it
       mygl::ColorIter fPDGColor;
       const size_t fMaxGeoDepth; //The maximum recursion depth when processing a geometry file
       VisID fAfterLastGeo; //The VisID after the last VisID used for the geometry.  Allows reusing VisIDs for event objects 
@@ -87,6 +92,17 @@ namespace mygl
       void choose_file(); 
       void goto_event();
       void next_event();
+
+      //Information for fiducial volume cut
+      Gtk::ToolItem fFiducialLabelWrap;
+      Gtk::Label fFiducialLabel;
+      Gtk::ToolItem fFiducialWrap;
+      Gtk::Entry fFiducialName;
+      TGeoNode* fFiducialNode; //The node for the fiducial volume.  Trajectory points outside this volume will not be drawn.
+      TGeoMatrix* fFiducialMatrix; //A matrix that translates objects from the top Node's coordinate system to fFiducialNode's 
+                                   //coordinate system. 
+      void set_fiducial();
+      bool find_node(const std::string& name, TGeoNode* parent, TGeoMatrix& mat);
 
       //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
       class GeoRecord: public ColRecord
@@ -125,7 +141,7 @@ namespace mygl
       Gtk::CellRendererText fColorRender; //Customized renderer for particle name to write name in color
       void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
 
-     /*class GuideRecord: public ColRecord
+     class GuideRecord: public ColRecord
      {
        public:
          GuideRecord(): ColRecord()
@@ -136,7 +152,7 @@ namespace mygl
          Gtk::TreeModelColumn<std::string> fName;
      };
 
-     GuideRecord fGuideRecord;*/
+     GuideRecord fGuideRecord;
 
      class EDepRecord: public ColRecord
      {

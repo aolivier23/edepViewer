@@ -96,7 +96,7 @@ namespace mygl
           std::cout << "\n";
         }
         
-        fGeoms.emplace_back(new mygl::PolyMesh(ptsVec, indices, color));
+        fGeoms.emplace_back(new mygl::PolyMesh(glm::mat4(), ptsVec, indices, color));
         std::cout << "Leaving mygl::GeoDrawer::AddGeo()\n";
       }
 

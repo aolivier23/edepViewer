@@ -11,12 +11,12 @@
 
 namespace mygl
 {
-  Path::Path(const std::vector<Vertex>& points): fNVertices(points.size())
+  Path::Path(const glm::mat4& model, const std::vector<Vertex>& points): Drawable(model), fNVertices(points.size())
   {
     Init(points);
   }
 
-  Path::Path(const std::vector<glm::vec3>& points, const glm::vec4& color): fNVertices(points.size())
+  Path::Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color): Drawable(model), fNVertices(points.size())
   {
     std::vector<Vertex> vertices;
     for(const auto& point: points)
@@ -29,7 +29,7 @@ namespace mygl
     Init(vertices);
   }
 
-  void Path::Draw(ShaderProg& shader)
+  void Path::DoDraw(ShaderProg& shader)
   {
     shader.Use();
 
