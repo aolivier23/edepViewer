@@ -14,6 +14,7 @@
 
 //gtk directory includes
 #include "ColorIter.cxx"
+#include "gtk/Palette.cpp"
 
 //ROOT includes
 #include "TFile.h"
@@ -161,6 +162,7 @@ namespace mygl
          {
            add(fPrimName);
            add(fEnergy);
+           add(fdEdx);
            add(fT0);
            add(fScintE);
            //TODO: Is it fair to call energy/length dE/dx?  
@@ -170,33 +172,36 @@ namespace mygl
          Gtk::TreeModelColumn<std::string> fPrimName;
          Gtk::TreeModelColumn<double>      fT0;
          Gtk::TreeModelColumn<double>      fScintE;
+         Gtk::TreeModelColumn<double>      fdEdx;
      };
    
      EDepRecord fEDepRecord;
 
      //TODO: If this is useful, consider moving it to its' own file
-     class RedToBluePalette
+     /*class Palette
      {
        public:
-         RedToBluePalette(const double min, const double max): fMin(min), fMax(max) {}
-         virtual ~RedToBluePalette() = default;
+         Palette(const double min, const double max): fMin(min), fMax(max) {}
+         virtual ~Palette() = default;
 
          glm::vec3 operator ()(const double value) //Returns a color between red and blue.  Red corresponds to high energy, and blue corresponds to low 
                                                    //energy.
          {
-           if(value > fMax) return glm::vec3(1.0, 0.0, 0.0);
+           if(value > fMax) return glm::vec3(0.0, 1.0, 0.0);
            if(value < fMin) return glm::vec3(0.0, 0.0, 1.0);
 
            const double red = (value - fMin)/(fMax-fMin);
-           return glm::vec3(red, 0, 1.0-red);
+           if(red < 0.5) return glm::vec3(0., 2.*red, 1.0-2.*red);
+           else return glm::vec3(2.*red-1.0, 2.*red-1.0, 0.); 
+           //return glm::vec3(red, std::fabs(0.5-red), 1.0-red);
          }
 
        protected:
          const double fMax;
          const double fMin;
-     };
+     };*/
 
-     RedToBluePalette fPalette;
+     Palette fPalette;
   };
 }
 

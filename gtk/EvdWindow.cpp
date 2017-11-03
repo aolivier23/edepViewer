@@ -36,7 +36,7 @@ namespace mygl
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(new mygl::ColorIter()), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), 
     //TODO: Make fMaxGeoDepth a user parameter
-    fPalette(1.0, 50.)
+    fPalette(-3., 1.) //fPalette(-5., 3.)
   {
     set_title("Geometry Display Window");
     set_border_width(5);
@@ -68,13 +68,12 @@ namespace mygl
 
   void EvdWindow::ReadGeo()
   {
+    //TODO: Just make this a local variable
     fGeoColor.reset(new mygl::ColorIter());
     //Remove the old geometry
     fViewer.GetScenes().find("Geometry")->second.RemoveAll();
     //TODO: Reset first VisID to (0, 0, 0)?
-    //TODO: Reset geometry color iterator
 
-    //auto man = (TGeoManager*)(fFile->Get("EDepSimGeometry")); //Seems to be a convention in EDepSim
     fGeoManager = (TGeoManager*)(fFile->Get("EDepSimGeometry"));
     auto man = fGeoManager;
     if(man != nullptr)
@@ -161,17 +160,43 @@ namespace mygl
       //      do not have the "properties" I plan to include in the energy deposition tree. I will just cut out energy depositions 
       //      in volumes by setting the frustrum box from the camera API (hopefully).   
       double sumE = 0., sumScintE = 0., minT = 1e10;
+
+      //Get minimum energy, maximum energy, and mean energy in this event for deciding on palette
+      //TODO: Do I want a palette that is fixed per event instead?  This algorithm seems designed to 
+      //      highlight structure rather than give an absolute energy scale. 
+      /*double mindEdx = 0., maxdEdx = 1e6; //, sumdEdx = 0.; //TODO: Check average dEdx and look at order of magnitude of its' ratio with 
+                                                            //      maxdEdx to decide whether to use log scale.
+      for(auto& edep: edeps)
+      {
+        const auto energy = edep.EnergyDeposit;
+        const auto length = edep.TrackLength;
+        double dEdx = (length>0)?energy/length:0;
+        //sumdEdx += dEdx;
+        if(energy < mindEdx) mindEdx = dEdx;
+        else if(energy > maxdEdx) maxdEdx = dEdx;
+      }
+      GreenToBluePalette palette(std::log(mindEdx), std::log(maxdEdx));*/
+
       for(auto& edep: edeps)
       {
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
-        const auto energy = edep.EnergyDeposit;
+        const double energy = edep.EnergyDeposit;
+        const double length = edep.TrackLength;
+        double dEdx = 0.;
+        if(length > 0.) dEdx = energy/length*10.; //TODO: Divide by density?
 
-        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(energy), 1.0));
+        //TODO: Consider getting energy from total deposit, dE/dx, and primary contributor?
+        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(std::log10(dEdx)), 1.0));
+        //fPalette(std::log10(energy)), 1.0));
+        //std::log10(dEdx)), 1.0)); //TODO: dE/dx -> alpha?
+        //fPalette(dEdx), 1.0)); //TODO: dE/dx -> alpha?
+        //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0)); 
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
+        row[fEDepRecord.fdEdx]    = dEdx;
         row[fEDepRecord.fT0]      = start.T();
         row[fEDepRecord.fPrimName] = (*fCurrentEvt)->Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
         ++fNextID;
@@ -185,12 +210,13 @@ namespace mygl
       detRow[fEDepRecord.fEnergy] = sumE;
       detRow[fEDepRecord.fScintE] = sumScintE;
       detRow[fEDepRecord.fT0]     = minT;
+      detRow[fEDepRecord.fdEdx]   = 0.; //TODO: Come up with a more meaningful value for this.
     }
   }
   
   //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
   //center of the screen broken into mm for now.  
-  void EvdWindow::DrawGuides() //TODO: This should become a Viewer function
+  void EvdWindow::DrawGuides() 
   {
     auto root = *(fViewer.GetScenes().find("Guides")->second.NewTopLevelNode());
     root[fGuideRecord.fName] = "Measurement Objects";
@@ -217,6 +243,7 @@ namespace mygl
     row[fGuideRecord.fName] = "1mm Grid";
     
     //TODO: Smaller grids, maybe with dashed lines
+    //TODO: Drawing the 1mm grid is very slow.  
   }
 
   Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
@@ -262,8 +289,9 @@ namespace mygl
 
       const auto& points = traj.Points;
       std::vector<glm::vec3> vertices;
-      for(auto& point: points)
+      for(auto pointIt = points.begin(); pointIt != points.end(); ++pointIt)
       {
+        auto& point = *pointIt;
         const auto& pos = point.Position;
 
         //Require that point is inside fiducial volume
@@ -271,6 +299,35 @@ namespace mygl
         double local[3] = {}; 
         fFiducialMatrix->MasterToLocal(master, local);
         if(fFiducialNode->GetVolume()->Contains(local)) vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
+        else if(pointIt != points.begin()) //Extrapolate to the face of the fiducial volume
+        {
+          //Make sure previous point was in the fiducial volume
+          const auto& prevPoint = (pointIt-1)->Position;
+          master[0] = prevPoint.X();
+          master[1] = prevPoint.Y();
+          master[2] = prevPoint.Z();
+          fFiducialMatrix->MasterToLocal(master, local);
+          if(fFiducialNode->GetVolume()->Contains(local))
+          {
+            //TGeoShape::DistFromInside needs two 3-vectors in the local frame:
+            //The direction
+            const auto dirVec = (pos-prevPoint).Vect().Unit();
+            double dir[] = {dirVec.X(), dirVec.Y(), dirVec.Z()};
+            double dirLocal[3] = {};
+            fFiducialMatrix->MasterToLocalVect(dir, dirLocal);
+  
+            //The position inside the volume
+            double prevMaster[] = {prevPoint.X(), prevPoint.Y(), prevPoint.Z()};
+            fFiducialMatrix->MasterToLocal(prevMaster, local);
+  
+            const auto dist = fFiducialNode->GetVolume()->GetShape()->DistFromInside(local, dirLocal, 3); 
+  
+            //Now, convert the position of the point to draw back to the master frame in which everything is drawn          
+            double newPtLocal[] = {local[0]+dirLocal[0]*dist, local[1]+dirLocal[1]*dist, local[2]+dirLocal[2]*dist};
+            fFiducialMatrix->LocalToMaster(newPtLocal, master);
+            vertices.emplace_back(master[0], master[1], master[2]);
+          }
+        }
       }
 
       auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
@@ -291,14 +348,12 @@ namespace mygl
   void EvdWindow::make_scenes()
   {
     //Configure Geometry Scene
-    fViewer.MakeScene("Geometry", fGeoRecord);
-    auto& geoTree = fViewer.GetScenes().find("Geometry")->second.fTreeView;
+    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord);
     geoTree.append_column("Volume Name", fGeoRecord.fName);
     geoTree.append_column("Material", fGeoRecord.fMaterial);
  
     //Configure Event Scene
-    fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
-    auto& trajTree = fViewer.GetScenes().find("Trajectories")->second.fTreeView;
+    auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
@@ -306,16 +361,15 @@ namespace mygl
     //trajTree.append_column("Process", fTrajRecord.fProcess);
 
     //Configure guide scene
-    fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
-    auto& guideTree = fViewer.GetScenes().find("Guides")->second.fTreeView;
+    auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert"); 
     guideTree.append_column("Name", fGuideRecord.fName);
-
+    guideTree.expand_to_path(Gtk::TreePath("0"));
     DrawGuides(); //Only do this once ever
 
-    fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
-    auto& edepTree = fViewer.GetScenes().find("EDep")->second.fTreeView;
+    auto& edepTree = fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
+    edepTree.append_column("dE/dx [MeV/cm]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
 
@@ -364,6 +418,7 @@ namespace mygl
   void EvdWindow::choose_file()
   {
     Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
+    //TODO: configure dialog to only show .root files and directories
 
     chooser.add_button("Open", Gtk::RESPONSE_OK);
 

@@ -40,6 +40,10 @@ add_library( ColorIter ColorIter.cxx )
 target_link_libraries( ColorIter ${ROOT_LIBRARIES} )
 install( TARGETS ColorIter DESTINATION lib )
 
+add_library( Palette Palette.cpp )
+target_link_libraries( Palette )
+install( TARGETS Palette DESTINATION lib )
+
 #Add libraries for drawing geometry based on list tree
 add_library( GeoDrawWindow GeoDrawWindow.cpp )
 target_link_libraries( GeoDrawWindow ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Camera Drawable PolyMesh ColorIter )
@@ -52,7 +56,7 @@ install( TARGETS GeoDraw DESTINATION bin )
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid 
-                                             ColorIter edepsim)
+                                             ColorIter Palette edepsim)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )
