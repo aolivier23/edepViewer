@@ -36,9 +36,9 @@ namespace mygl
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(new mygl::ColorIter()), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), 
     //TODO: Make fMaxGeoDepth a user parameter
-    fPalette(-3., 1.) //fPalette(-5., 3.)
+    fPalette(0., 8.) 
   {
-    set_title("Geometry Display Window");
+    set_title("edepsim Display Window");
     set_border_width(5);
     set_default_size(1400, 1000);
 
@@ -175,25 +175,60 @@ namespace mygl
         if(energy < mindEdx) mindEdx = dEdx;
         else if(energy > maxdEdx) maxdEdx = dEdx;
       }
-      GreenToBluePalette palette(std::log(mindEdx), std::log(maxdEdx));*/
-
+      Palette palette(std::log10(mindEdx), std::log10(maxdEdx));*/
+  
       for(auto& edep: edeps)
       {
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
+          
+        //Get the density of material at the middle of this energy deposit
+        /*const auto diff = start.Vect()-stop.Vect();
+        const auto mid = start.Vect()+diff.Unit()*diff.Mag();
+        auto mat = fGeoManager->FindNode(mid.X(), mid.Y(), mid.Z())->GetVolume()->GetMaterial();
+        const double density = mat->GetDensity()/6.24e24*1e6;*/
+
+        //Get the weighted density of the material that most of this energy deposit was deposited in.  Increase the accuracy of this 
+        //material guess by increasing the number of sample points, but beware of event loading time!
+        const size_t nSamples = 10;
+        const auto diff = start.Vect()-stop.Vect();
+        const double dist = diff.Mag();
+        double sumDensity = 0;
+        double sumA = 0;
+        double sumZ = 0;   
+        for(size_t sample = 0; sample < nSamples; ++sample)
+        {
+          const auto pos = start.Vect()+diff.Unit()*dist;
+          auto mat = fGeoManager->FindNode(pos.X(), pos.Y(), pos.Z())->GetVolume()->GetMaterial();
+          sumDensity += mat->GetDensity();
+          sumA += mat->GetA();
+          sumZ += mat->GetZ();
+        }
+        const double density = sumDensity/nSamples/6.24e24*1e6;
+        //std::cout << "density is " << density << "\n";
+  
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
         const double energy = edep.EnergyDeposit;
         const double length = edep.TrackLength;
         double dEdx = 0.;
-        if(length > 0.) dEdx = energy/length*10.; //TODO: Divide by density?
+        //From http://pdg.lbl.gov/2011/reviews/rpp2011-rev-passage-particles-matter.pdf, the Bethe formula for dE/dx in 
+        //MeV*cm^2/g goes as Z/A.  To get comparable stopping powers for all materials, try to "remove the Z/A dependence".
+        if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ; //*mat->GetA()/mat->GetZ(); 
 
         //TODO: Consider getting energy from total deposit, dE/dx, and primary contributor?
-        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(std::log10(dEdx)), 1.0));
+        /*const double eMin = 0., eMax = 1.;
+        float alpha = (std::log10(dEdx)-eMin)/(eMax-eMin);
+        if(alpha > 1.) alpha = 1.;
+        if(alpha < 0.) alpha = 0.;*/
+        
+        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0));
+        //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], alpha));
+        //fPalette(dEdx), 1.0));
+        //palette(std::log10(dEdx)), 1.0));
         //fPalette(std::log10(energy)), 1.0));
         //std::log10(dEdx)), 1.0)); //TODO: dE/dx -> alpha?
         //fPalette(dEdx), 1.0)); //TODO: dE/dx -> alpha?
-        //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0)); 
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
         row[fEDepRecord.fdEdx]    = dEdx;
@@ -330,7 +365,8 @@ namespace mygl
         }
       }
 
-      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
+      //TODO: Change "false" back to "true" to draw trajectories by default
+      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, false, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
       auto p = traj.InitialMomentum;
       const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
@@ -369,7 +405,7 @@ namespace mygl
     auto& edepTree = fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert");
     edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
-    edepTree.append_column("dE/dx [MeV/cm]", fEDepRecord.fdEdx);
+    edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
 
