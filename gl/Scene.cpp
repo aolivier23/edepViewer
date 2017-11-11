@@ -110,21 +110,20 @@ namespace mygl
 
   void Scene::RemoveAll() //Might be useful when updating event
   {
-    fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 
+    //fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 
                           //      numeric values propagated between calls to RemoveAll().
     fActive.erase(fActive.begin(), fActive.end());
     fHidden.erase(fHidden.begin(), fHidden.end());
+    fFilter->clear_cache();
     fModel->clear();
     //fModel->erase(fModel->get_iter("0")); //This was recommended online, but it doesn't change anything.
-    fFilter->clear_cache();
   }
 
   void Scene::draw_self(const Glib::ustring& path)
   {
-    std::cout << "mygl::Scene::draw_self() called.\n";
-    auto row = *(fModel->get_iter(path));
+    auto row = *(fFilter->get_iter(path));
     if(!row) return;
-    const auto& id = row[fIDCol];
+    const auto id = row[fIDCol];
     const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
                                         //opposite of what it was when the user selected it.
 
@@ -168,15 +167,17 @@ namespace mygl
   //Intercept the result of UserCut::do_filter() to disable the Drawables for filtered rows.
   bool Scene::filter(const Gtk::TreeModel::iterator& iter)
   {
-    auto& row = *iter;
-    if(!row) 
+    //std::cout << "Entering mygl::Scene::filter()\n";
+    if(!iter) 
     {
       std::cerr << "Avoided processing a \"zombie\" row in mygl::Scene::filter().\n";
       return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.
     }
+    auto& row = *iter;
+    //std::cout << "VisID was " << row[fIDCol] << "\n";
     const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
     //std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
-    if(!result) 
+    if(result == false) 
     {
       //std::cout << "Cutting this row in mygl::Scene::filter().\n";
       //row[fSelfCol] = false; //TODO: This line causes a segmentation fault
@@ -192,8 +193,12 @@ namespace mygl
       }
       catch(const util::GenException& e)
       {
+        //TODO: I am getting this exception often, even for things that shouldn't be filtered!  
+        std::cerr << "Caught exception \n" << e.what() << "\n when trying to filter rows of TreeModel.  "
+                  << "Ignoring this request to filter object.\n";
       }
     }
+    //std::cout << "VisID is now " << row[fIDCol] << "\n";
     return result;
   }
 }

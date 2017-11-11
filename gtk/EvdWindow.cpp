@@ -223,12 +223,10 @@ namespace mygl
         if(alpha < 0.) alpha = 0.;*/
         
         auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0));
-        //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], alpha));
         //fPalette(dEdx), 1.0));
+        //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));
         //palette(std::log10(dEdx)), 1.0));
         //fPalette(std::log10(energy)), 1.0));
-        //std::log10(dEdx)), 1.0)); //TODO: dE/dx -> alpha?
-        //fPalette(dEdx), 1.0)); //TODO: dE/dx -> alpha?
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
         row[fEDepRecord.fdEdx]    = dEdx;
@@ -366,7 +364,7 @@ namespace mygl
       }
 
       //TODO: Change "false" back to "true" to draw trajectories by default
-      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, false, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
+      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0)); 
       row[fTrajRecord.fPartName] = traj.Name;
       auto p = traj.InitialMomentum;
       const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
