@@ -9,9 +9,7 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-
-//GLEW include(s)
-#include "GL/glew.h" //for GL types
+#include "gl/model/ShaderProg.h"
 
 //c++ includes
 #include <vector>
@@ -41,7 +39,7 @@ namespace mygl
       GLuint fVBO; //Location of vertex buffer object from opengl.
       const GLuint fNVertices; //Number of vertices in this path
 
-      void Init(const std::vector<Vertex>& points);
+      void Init(std::vector<Vertex> points);
   };
 }
 

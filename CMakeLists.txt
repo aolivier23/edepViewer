@@ -11,5 +11,10 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
 
+#Support for glad
+add_library(glad glad/src/glad.c)
+target_include_directories("glad" PRIVATE "glad/include")
+target_link_libraries("glad" ${CMAKE_DL_LIBS})
+
 add_subdirectory(gl)
 add_subdirectory(gtk)

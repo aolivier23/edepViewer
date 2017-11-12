@@ -19,9 +19,8 @@
 //c++ includes
 #include <iostream>
 
-//GLEW includes
-#define GLEW_STATIC
-#include "GL/glew.h"
+//glad includes
+#include "glad/include/glad/glad.h"
 
 #ifndef MYGL_GLCAMERAAERA_H
 #define MYGL_GLCAMERAAREA_H
@@ -107,8 +106,7 @@ namespace mygl
         try
         {
           fArea.throw_if_error();
-          glewExperimental = GL_TRUE;
-          if(glewInit() != GLEW_OK)
+          if(!gladLoadGL())
           {
             std::cerr << "Failed to initialize GLEW\n";
           }

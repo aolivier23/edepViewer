@@ -3,7 +3,6 @@ link_directories( /usr/local/lib )
 
 #Stuff for Opengl and GLEW
 find_package( OpenGL REQUIRED )
-find_package( GLEW 1.13.0 EXACT REQUIRED )
 
 #gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
 link_directories( ${GTKMM_LIBRARY_DIRS} )
@@ -27,7 +26,7 @@ add_library( Path      Path.cpp )
 add_library( Grid      Grid.cpp )
 
 target_link_libraries( exception )
-target_link_libraries( Shader exception ${GTKMM_LIBRARIES} ${GLEW_LIBRARIES} )
+target_link_libraries( Shader exception ${GTKMM_LIBRARIES} glad )
 target_link_libraries( Drawable Shader ${GTKMM_LIBRARIES} )
 target_link_libraries( PolyMesh Drawable ${ROOT_LIBRARIES})
 target_link_libraries( Path Drawable )

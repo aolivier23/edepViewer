@@ -6,9 +6,7 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-
-//GLEW include(s)
-#include "GL/glew.h" //for GL types
+#include "gl/model/ShaderProg.h"
 
 #ifndef MYGL_GRID_H
 #define MYGL_GRID_H

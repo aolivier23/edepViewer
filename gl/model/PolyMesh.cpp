@@ -3,8 +3,8 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //local includes
-#include "PolyMesh.h"
-#include "ShaderProg.h"
+#include "gl/model/PolyMesh.h"
+#include "gl/model/ShaderProg.h"
 
 //ROOT includes
 #include "TGeoVolume.h"

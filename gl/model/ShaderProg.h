@@ -6,8 +6,8 @@
 #ifndef GL_SHADERPROG_H
 #define GL_SHADERPROG_H
 
-//GLEW include(s)
-#include "GL/glew.h" //for GL types
+//glad includes
+#include "glad/include/glad/glad.h"
 
 //glm include
 #include <glm/gtc/matrix_transform.hpp> //for glm::mat4, which is a typedef

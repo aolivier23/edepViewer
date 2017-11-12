@@ -22,9 +22,7 @@
 #include <utility> //For std::piecewise_construct shenanigans
 #include <tuple> //For std::forward_as_tuple
 
-//GLEW includes
-#define GLEW_STATIC
-#include "GL/glew.h"
+#include "glad/include/glad/glad.h"
 
 namespace mygl
 {
@@ -129,10 +127,9 @@ namespace mygl
     try
     {
       fArea.throw_if_error();
-      glewExperimental = GL_TRUE;
-      if(glewInit() != GLEW_OK)
+      if(!gladLoadGL())
       {
-        std::cerr << "Failed to initialize GLEW\n";
+        std::cerr << "Failed to load opengl extensions with glad.\n";
       }
 
       glViewport(0, 0, fArea.get_allocated_width(), fArea.get_allocated_height());

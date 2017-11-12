@@ -14,12 +14,12 @@
 
 namespace mygl
 {
-  Path::Path(const glm::mat4& model, const std::vector<Vertex>& points): Drawable(model), fNVertices(points.size())
+  Path::Path(const glm::mat4& model, const std::vector<Vertex>& points): Drawable(model), fNVertices(points.size()+2)
   {
     Init(points);
   }
 
-  Path::Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color): Drawable(model), fNVertices(points.size())
+  Path::Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color): Drawable(model), fNVertices(points.size()+2)
   {
     std::vector<Vertex> vertices;
     for(const auto& point: points)
@@ -37,15 +37,16 @@ namespace mygl
     shader.Use();
 
     glBindVertexArray(fVAO);
-    glDrawArrays(GL_LINE_STRIP, 0, fNVertices); //GL_LINE_STRIP_ADJACENCY, 0, fNVertices);
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, fNVertices);
 
     glBindVertexArray(0); //Unbind data after done drawing
   }
 
-  void Path::Init(const std::vector<Vertex>& points)
+  void Path::Init(std::vector<Vertex> points)
   {
-    std::cout << "GLEW version is " << glewGetString(GLEW_VERSION) << "\n";
-    std::cout << "OpenGL version is " << glGetString(GL_VERSION) << "\n";
+    //Add one extra vertex on each end of points to provide adjacency information
+    points.insert(points.begin(), points.front());
+    points.push_back(points.back());
 
     //Set up vertices for drawing. 
     glGenVertexArrays(1, &fVAO);

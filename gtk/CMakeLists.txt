@@ -6,7 +6,6 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin )
 
 #Stuff for Opengl and GLEW
 find_package( OpenGL REQUIRED )
-find_package( GLEW 1.13.0 EXACT REQUIRED )
 
 #Set up to build against ROOT
 #I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake

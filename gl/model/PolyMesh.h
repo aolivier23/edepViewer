@@ -13,18 +13,14 @@
 //glm includes
 #include <glm/glm.hpp>
 
-//GLEW include(s)
-#include "GL/glew.h" //for GL types
-
 //gl includes
 #include "gl/model/Drawable.h"
+#include "gl/model/ShaderProg.h"
 
 class TGeoVolume;
 
 namespace mygl
 {
-  class ShaderProg;
-
   class PolyMesh: public Drawable
   {
     public:
