@@ -6,7 +6,7 @@ link_directories( /usr/local/lib )
 
 #Stuff for Opengl and GLEW
 find_package( OpenGL REQUIRED )
-find_package( GLEW REQUIRED )
+find_package( GLEW 1.13.0 EXACT REQUIRED )
 
 #gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
 link_directories( ${GTKMM_LIBRARY_DIRS} )
