@@ -17,46 +17,49 @@
 
 namespace mygl
 {
-  ShaderProg::ShaderProg(const std::string& fragStr, const std::string& vertStr)
+  ShaderProg::ShaderProg(const std::string& fragStr, const std::string& vertStr): fProgID(glCreateProgram())
   {
-    //Check for passing fragment shader source for vertex shader
-    //You are welcome to add more conventions here!
-    if(vertStr.find(".frag") != std::string::npos) 
-    {
-      std::cerr << "WARNING in ShaderProg Constructor: "
-                << "You may have passed the source code "
-                << "for a fragment shader as the vertex " 
-                << "shader source.  If this is the case, "
-                << "you will almost certainly get many shader "
-                << "compiler errors below.\n";
-    }
+    //Make sure the user passed the right kinds of source code for the shaders
+    ValidateVert(vertStr);
+    ValidateFrag(fragStr);
 
-    //Check for passing vertex shader source for fragment shader
-    //You are welcome to add more conventions here!
-    if(fragStr.find(".vert") != std::string::npos) 
-    {
-      std::cerr << "WARNING in ShaderProg Constructor: "
-                << "You may have passed the source code "
-                << "for a vertex shader as the fragment "                         
-                << "shader source.  If this is the case, "
-                << "you will almost certainly get many shader "
-                << "compiler errors below.\n";
-    }
-
-    //Compile the shaders
-    auto vert = MakeShader(vertStr, GL_VERTEX_SHADER);
-    auto frag = MakeShader(fragStr, GL_FRAGMENT_SHADER);
-
-    //Make a shader program from the shaders just compiled
-    fProgID = glCreateProgram();
-    glAttachShader(fProgID, vert);
-    glAttachShader(fProgID, frag);
+    //Compile and attach the shaders
+    const auto vert = MakeShader(vertStr, GL_VERTEX_SHADER);
+    const auto frag = MakeShader(fragStr, GL_FRAGMENT_SHADER);
     glLinkProgram(fProgID);
   
     //Delete shaders once they have been used
     glDeleteShader(vert);
     glDeleteShader(frag);
   
+    //Check whether shader program linking failed
+    CheckSuccess();
+  }
+
+  ShaderProg::ShaderProg(const std::string& fragStr, const std::string& vertStr, const std::string& geomStr): fProgID(glCreateProgram())
+  {
+    //Make sure the user passed the right kinds of source code for the shaders
+    ValidateVert(vertStr);
+    ValidateFrag(fragStr);
+    ValidateGeom(geomStr);
+
+    //Compile and attach the shaders
+    const auto vert = MakeShader(vertStr, GL_VERTEX_SHADER);
+    const auto frag = MakeShader(fragStr, GL_FRAGMENT_SHADER);
+    const auto geom = MakeShader(geomStr, GL_GEOMETRY_SHADER);
+    glLinkProgram(fProgID);
+
+    //Delete shaders once they have been used
+    glDeleteShader(vert);
+    glDeleteShader(frag);
+    glDeleteShader(geom);
+
+    //Check whether shader program linking failed
+    CheckSuccess();
+  }
+
+  void ShaderProg::CheckSuccess() const
+  {
     //Check whether shader program linking failed
     GLint success;
     GLchar infoLog[512];
@@ -68,8 +71,57 @@ namespace mygl
     }
   }
 
+  void ShaderProg::ValidateVert(const std::string& vertName) const 
+  {
+    //Check for passing fragment shader source for vertex shader
+    //You are welcome to add more conventions here!
+    if(vertName.find(".vert") == std::string::npos)
+    {
+      std::cerr << "WARNING in ShaderProg Constructor: "
+                << "Passed a shader program in a file "
+                << "named " << vertName << " as the "
+                << "vertex shader.  However, the program "
+                << "name doesn't have .vert in it.  You "
+                << "may have passed the wrong source file "
+                << "for the vertex shader!\n";
+    }
+  }
+  
+  void ShaderProg::ValidateFrag(const std::string& fragName) const
+  {
+    //Check for passing fragment shader source for vertex shader
+    //You are welcome to add more conventions here!
+    if(fragName.find(".frag") == std::string::npos)
+    {
+      std::cerr << "WARNING in ShaderProg Constructor: "
+                << "Passed a shader program in a file "
+                << "named " << fragName << " as the "
+                << "fragment shader.  However, the program "
+                << "name doesn't have .frag in it.  You "
+                << "may have passed the wrong source file "
+                << "for the vertex shader!\n";
+    }
+  }
+
+  void ShaderProg::ValidateGeom(const std::string& geomName) const
+  {
+    //Check for passing fragment shader source for vertex shader
+    //You are welcome to add more conventions here!
+    if(geomName.find(".geom") == std::string::npos)
+    {
+      std::cerr << "WARNING in ShaderProg Constructor: "
+                << "Passed a shader program in a file "
+                << "named " << geomName << " as the "
+                << "geometry shader.  However, the program "
+                << "name doesn't have .geom in it.  You "
+                << "may have passed the wrong source file "
+                << "for the vertex shader!\n";
+    }
+  }
+
   GLuint ShaderProg::MakeShader(const std::string& fileName, const GLenum shader_type)
   {
+    //It is assumed that fProgID has already been set before this function is called.
     //First, get the source code for this shader
     std::ifstream sourceFile(fileName);
     if(!sourceFile.is_open()) throw util::GenException("Source File Not Found") 
@@ -102,6 +154,9 @@ namespace mygl
                                                  << infoLog 
                                                  << "\nSource code was:\n" << sourceChar << "\n";
     }
+
+    //Attach this shader to the current shader program
+    glAttachShader(fProgID, shader);
 
     //Return openGL's identifier for this shader
     return shader;

@@ -87,18 +87,33 @@ namespace mygl
 
   Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
   {
+    PrepareToAddScene(name);
+    return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
+                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second); //lol
+  }
+
+  Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc, 
+                                   const std::string& geomSrc)
+  {
+    PrepareToAddScene(name);
+    return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                                    std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second); //lol
+  }
+
+  void Viewer::PrepareToAddScene(const std::string& name)
+  {
     auto found = fSceneMap.find(name);
     if(found != fSceneMap.end())
     {
       throw util::GenException("Duplicate Scene Name") << "In mygl::Viewer::MakeScene(), requested scene name " << name << " is already in use.\n";
     }
 
-    //fSceneMap.emplace(name, Scene(name, fragSrc, vertSrc));
     fArea.throw_if_error();
     fArea.make_current();
-    auto& scene = fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second; //lol
+  }
 
+  Gtk::TreeView& Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene)
+  {
     //Now, tell this Viewer's GUI about the Scene's GUI
     auto& treeView = scene.fTreeView;
     treeView.set_enable_search(true);
@@ -112,7 +127,6 @@ namespace mygl
     box.pack_start(scene.fCutBar, Gtk::PACK_SHRINK);
     box.pack_end(scroll);
     fNotebook.append_page(box, name);
-    //fNotebook.append_page(scroll, name);
     fNotebook.show_all_children();
     
     return treeView;

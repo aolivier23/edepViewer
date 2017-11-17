@@ -70,6 +70,8 @@ namespace mygl
       //User access to Scenes
       Gtk::TreeView& MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
+      Gtk::TreeView& MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc,
+                               const std::string& geomSrc);
 
       //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
@@ -111,6 +113,9 @@ namespace mygl
       float fXPerPixel; //x units per pixel
       float fYPerPixel; //y units per pixel
       float fZPerPixel; //z units per pixel
+
+      void PrepareToAddScene(const std::string& name);
+      Gtk::TreeView& ConfigureNewScene(const std::string& name, mygl::Scene& scene);      
   };
 }
 #endif //End ifndef MYGL_VIEWER_H

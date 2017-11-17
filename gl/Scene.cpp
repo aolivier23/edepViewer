@@ -15,10 +15,22 @@ namespace mygl
   //         the proper GL context is bound for shader allocation.
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
-                                                                                                                        fSelfCol(cols.fDrawSelf), 
-                                                                                                                        fIDCol(cols.fVisID),
                                                                                                                         fCutBar("")
   {
+    BuildGUI(cols);
+  }
+
+  Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
+               mygl::ColRecord& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), fCutBar("")
+  {
+    BuildGUI(cols);
+  }
+
+  void Scene::BuildGUI(mygl::ColRecord& cols)
+  {
+    fSelfCol = cols.fDrawSelf;
+    fIDCol = cols.fVisID;
+
     fModel = Gtk::TreeStore::create(cols); //TODO: Should I be using fModel for updating the data to be drawn or fFilter?   
     fFilter = Gtk::TreeModelFilter::create(fModel); 
     fTreeView.set_model(fFilter);

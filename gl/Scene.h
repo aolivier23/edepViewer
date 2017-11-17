@@ -36,6 +36,9 @@ namespace mygl
   {
     public:
       Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols);
+      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
+            mygl::ColRecord& cols);
+      
       virtual ~Scene();
 
       //Warning: The following function may not do anything if Gtk::GLArea::make_current() is 
@@ -76,6 +79,8 @@ namespace mygl
       //Details to save user code when working with the TreeModel
       Gtk::TreeModelColumn<bool> fSelfCol;
       Gtk::TreeModelColumn<VisID> fIDCol;
+
+      void BuildGUI(mygl::ColRecord& cols);
   };
 }
 

@@ -20,7 +20,13 @@ namespace mygl
   class ShaderProg
   {
     public: 
-      ShaderProg(const std::string& fragName, const std::string& vertName); //Create a shader program
+      ShaderProg(const std::string& fragName, const std::string& vertName); //Create a shader program with a fragment shader and a 
+                                                                            //vertex shader.
+      ShaderProg(const std::string& fragStr, const std::string& vertStr, const std::string& geomStr); //Create a shader program 
+                                                                                                      //with a framgment shader, 
+                                                                                                      //a vertex shader, and a 
+                                                                                                      //geometry shader.
+      
       void Use(); //Make this the active program
 
       //Function overloads to set uniforms of various types
@@ -42,6 +48,11 @@ namespace mygl
 
       GLuint MakeShader(const std::string& fileName, GLenum shader_type); //Compile a shader to be ready for program linking.  
                                                                           //Returns the openGL ID number for the shader
+
+      void CheckSuccess() const;
+      void ValidateVert(const std::string& vertName) const;
+      void ValidateFrag(const std::string& fragName) const;
+      void ValidateGeom(const std::string& geomName) const; 
   };
 }
 
