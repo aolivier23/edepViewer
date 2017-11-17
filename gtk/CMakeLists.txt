@@ -17,11 +17,10 @@ include(${ROOT_USE_FILE})
 link_directories( ${GTKMM_LIBRARY_DIRS} )
 include_directories( ${GTKMM_INCLUDE_DIRS} )
 
-#Set up edep-sim?
-#TODO: Figure out how to do this with a CMake find command
-set( PATH_TO_EDEPSIM "/home/aolivier/app/edep-sim/edep-gcc-5.4.0-x86_64-linux-gnu/" )
-include_directories( "${PATH_TO_EDEPSIM}/include" )
-link_directories( "${PATH_TO_EDEPSIM}/lib" )
+#Set up edep-sim
+set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
+include_directories( "${EDEP_DIR}/include/edep-sim" )
+link_directories( "${EDEP_DIR}/lib" )
 
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )

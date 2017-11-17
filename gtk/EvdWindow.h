@@ -24,7 +24,7 @@
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
-#include "/home/aolivier/app/edep-sim/src/TG4Event.h" //TODO: Make CMake figure out this path
+#include "TG4Event.h" //TODO: Make CMake figure out this path
 
 #ifndef EVD_EVDWINDOW
 #define EVD_EVDWINDOW
