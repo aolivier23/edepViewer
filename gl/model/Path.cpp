@@ -14,12 +14,13 @@
 
 namespace mygl
 {
-  Path::Path(const glm::mat4& model, const std::vector<Vertex>& points): Drawable(model), fNVertices(points.size()+2)
+  Path::Path(const glm::mat4& model, const std::vector<Vertex>& points, const float width): Drawable(model), fNVertices(points.size()+2), fWidth(width)
   {
     Init(points);
   }
 
-  Path::Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color): Drawable(model), fNVertices(points.size()+2)
+  Path::Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, 
+             const float width): Drawable(model), fNVertices(points.size()+2), fWidth(width)
   {
     std::vector<Vertex> vertices;
     for(const auto& point: points)
@@ -35,6 +36,7 @@ namespace mygl
   void Path::DoDraw(ShaderProg& shader)
   {
     shader.Use();
+    shader.SetUniform("width", fWidth);
 
     glBindVertexArray(fVAO);
     glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, fNVertices);

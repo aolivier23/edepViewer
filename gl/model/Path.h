@@ -28,8 +28,8 @@ namespace mygl
         glm::vec4 color;
       };
 
-      Path(const glm::mat4& model, const std::vector<Vertex>& points);
-      Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color);
+      Path(const glm::mat4& model, const std::vector<Vertex>& points, const float width);
+      Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, const float width);
       virtual ~Path() = default;
 
       virtual void DoDraw(mygl::ShaderProg& shader);
@@ -40,6 +40,8 @@ namespace mygl
       const GLuint fNVertices; //Number of vertices in this path
 
       void Init(std::vector<Vertex> points);
+
+      const float fWidth;
   };
 }
 
