@@ -36,7 +36,7 @@ namespace mygl
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
     fFileName(fileName), fNextID(0, 0, 0), fGeoColor(new mygl::ColorIter()), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), 
     //TODO: Make fMaxGeoDepth a user parameter
-    fPalette(0., 8.) 
+    fPalette(0., 8.), fLineWidth(0.008)
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -222,7 +222,7 @@ namespace mygl
         if(alpha > 1.) alpha = 1.;
         if(alpha < 0.) alpha = 0.;*/
         
-        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0), 0.01);
+        auto row = fViewer.AddDrawable<mygl::Path>("EDep", fNextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
         //fPalette(dEdx), 1.0));
         //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));
         //palette(std::log10(dEdx)), 1.0));
@@ -364,7 +364,7 @@ namespace mygl
       }
 
       //TODO: Change "false" back to "true" to draw trajectories by default
-      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), 0.01); 
+      auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
       row[fTrajRecord.fPartName] = traj.Name;
       auto p = traj.InitialMomentum;
       const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 

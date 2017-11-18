@@ -102,8 +102,12 @@ namespace mygl
       TGeoNode* fFiducialNode; //The node for the fiducial volume.  Trajectory points outside this volume will not be drawn.
       TGeoMatrix* fFiducialMatrix; //A matrix that translates objects from the top Node's coordinate system to fFiducialNode's 
                                    //coordinate system. 
+
       void set_fiducial();
       bool find_node(const std::string& name, TGeoNode* parent, TGeoMatrix& mat);
+
+      //Drawing settings
+      float fLineWidth; //The default line width to use
 
       //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
       class GeoRecord: public ColRecord
