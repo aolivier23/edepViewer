@@ -12,8 +12,8 @@
 namespace mygl
 {
   Grid::Grid(const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace,
-       const glm::vec4& color): Drawable(model), fColor(color), fWidth(width), fHorizSpace(horizSpace), fHeight(height), 
-                                fVertSpace(vertSpace)
+       const glm::vec4& color, const float lineWidth): Drawable(model), fColor(color), fWidth(width), fHorizSpace(horizSpace), 
+                                                       fHeight(height), fVertSpace(vertSpace), fLineWidth(lineWidth)
   {
     //Set up vertical line
     //Set up vertices for drawing.
@@ -24,8 +24,9 @@ namespace mygl
     glGenBuffers(1, &fVertVBO);
     glBindBuffer(GL_ARRAY_BUFFER, fVertVBO);
 
-    glm::vec3 points[] = {glm::vec3(0.f, -height/2., 0.f), glm::vec3(0.f, height/2., 0.f)};
-    glBufferData(GL_ARRAY_BUFFER, 2*sizeof(glm::vec3), points, GL_STATIC_DRAW);
+    glm::vec3 points[] = {glm::vec3(0.f, -height/2., 0.f), glm::vec3(0.f, -height/2., 0.f), 
+                          glm::vec3(0.f, height/2., 0.f), glm::vec3(0.f, height/2., 0.f)};
+    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(glm::vec3), points, GL_STATIC_DRAW);
 
     //Set up vertex attributes expected by vertex shader
     glEnableVertexAttribArray(0);
@@ -41,9 +42,11 @@ namespace mygl
     glBindBuffer(GL_ARRAY_BUFFER, fHorizVBO);
 
     points[0] = glm::vec3(-width/2., 0.f, 0.f);
-    points[1] = glm::vec3(width/2., 0.f, 0.f);
+    points[1] = glm::vec3(-width/2., 0.f, 0.f);
+    points[2] = glm::vec3(width/2., 0.f, 0.f);
+    points[3] = glm::vec3(width/2., 0.f, 0.f);
 
-    glBufferData(GL_ARRAY_BUFFER, 2*sizeof(glm::vec3), points, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(glm::vec3), points, GL_STATIC_DRAW);
     
     //Set up vertex attributes expected by vertex shader
     glEnableVertexAttribArray(0);
@@ -54,6 +57,7 @@ namespace mygl
   {
     shader.Use();
     shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);
+    shader.SetUniform("width", fLineWidth);
 
     //Draw horizontal lines
     for(double ypos = -fHeight/2.; ypos < fHeight/2.; ypos += fVertSpace) DrawHorizLine(shader, ypos);    
@@ -68,7 +72,7 @@ namespace mygl
   {
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(xpos, 0.f, 0.f)));
     glBindVertexArray(fVertVAO);
-    glDrawArrays(GL_LINE_STRIP, 0, 2);
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
     glBindVertexArray(0); //Unbind data after done drawing
   }
 
@@ -76,7 +80,7 @@ namespace mygl
   {
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(0.f, ypos, 0.f)));
     glBindVertexArray(fHorizVAO);
-    glDrawArrays(GL_LINE_STRIP, 0, 2);
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
     glBindVertexArray(0); //Unbind data after done drawing
   }
 }

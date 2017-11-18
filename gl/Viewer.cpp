@@ -152,7 +152,6 @@ namespace mygl
       //glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glLineWidth(3.0f); //TODO: User parameter
     }
     catch(const Gdk::GLError& err)
     {

@@ -17,7 +17,7 @@ namespace mygl
   {
     public:
       Grid(const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
-           const glm::vec4& color);
+           const glm::vec4& color, const float lineWidth);
       virtual ~Grid() = default;
 
       virtual void DoDraw(mygl::ShaderProg& shader);
@@ -38,6 +38,8 @@ namespace mygl
 
       void DrawVertLine(mygl::ShaderProg& prog, const double ypos); //Draw a vertical line at a point pos
       void DrawHorizLine(mygl::ShaderProg& prog, const double xpos); //Draw a horizontal line at a point pos
+
+      const float fLineWidth; //The width of lines to draw in NDC coordinates
   };
 }
 
