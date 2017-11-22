@@ -34,6 +34,7 @@ namespace mygl
     //Setup control widgets
     //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
     fNotebook.set_hexpand(false);
+    fNotebook.set_scrollable();
     fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
     fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
     fBackgroundButton.signal_color_set().connect(sigc::mem_fun(*this, &Viewer::set_background));
@@ -312,7 +313,17 @@ namespace mygl
     
     //Tell Scenes to select chosen object.
     //TODO: Get ToolTips from scenes
-    for(auto& scenePair: fSceneMap) scenePair.second.SelectID(id);
+    for(auto& scenePair: fSceneMap) 
+    {
+      //TODO: If this scene found an object, make it the current TreeView.
+      const std::string tip = scenePair.second.SelectID(id);
+      if(tip != "") 
+      {
+        //TODO: Write a simple GUI widget for Scenes' TreeViews instead of this horrible nested parentage.
+        fNotebook.set_current_page(fNotebook.page_num(*(scenePair.second.fTreeView.get_parent()->get_parent())));
+        std::cout << "Got tooltip " << tip << ".\n";
+      }
+    }
 
     //If any scene finds the selected object, it will return tool tip text.  Draw a tool tip from the text of the first match found.
   }

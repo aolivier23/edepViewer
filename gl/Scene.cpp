@@ -257,10 +257,14 @@ namespace mygl
     {
       fTreeView.expand_to_path(result);
       fTreeView.set_cursor(result);
+
+      //TODO: Replace this with a real ToolTip
+      std::stringstream ss;
+      ss << id;
+      return ss.str();
     }
-    //return (*(search.result))[fTipCol];
     std::cout << "Returning from mygl::Scene::SelectID\n";
 
-    return std::string();
+    return std::string("");
   }
 }
