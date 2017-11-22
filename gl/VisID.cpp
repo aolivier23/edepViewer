@@ -14,7 +14,7 @@ namespace mygl
 
   VisID::operator glm::vec4() const
   {
-    return glm::vec4(fR, fG, fB, 0.0f);
+    return glm::vec4(fR/255.f, fG/255.f, fB/255.f, 0.0f);
   }
 
   VisID& VisID::operator ++() //prefix

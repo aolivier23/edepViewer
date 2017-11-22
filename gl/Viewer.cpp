@@ -75,6 +75,7 @@ namespace mygl
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
     fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
+    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
 
     //Configure opengl
     //fArea.set_has_depth_buffer(true);
@@ -149,6 +150,7 @@ namespace mygl
       glViewport(0, 0, fArea.get_allocated_width(), fArea.get_allocated_height());
 
       //enable depth testing
+      //TODO: Use depth testing with some scenes but not others (geometry).  
       //glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -236,5 +238,67 @@ namespace mygl
     fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
     fCurrentCamera->ConnectSignals(fArea);
     fArea.queue_render();
+  }
+
+  bool Viewer::on_click(GdkEventButton* evt)
+  {
+    std::cout << "Called mygl::Viewer::on_click() with button " << evt->button << ".\n";
+    if(evt->button != 1) return false; //button 1 is the left mouse button
+    
+    //TODO: Encapsulate "global" opengl settings into an object that can apply defaults here
+    glDisable(GL_BLEND);
+    fArea.make_current();
+    try
+    {
+      fArea.throw_if_error();
+
+      glClearColor(1.0f, 1.0f, 1.0f, 0.314159f); //TODO: Make sure there is no VisID that maps to this color.  
+                                              
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+
+      for(auto& scenePair: fSceneMap)
+      {
+        const auto view = fCurrentCamera->GetView();
+
+        //TODO: It would be great to be able to change out this selection algorithm.  
+        scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), 
+                                                          fArea.get_allocated_height()),
+                                         glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+        //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
+        fArea.queue_render();
+      }
+      glFlush();
+    }
+    catch(const Gdk::GLError& err)
+    {
+      std::cerr << "Caught exception in Viewer::on_click():\n"
+                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
+      return false;
+    }
+  
+    //TODO: Class/struct to encapsulate an opengl drawing state
+    glEnable(GL_BLEND);
+
+    //TODO: Getting 255 for all four color components regardless of background color and mouse position.
+    //Method for reading pixels taken from http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
+    glFinish(); //Wait for all drawing to finish
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+    unsigned char color[4];
+    std::cout << "Reading pixels at position (" << evt->x << ", " << evt->y << ")\n";
+    glReadPixels(evt->x, evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
+    std::cout << "Got back color (" << (unsigned long)color[0] << ", " << (unsigned long)color[1] << ", " 
+              << (unsigned long)color[2] << ", " << (unsigned long)color[3] << ")\n";
+
+    std::cout << "Selected object with VisID " << mygl::VisID(color[0], color[1], color[2]) << "\n"; //TODO: Remove me
+
+    //React to the user's selection.  Ultimately, I want to propagate this to other Viewers, so emit a signal that Viewers 
+    //and/or Scenes can react to.  
+    //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
+    //      I would want a way for multiple Viewers to post events to this Selection object.  
+    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); 
+
+    return true;
   }
 }

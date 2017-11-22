@@ -50,6 +50,7 @@ namespace mygl
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
       virtual void Render(const glm::mat4& view, const glm::mat4& persp);
+      virtual void RenderSelection(const glm::mat4& view, const glm::mat4& persp);
 
       const std::string fName; //The name of this scene.  Might be useful for list tree displays
       
@@ -68,6 +69,9 @@ namespace mygl
       std::map<VisID, std::unique_ptr<Drawable>> fActive; //The opengl drawing instructions for this scene that will be drawn on Render
       std::map<VisID, std::unique_ptr<Drawable>> fHidden; //Opengl drawing instructions for this scene that will not be drawn on Render
       ShaderProg fShader; //The opengl shader program with which the objects in fDrawables will be rendered
+      ShaderProg fSelectionShader; //Same components as fShader except for the fragment shader.  This program 
+                                   //uses a special (unique?) fragment shader to which it can bind a VisID as 
+                                   //a color.
 
       //GUI components
       Glib::RefPtr<Gtk::TreeStore> fModel; //The TreeModel that has each element in this Scene.  

@@ -15,13 +15,15 @@ namespace mygl
   //         the proper GL context is bound for shader allocation.
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
+                                                                                                                        fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
                                                                                                                         fCutBar("")
   {
     BuildGUI(cols);
   }
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-               mygl::ColRecord& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), fCutBar("")
+               mygl::ColRecord& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
+               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fCutBar("")
   {
     BuildGUI(cols);
   }
@@ -118,6 +120,25 @@ namespace mygl
     for(auto& pair: fActive) pair.second->Draw(fShader); //This is different from my old DRAWER contract because 
                                                          //Drawables are now responsible for binding their own 
                                                          //model matrices.
+  }
+
+  void Scene::RenderSelection(const glm::mat4& view, const glm::mat4& persp)
+  {
+    //Note that these uniform names assume that like-named uniforms are 
+    //handled by the shader programs used to form fShader
+    fSelectionShader.SetUniform("view", view);
+    fSelectionShader.SetUniform("projection", persp);
+    fSelectionShader.SetUniform("model", glm::mat4());  //In case Drawables don't set their own model matrices.  Setting the 
+                                                        //same uniform twice shouldn't be a problem, right?
+    for(auto& pair: fActive) 
+    {
+      fSelectionShader.SetUniform("idColor", pair.first); //Each VisID is a unique color that can be drawn by opengl.  
+                                                          //So, draw this object with that color so that its' color 
+                                                          //can be mapped back to its' VisID if the user clicks on it.
+      pair.second->Draw(fSelectionShader); //This is different from my old DRAWER contract because 
+                                           //Drawables are now responsible for binding their own 
+                                           //model matrices.
+    }
   }
 
   void Scene::RemoveAll() //Might be useful when updating event
