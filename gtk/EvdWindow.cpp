@@ -386,13 +386,12 @@ namespace mygl
     geoTree.append_column("Volume Name", fGeoRecord.fName);
     geoTree.append_column("Material", fGeoRecord.fMaterial);
  
-    //Configure Event Scene
+    //Configure trajectory Scene
     auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
     trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
-    //trajTree.append_column("Process", fTrajRecord.fProcess);
 
     //Configure guide scene
     auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom"); 
@@ -400,12 +399,20 @@ namespace mygl
     guideTree.expand_to_path(Gtk::TreePath("0"));
     DrawGuides(); //Only do this once ever
 
+    //Configure energy deposit Scene
     auto& edepTree = fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
     edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
+
+    //Configure Trajectory Point Scene
+    auto& ptTree = fViewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
+    ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
+    ptTree.append_column("Time", fTrajPtRecord.fTime);
+    ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
+    ptTree.append_column("Process", fTrajPtRecord.fProcess);
 
     //TODO: Make fFileName a command line option to the application that runs this window.
     choose_file();

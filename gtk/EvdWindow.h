@@ -178,32 +178,25 @@ namespace mygl
          Gtk::TreeModelColumn<double>      fScintE;
          Gtk::TreeModelColumn<double>      fdEdx;
      };
-   
      EDepRecord fEDepRecord;
 
-     //TODO: If this is useful, consider moving it to its' own file
-     /*class Palette
+     class TrajPtRecord: public ColRecord
      {
        public:
-         Palette(const double min, const double max): fMin(min), fMax(max) {}
-         virtual ~Palette() = default;
-
-         glm::vec3 operator ()(const double value) //Returns a color between red and blue.  Red corresponds to high energy, and blue corresponds to low 
-                                                   //energy.
+         TrajPtRecord(): ColRecord()
          {
-           if(value > fMax) return glm::vec3(0.0, 1.0, 0.0);
-           if(value < fMin) return glm::vec3(0.0, 0.0, 1.0);
-
-           const double red = (value - fMin)/(fMax-fMin);
-           if(red < 0.5) return glm::vec3(0., 2.*red, 1.0-2.*red);
-           else return glm::vec3(2.*red-1.0, 2.*red-1.0, 0.); 
-           //return glm::vec3(red, std::fabs(0.5-red), 1.0-red);
+           add(fMomMag);
+           add(fTime);
+           add(fProcess);
+           add(fParticle);
          }
 
-       protected:
-         const double fMax;
-         const double fMin;
-     };*/
+         Gtk::TreeModelColumn<double> fMomMag;
+         Gtk::TreeModelColumn<double> fTime;
+         Gtk::TreeModelColumn<std::string> fProcess;
+         Gtk::TreeModelColumn<std::string> fParticle;
+     };
+     TrajPtRecord fTrajPtRecord;
 
      Palette fPalette;
   };
