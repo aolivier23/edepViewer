@@ -252,7 +252,7 @@ namespace mygl
     {
       fArea.throw_if_error();
 
-      glClearColor(1.0f, 1.0f, 1.0f, 0.314159f); //TODO: Make sure there is no VisID that maps to this color.  
+      glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //TODO: Make sure there is no VisID that maps to this color.  
                                               
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -267,7 +267,6 @@ namespace mygl
                                                           fArea.get_allocated_height()),
                                          glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
         //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
-        fArea.queue_render();
       }
       glFlush();
     }
@@ -281,13 +280,12 @@ namespace mygl
     //TODO: Class/struct to encapsulate an opengl drawing state
     glEnable(GL_BLEND);
 
-    //TODO: Getting 255 for all four color components regardless of background color and mouse position.
     //Method for reading pixels taken from http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
     glFinish(); //Wait for all drawing to finish
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+    glPixelStorei(GL_PACK_ALIGNMENT, 1); 
     unsigned char color[4];
     std::cout << "Reading pixels at position (" << evt->x << ", " << evt->y << ")\n";
-    glReadPixels(evt->x, evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
+    glReadPixels(evt->x, fArea.get_allocated_height() - evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
     std::cout << "Got back color (" << (unsigned long)color[0] << ", " << (unsigned long)color[1] << ", " 
               << (unsigned long)color[2] << ", " << (unsigned long)color[3] << ")\n";
 

@@ -113,6 +113,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
+    fShader.Use();
     fShader.SetUniform("view", view);
     fShader.SetUniform("projection", persp);
     fShader.SetUniform("model", glm::mat4());  //In case Drawables don't set their own model matrices.  Setting the 
@@ -126,6 +127,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
+    fSelectionShader.Use();
     fSelectionShader.SetUniform("view", view);
     fSelectionShader.SetUniform("projection", persp);
     fSelectionShader.SetUniform("model", glm::mat4());  //In case Drawables don't set their own model matrices.  Setting the 
