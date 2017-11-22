@@ -311,8 +311,9 @@ namespace mygl
     //TODO: Highlight selected object.  Requires work with shaders and probably adjacency information in geometry.
     
     //Tell Scenes to select chosen object.
+    //TODO: Get ToolTips from scenes
+    for(auto& scenePair: fSceneMap) scenePair.second.SelectID(id);
 
-    //If any scene finds the selected object, it will return a TreePath to that row.  Obtain tooltip text from the 
-    //first match and draw a tooltip on the screen. 
+    //If any scene finds the selected object, it will return tool tip text.  Draw a tool tip from the text of the first match found.
   }
 }

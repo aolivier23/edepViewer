@@ -27,6 +27,8 @@ namespace mygl
     VisID operator ++(int); //postfix
   
     bool operator <(const VisID& rhs) const;
+
+    bool operator ==(const VisID& rhs) const;
   };
   
   std::ostream& operator <<(std::ostream& os, const VisID& id);

@@ -64,6 +64,8 @@ namespace mygl
       bool filter(const Gtk::TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
       void remove_row(const Gtk::TreeModel::Path& path);
 
+      std::string SelectID(const mygl::VisID& id);
+
     protected:
       //opengl components
       std::map<VisID, std::unique_ptr<Drawable>> fActive; //The opengl drawing instructions for this scene that will be drawn on Render

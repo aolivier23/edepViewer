@@ -52,6 +52,11 @@ namespace mygl
     return (fB < rhs.fB);
   }
 
+  bool VisID::operator ==(const VisID& rhs) const
+  {
+    return (fR == rhs.fR) && (fG == rhs.fG) && (fB == rhs.fB);
+  }
+
 
   //Printing interface for VisID
   std::ostream& operator <<(std::ostream& os, const VisID& id)

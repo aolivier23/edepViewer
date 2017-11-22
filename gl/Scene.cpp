@@ -236,4 +236,31 @@ namespace mygl
     //std::cout << "VisID is now " << row[fIDCol] << "\n";
     return result;
   }
+
+  std::string Scene::SelectID(const mygl::VisID& id)
+  {
+    std::cout << "Calling mygl::Scene::SelectID.\n";
+    //Find all objects with VisID id
+    //Gtk::TreeModel::foreach_iter appears to be copying my slot object.  
+    //So, I cannot return anything through the slot object's members.  
+    //...Or can I?  Lambda capture seems to work.  
+    Gtk::TreePath result;
+    fFilter->foreach_iter([&result, &id, this](const Gtk::TreeIter& pos) 
+                          {
+                            const bool found = ((mygl::VisID)((*pos)[this->fIDCol]) == id);
+                            if(found) result = Gtk::TreePath(pos);
+                            return found;
+                          });
+
+    //Highlight selected objects in the TreeView
+    if(result)
+    {
+      fTreeView.expand_to_path(result);
+      fTreeView.set_cursor(result);
+    }
+    //return (*(search.result))[fTipCol];
+    std::cout << "Returning from mygl::Scene::SelectID\n";
+
+    return std::string();
+  }
 }
