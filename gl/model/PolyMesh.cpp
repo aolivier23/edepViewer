@@ -87,7 +87,6 @@ namespace mygl
 
   void PolyMesh::DoDraw(ShaderProg& shader)
   {
-    shader.Use();
     shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);
 
     glBindVertexArray(fVAO);

@@ -35,7 +35,6 @@ namespace mygl
 
   void Path::DoDraw(ShaderProg& shader)
   {
-    shader.Use();
     shader.SetUniform("width", fWidth);
 
     glBindVertexArray(fVAO);
