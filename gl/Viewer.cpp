@@ -306,8 +306,8 @@ namespace mygl
 
   void Viewer::on_selection(const mygl::VisID id, const int x, const int y)  
   {
-    std::cout << "Selected object with VisID " << id 
-              << " at screen coordinates (" << x << ", " << y << ")\n"; 
+    //std::cout << "Selected object with VisID " << id 
+    //          << " at screen coordinates (" << x << ", " << y << ")\n"; 
 
     //TODO: Highlight selected object.  Requires work with shaders and probably adjacency information in geometry.
     
@@ -321,7 +321,6 @@ namespace mygl
       {
         //TODO: Write a simple GUI widget for Scenes' TreeViews instead of this horrible nested parentage.
         fNotebook.set_current_page(fNotebook.page_num(*(scenePair.second.fTreeView.get_parent()->get_parent())));
-        std::cout << "Got tooltip " << tip << ".\n";
       }
     }
 

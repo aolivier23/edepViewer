@@ -239,7 +239,6 @@ namespace mygl
 
   std::string Scene::SelectID(const mygl::VisID& id)
   {
-    std::cout << "Calling mygl::Scene::SelectID.\n";
     //Find all objects with VisID id
     //Gtk::TreeModel::foreach_iter appears to be copying my slot object.  
     //So, I cannot return anything through the slot object's members.  
@@ -263,7 +262,6 @@ namespace mygl
       ss << id;
       return ss.str();
     }
-    std::cout << "Returning from mygl::Scene::SelectID\n";
 
     return std::string("");
   }
