@@ -26,7 +26,7 @@ namespace mygl
         glm::vec4 color;
       };
 
-      Point(const glm::mat4& model, const Vertex& point, const float radius);
+      Point(const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
       virtual ~Point() = default;
 
       virtual void DoDraw(mygl::ShaderProg& shader);

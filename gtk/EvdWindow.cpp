@@ -10,6 +10,7 @@
 #include "gl/model/PolyMesh.h"
 #include "gl/model/Path.h"
 #include "gl/model/Grid.h"
+#include "gl/model/Point.h"
 #include "gl/camera/PlaneCam.h"
 
 //glm includes
@@ -137,7 +138,30 @@ namespace mygl
       row[fTrajRecord.fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
       row[fTrajRecord.fColor] = Gdk::RGBA("(0., 0., 0.)");
-      AppendTrajectories(row, -1, parentID);
+
+      //Prepare a dummy trajectory point for this primary particle
+      std::vector<TG4TrajectoryPoint> primPts;
+      TG4TrajectoryPoint primPt;
+      primPt.Position = prim.Position;
+      primPt.Momentum = TVector3();
+      primPts.push_back(primPt);
+
+      //Add this interaction vertex to the scene of trajectory points
+      const auto ptPos = primPt.Position;
+      const int pdg = std::stoi(match[1].str());
+      if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
+      const auto color = fPDGToColor[pdg];
+
+      //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
+      auto ptRow = fViewer.AddDrawable<mygl::Point>("TrajPts", fNextID++, 
+                                                    *(fViewer.GetScenes().find("TrajPts")->second.NewTopLevelNode()), true, 
+                                                    glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), 0.02);
+      ptRow[fTrajPtRecord.fMomMag] = -1.; //TODO: Get primary momentum
+      ptRow[fTrajPtRecord.fTime] = ptPos.T();
+      ptRow[fTrajPtRecord.fProcess] = nu+" "+match[5].str()+" "+match[6].str();
+      ptRow[fTrajPtRecord.fParticle] = nu;
+
+      AppendTrajectories(row, -1, parentID, primPts);
     }
 
     //Last, set current event number for GUI
@@ -309,13 +333,13 @@ namespace mygl
   }
 
   void EvdWindow::AppendTrajectories(const Gtk::TreeModel::Row& parent, const int trackID, 
-                                     std::map<int, std::vector<TG4Trajectory>>& parentToTraj)
+                                     std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
+                                     const std::vector<TG4TrajectoryPoint>& parentPts)
   {
     auto trajs = parentToTraj[trackID];
     for(auto& traj: trajs)
     {
       const int pdg = traj.PDGCode;
-      //TODO: End Process
       //TODO: Legend
       if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
       auto color = fPDGToColor[pdg];
@@ -375,7 +399,7 @@ namespace mygl
       gdkColor.set_rgba(color.r, color.g, color.b, 1.0);
       row[fTrajRecord.fColor] = gdkColor;
       ++fNextID;
-      AppendTrajectories(row, traj.TrackId, parentToTraj);
+      AppendTrajectories(row, traj.TrackId, parentToTraj, points);
     }
   }
 

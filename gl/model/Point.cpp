@@ -15,7 +15,8 @@
 
 namespace mygl
 {
-  Point::Point(const glm::mat4& model, const std::vector<Vertex>& points, const float radius): Drawable(model), fNVertices(1), fRadius(radius)
+  Point::Point(const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius): Drawable(model), fNVertices(1), 
+                                                                                                            fRadius(radius)
   {
     //TODO: Do I really need a VAO and a VBO for a single point?  This really points to the need for 
     //      a VAO sharing model within Scene.  
@@ -27,7 +28,11 @@ namespace mygl
     glGenBuffers(1, &fVBO);
     glBindBuffer(GL_ARRAY_BUFFER, fVBO);
 
-    glBufferData(GL_ARRAY_BUFFER, fNVertices*sizeof(Vertex), &points[0], GL_STATIC_DRAW);
+    Vertex vert;
+    vert.position = point;
+    vert.color = color;
+
+    glBufferData(GL_ARRAY_BUFFER, fNVertices*sizeof(Vertex), &vert, GL_STATIC_DRAW);
 
     //Set up vertex attributes expected by vertex shader
     glEnableVertexAttribArray(0);
