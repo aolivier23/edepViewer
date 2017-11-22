@@ -246,7 +246,6 @@ namespace mygl
 
   bool Viewer::on_click(GdkEventButton* evt)
   {
-    std::cout << "Called mygl::Viewer::on_click() with button " << evt->button << ".\n";
     if(evt->button != 1) return false; //button 1 is the left mouse button
     
     //TODO: Encapsulate "global" opengl settings into an object that can apply defaults here

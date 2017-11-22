@@ -75,8 +75,12 @@ namespace mygl
     private:
       Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth);
       void AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
-      void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                              const std::vector<TG4TrajectoryPoint>& points);
+      //void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
+      //                        const Gtk::TreeModel::Row& ptRow);
+      void AppendTrajectory(const Gtk::TreeModel::Row& parent, const TG4Trajectory& traj, 
+                            std::map<int, std::vector<TG4Trajectory>>& parentToTraj, const Gtk::TreeModel::Row& ptRow);
+      Gtk::TreeModel::Row AddTrajPt(const std::string& particle, const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, 
+                                    const glm::vec4& color);
       void ReadGeo();
       void ReadEvent();
       void DrawGuides(); 
@@ -109,6 +113,7 @@ namespace mygl
 
       //Drawing settings
       float fLineWidth; //The default line width to use
+      float fPointRad; //The default point radius to use
 
       //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
       class GeoRecord: public ColRecord
