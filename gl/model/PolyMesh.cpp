@@ -31,6 +31,14 @@ namespace mygl
     std::vector<glm::vec3> ptsVec;
     for(size_t pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
 
+    //TODO: Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
+    //      ever draw convex polygons anyway.  So, I can draw any ROOT polygon with a triangle fan provided I can wind 
+    //      the vertices of that polygon in the correct order.  To determine the order of vertices, I am considering the 
+    //      following algorithm:
+    //      1.) Form a vector between the previous vertex and the current vertex, "prev"
+    //      2.) Form a vector between the current vertex and each other vertex, "next"
+    //      3.) The next vertex is the vertex such that "next" dot "prev" is > 0 and a minimum.  
+    //      Is there an easier way to do this?  This sounds like a lot of vector algebra for the CPU.
     //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
     std::vector<std::vector<unsigned int>> indices;
     size_t polPos = 0; //Position in the array of polygon "components".  See https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
@@ -39,12 +47,67 @@ namespace mygl
       size_t nVertices = pols[polPos+1]; //The second "component" of each polygon is the number of vertices it contains
       std::vector<unsigned int> thisPol; //Collect the unique vertices in this polygon in the order they were intended for drawing
       std::set<unsigned int> indicesFound; //Make sure that each index appears only once, but in eactly the order they appeared
-      //TODO: This algorithm is STILL wrong
+
+      //Get the list of vertices for this polygon
       for(size_t vert = 0; vert < nVertices; ++vert)
       {
         const auto seg = pols[polPos+2+vert];
-        auto segToAdd = segs[1+seg*3];
-        if(indicesFound.count(segToAdd) == 0)
+        //auto segToAdd = segs[1+seg*3];
+        indicesFound.insert(segs[1+seg*3]);
+        indicesFound.insert(segs[2+seg*3]);
+      }
+      
+      //Add the vertices in counter-clockwise order
+      //Find the center of the polygon as the average vertex position.
+      glm::vec3 center(0., 0., 0.);
+      for(const size_t index: indicesFound) center += ptsVec[index];
+      center *= 1./nVertices;
+
+      //TODO: Maybe try this: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
+      //TODO: Algorithm gets most volumes wrong.
+      //size_t prev = *(indicesFound.begin());
+      //const auto prevDir = glm::normalize(ptsVec[prev]-center);
+      //thisPol.push_back(prev); //Assert a beginning to the polygon as the first vertex ROOT specified
+      //indicesFound.erase(prev);
+
+      //Sort vertices by angle from the first vertex
+      std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
+      std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec/*, &prevDir*/](const size_t first, const size_t second)
+                                                {
+                                                  /*const auto firstDir = glm::normalize(ptsVec[first]-center);
+                                                  const auto secondDir = glm::normalize(ptsVec[second]-center);
+                                                  const float firstCos = glm::dot(firstDir, prevDir);
+                                                  const float secondCos = glm::dot(secondDir, prevDir);
+                                                  const float firstSin = glm::length(glm::cross(prevDir, firstDir));
+                                                  const float secondSin = glm::length(glm::cross(prevDir, secondDir));
+                                                  return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);*/
+                                                  const auto firstPt = ptsVec[first];
+                                                  const auto secondPt = ptsVec[second];
+ 
+                                                  if((firstPt.x - center.x) < (secondPt.x - center.x))
+                                                  {
+                                                    return 
+                                                  }
+                                                  
+                                                });
+      thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
+
+      /*while(!indicesFound.empty())
+      {
+        const glm::vec3 prevVert = glm::normalize(ptsVec[prev]);
+        const auto next = std::min_element(indicesFound.begin(), indicesFound.end(), [&ptsVec, &prevVert](const size_t first, const size_t second) 
+                         { 
+                           const float firstCos = glm::dot(glm::normalize(ptsVec[first]-prevVert), prevVert);
+                           const float secondCos = glm::dot(glm::normalize(ptsVec[second]-prevVert), prevVert);
+                           if(firstCos > 0 && secondCos < 0) return true;
+                           if(firstCos < 0 && secondCos > 0) return false;
+                           return std::fabs(firstCos) < std::fabs(secondCos); 
+                         });
+        thisPol.push_back(*next);
+        prev = *next;
+        indicesFound.erase(next);
+      }*/
+        /*if(indicesFound.count(segToAdd) == 0)
         {
           thisPol.push_back(segToAdd);
         }
@@ -55,13 +118,13 @@ namespace mygl
           thisPol.push_back(segToAdd);
         }
         indicesFound.insert(segToAdd);
-      }
+      }*/
       polPos += nVertices+2;
       indices.push_back(thisPol);
     }
 
     //Print out ptsVec for debugging
-    /*std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
+    std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
     for(const auto& point: ptsVec) std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
 
     std::cout << "Printing " << nPols << " polygons from volume " << vol->GetName() << ":\n";
@@ -74,7 +137,7 @@ namespace mygl
         std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
       }
       std::cout << "\n";
-    }*/
+    }
     Init(ptsVec, indices, color);
   }
 
@@ -102,6 +165,7 @@ namespace mygl
     }
    
     //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
+    //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
     glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
