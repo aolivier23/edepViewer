@@ -77,6 +77,9 @@ namespace mygl
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
     fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
 
+    //Make sure this Viewer reacts to its' own selection signal.  Other viewers can also connect via the public interface.
+    fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
+
     //Configure opengl
     //fArea.set_has_depth_buffer(true);
 
@@ -284,19 +287,32 @@ namespace mygl
     glFinish(); //Wait for all drawing to finish
     glPixelStorei(GL_PACK_ALIGNMENT, 1); 
     unsigned char color[4];
-    std::cout << "Reading pixels at position (" << evt->x << ", " << evt->y << ")\n";
     glReadPixels(evt->x, fArea.get_allocated_height() - evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
-    std::cout << "Got back color (" << (unsigned long)color[0] << ", " << (unsigned long)color[1] << ", " 
-              << (unsigned long)color[2] << ", " << (unsigned long)color[3] << ")\n";
-
-    std::cout << "Selected object with VisID " << mygl::VisID(color[0], color[1], color[2]) << "\n"; //TODO: Remove me
 
     //React to the user's selection.  Ultimately, I want to propagate this to other Viewers, so emit a signal that Viewers 
     //and/or Scenes can react to.  
     //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
     //      I would want a way for multiple Viewers to post events to this Selection object.  
-    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); 
+    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2]), evt->x, evt->y); 
 
     return true;
+  }
+
+  sigc::signal<void, const mygl::VisID, const int, const int> Viewer::signal_selection()
+  {
+    return fSignalSelection;
+  }
+
+  void Viewer::on_selection(const mygl::VisID id, const int x, const int y)  
+  {
+    std::cout << "Selected object with VisID " << id 
+              << " at screen coordinates (" << x << ", " << y << ")\n"; 
+
+    //TODO: Highlight selected object.  Requires work with shaders and probably adjacency information in geometry.
+    
+    //Tell Scenes to select chosen object.
+
+    //If any scene finds the selected object, it will return a TreePath to that row.  Obtain tooltip text from the 
+    //first match and draw a tooltip on the screen. 
   }
 }
