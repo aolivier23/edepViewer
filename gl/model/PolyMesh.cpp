@@ -88,9 +88,6 @@ namespace mygl
                                                   const float secondCos = glm::dot(secondDir, prevDir);
                                                   const float firstSin = glm::length(glm::cross(prevDir, firstDir));
                                                   const float secondSin = glm::length(glm::cross(prevDir, secondDir));
-                                                  std::cout << "Angle between " << firstDir << " and " << prevDir << " is " 
-                                                            << atan2(firstSin, firstCos) << "\n Angle between " << secondDir 
-                                                            << " and " << prevDir << " is " << atan2(secondSin, secondCos) << "\n";
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
@@ -100,7 +97,7 @@ namespace mygl
     }
 
     //Print out ptsVec for debugging
-    std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
+    /*std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
     for(const auto& point: ptsVec) std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
 
     std::cout << "Printing " << nPols << " polygons from volume " << vol->GetName() << ":\n";
@@ -113,7 +110,7 @@ namespace mygl
         std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
       }
       std::cout << "\n";
-    }
+    }*/
     Init(ptsVec, indices, color);
   }
 

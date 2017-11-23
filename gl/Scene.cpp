@@ -256,6 +256,18 @@ namespace mygl
                             return found;
                           });
 
+    //TODO: overhaul signalling between Scenes and Viewers so that this only happens in one place.
+    //Regardless of what was selected, unselect the last thing that was selected
+    auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
+                                                //it was selected.
+    //TODO: Make border color and width a user parameter
+    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    else
+    {
+      prev = fHidden.find(fSelection);
+      if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    }
+
     if(result)
     {
       //Highlight selected objects in the TreeView
@@ -276,11 +288,20 @@ namespace mygl
   void Scene::on_tree_selection()
   {
     const auto found = fTreeView.get_selection()->get_selected();
+
+    //Regardless of what was selected, unselect the last thing that was selected
+    auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
+                                                //it was selected.
+    //TODO: Make border color and width a user parameter
+    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    else
+    {
+      prev = fHidden.find(fSelection);
+      if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    }
+
     if(!found) return;
     const auto id = (*found)[fIDCol];
-    const auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
-                                                  //it was selected.
-    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
     auto toHighlight = fActive.find(id);
     if(toHighlight != fActive.end()) toHighlight->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
     fSelection = id;
