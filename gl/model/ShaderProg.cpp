@@ -188,6 +188,11 @@ namespace mygl
     glUniform2f(location, first, second);
   }
 
+  void ShaderProg::SetUniform(const std::string& name, const glm::vec2& vec)
+  {
+    SetUniform(name, vec.x, vec.y);
+  }
+
   void ShaderProg::SetUniform(const std::string& name, const float first, const float second, const float third)
   {
     Use();
@@ -195,11 +200,21 @@ namespace mygl
     glUniform3f(location, first, second, third);
   }
 
+  void ShaderProg::SetUniform(const std::string& name, const glm::vec3& vec)
+  {
+    SetUniform(name, vec.x, vec.y, vec.z);
+  }
+
   void ShaderProg::SetUniform(const std::string& name, const float first, const float second, const float third, const float fourth)
   {
     Use();
     auto location = glGetUniformLocation(fProgID, name.c_str());
     glUniform4f(location, first, second, third, fourth);
+  }
+
+  void ShaderProg::SetUniform(const std::string& name, const glm::vec4& vec)
+  {
+    SetUniform(name, vec.r, vec.g, vec.b, vec.a);
   }
 
   void ShaderProg::SetUniform(const std::string& name, const glm::mat4& mat)

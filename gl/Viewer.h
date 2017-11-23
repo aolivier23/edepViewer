@@ -77,6 +77,12 @@ namespace mygl
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
       void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera);
+
+      bool on_click(GdkEventButton* evt); //Handle user selection of drawn objects
+
+      sigc::signal<void, const mygl::VisID, const int, const int> signal_selection(); //User access to this Viewer's signal that it selected an object
+
+      void on_selection(const mygl::VisID id, const int, const int);
     
     protected:
       //Viewer parameters the user can customize
@@ -116,6 +122,8 @@ namespace mygl
 
       void PrepareToAddScene(const std::string& name);
       Gtk::TreeView& ConfigureNewScene(const std::string& name, mygl::Scene& scene);      
+
+      sigc::signal<void, const mygl::VisID, const int, const int> fSignalSelection;
   };
 }
 #endif //End ifndef MYGL_VIEWER_H

@@ -69,7 +69,7 @@ namespace mygl
     fMouse = Camera::keyState::down;
     fPrevMousePos = std::make_pair(evt->x, evt->y);
     fModified = true;
-    return true;
+    return false;
   }
 
   bool Camera::on_button_release(const GdkEventButton* evt)
@@ -77,7 +77,7 @@ namespace mygl
     if(evt->button != 1) return false;
     fMouse = Camera::keyState::up;
     fModified = true;
-    return true;
+    return false;
   }
 
   bool Camera::on_motion(const GdkEventMotion* evt)

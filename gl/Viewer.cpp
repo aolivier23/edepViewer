@@ -34,6 +34,7 @@ namespace mygl
     //Setup control widgets
     //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
     fNotebook.set_hexpand(false);
+    fNotebook.set_scrollable();
     fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
     fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
     fBackgroundButton.signal_color_set().connect(sigc::mem_fun(*this, &Viewer::set_background));
@@ -75,6 +76,10 @@ namespace mygl
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
     fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
+    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
+
+    //Make sure this Viewer reacts to its' own selection signal.  Other viewers can also connect via the public interface.
+    fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
 
     //Configure opengl
     //fArea.set_has_depth_buffer(true);
@@ -149,6 +154,7 @@ namespace mygl
       glViewport(0, 0, fArea.get_allocated_width(), fArea.get_allocated_height());
 
       //enable depth testing
+      //TODO: Use depth testing with some scenes but not others (geometry).  
       //glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -236,5 +242,87 @@ namespace mygl
     fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
     fCurrentCamera->ConnectSignals(fArea);
     fArea.queue_render();
+  }
+
+  bool Viewer::on_click(GdkEventButton* evt)
+  {
+    if(evt->button != 1) return false; //button 1 is the left mouse button
+    
+    //TODO: Encapsulate "global" opengl settings into an object that can apply defaults here
+    glDisable(GL_BLEND);
+    fArea.make_current();
+    try
+    {
+      fArea.throw_if_error();
+
+      glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //TODO: Make sure there is no VisID that maps to this color.  
+                                              
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+
+      for(auto& scenePair: fSceneMap)
+      {
+        const auto view = fCurrentCamera->GetView();
+
+        //TODO: It would be great to be able to change out this selection algorithm.  
+        scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), 
+                                                          fArea.get_allocated_height()),
+                                         glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+        //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
+      }
+      glFlush();
+    }
+    catch(const Gdk::GLError& err)
+    {
+      std::cerr << "Caught exception in Viewer::on_click():\n"
+                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
+      return false;
+    }
+  
+    //TODO: Class/struct to encapsulate an opengl drawing state
+    glEnable(GL_BLEND);
+
+    //Method for reading pixels taken from http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
+    glFinish(); //Wait for all drawing to finish
+    glPixelStorei(GL_PACK_ALIGNMENT, 1); 
+    unsigned char color[4];
+    glReadPixels(evt->x, fArea.get_allocated_height() - evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
+
+    //React to the user's selection.  Ultimately, I want to propagate this to other Viewers, so emit a signal that Viewers 
+    //and/or Scenes can react to.  
+    //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
+    //      I would want a way for multiple Viewers to post events to this Selection object.  
+    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2]), evt->x, evt->y); 
+
+    return true;
+  }
+
+  sigc::signal<void, const mygl::VisID, const int, const int> Viewer::signal_selection()
+  {
+    return fSignalSelection;
+  }
+
+  void Viewer::on_selection(const mygl::VisID id, const int x, const int y)  
+  {
+    //std::cout << "Selected object with VisID " << id 
+    //          << " at screen coordinates (" << x << ", " << y << ")\n"; 
+
+    //TODO: Highlight selected object.  Requires work with shaders and probably adjacency information in geometry.
+    
+    //Tell Scenes to select chosen object.
+    //TODO: Get ToolTips from scenes
+    for(auto& scenePair: fSceneMap) 
+    {
+      //TODO: If this scene found an object, make it the current TreeView.
+      const std::string tip = scenePair.second.SelectID(id);
+      if(tip != "") 
+      {
+        //TODO: Write a simple GUI widget for Scenes' TreeViews instead of this horrible nested parentage.
+        fNotebook.set_current_page(fNotebook.page_num(*(scenePair.second.fTreeView.get_parent()->get_parent())));
+      }
+    }
+
+    //If any scene finds the selected object, it will return tool tip text.  Draw a tool tip from the text of the first match found.
   }
 }

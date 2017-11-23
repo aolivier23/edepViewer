@@ -22,6 +22,7 @@ namespace mygl
 
   void Drawable::Draw(mygl::ShaderProg& prog)
   {
+    prog.Use(); //TODO: Rely on Scene to do this?
     prog.SetUniform("model", fModel);
     DoDraw(prog);
   }

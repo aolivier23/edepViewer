@@ -14,7 +14,7 @@ namespace mygl
 
   VisID::operator glm::vec4() const
   {
-    return glm::vec4(fR, fG, fB, 0.0f);
+    return glm::vec4(fR/255.0f, fG/255.0f, fB/255.0f, 1.0f);
   }
 
   VisID& VisID::operator ++() //prefix
@@ -50,6 +50,11 @@ namespace mygl
     if(fR != rhs.fR) return (fR < rhs.fR);
     if(fG != rhs.fG) return (fG < rhs.fG);
     return (fB < rhs.fB);
+  }
+
+  bool VisID::operator ==(const VisID& rhs) const
+  {
+    return (fR == rhs.fR) && (fG == rhs.fG) && (fB == rhs.fB);
   }
 
 

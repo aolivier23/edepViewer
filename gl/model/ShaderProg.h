@@ -35,8 +35,11 @@ namespace mygl
       void SetUniform(const std::string& name, const float value);
       void SetUniform(const std::string& name, const int value); 
       void SetUniform(const std::string& name, const float first, const float second);
+      void SetUniform(const std::string& name, const glm::vec2& vec);
       void SetUniform(const std::string& name, const float first, const float second, const float third);
+      void SetUniform(const std::string& name, const glm::vec3& vec);
       void SetUniform(const std::string& name, const float first, const float second, const float third, const float fourth);
+      void SetUniform(const std::string& name, const glm::vec4& vec);
       void SetUniform(const std::string& name, const glm::mat4& mat);
 
       //Provide user access to program ID.  
