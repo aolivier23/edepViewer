@@ -59,6 +59,10 @@ namespace mygl
     //Configure filter
     fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
     fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
+
+    //Make sure that objects that are selected in this TreeView are highlighted in the GUI
+    //TODO: Notify other Scenes about what VisID was selected
+    fTreeView.get_selection()->signal_changed().connect(sigc::mem_fun(*this, &Scene::on_tree_selection));
   }
 
   Scene::~Scene() {}
@@ -151,6 +155,7 @@ namespace mygl
     fHidden.erase(fHidden.begin(), fHidden.end());
     fFilter->clear_cache();
     fModel->clear();
+    fSelection = VisID();
     //fModel->erase(fModel->get_iter("0")); //This was recommended online, but it doesn't change anything.
   }
 
@@ -257,14 +262,6 @@ namespace mygl
       fTreeView.expand_to_path(result);
       fTreeView.set_cursor(result);
 
-      //Highlight selected objects in opengl.  You will need a geometry shader that knows how to do highlighting.  
-      //TODO: This is only supported for lines so far
-      const auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
-                                                  //it was selected.
-      if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-      fActive[id]->SetBorder(0.01, glm::vec4(1., 0., 0., 1.)); 
-      fSelection = id;
-
       //Generate tooltip
       /*std::stringstream ss;
       ss << id;
@@ -274,5 +271,18 @@ namespace mygl
 
     //return std::string("");
     return false;
+  }
+
+  void Scene::on_tree_selection()
+  {
+    const auto found = fTreeView.get_selection()->get_selected();
+    if(!found) return;
+    const auto id = (*found)[fIDCol];
+    const auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
+                                                  //it was selected.
+    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    auto toHighlight = fActive.find(id);
+    if(toHighlight != fActive.end()) toHighlight->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
+    fSelection = id;
   }
 }

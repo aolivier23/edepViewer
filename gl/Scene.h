@@ -65,6 +65,7 @@ namespace mygl
       void remove_row(const Gtk::TreeModel::Path& path);
 
       bool SelectID(const mygl::VisID& id);
+      void on_tree_selection();
 
     protected:
       //opengl components
