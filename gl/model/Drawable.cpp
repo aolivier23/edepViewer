@@ -12,7 +12,7 @@
 
 namespace mygl
 {
-  Drawable::Drawable(const glm::mat4& model): fModel(model)
+  Drawable::Drawable(const glm::mat4& model): fModel(model), fBorderWidth(0), fBorderColor(1., 0., 0., 1.)
   {
   }
 
@@ -24,6 +24,14 @@ namespace mygl
   {
     prog.Use(); //TODO: Rely on Scene to do this?
     prog.SetUniform("model", fModel);
+    prog.SetUniform("borderWidth", fBorderWidth);
+    prog.SetUniform("borderColor", fBorderColor);
     DoDraw(prog);
+  }
+
+  void Drawable::SetBorder(const float width, const glm::vec4& color)
+  {
+    fBorderWidth = width;
+    fBorderColor = color;
   }
 }

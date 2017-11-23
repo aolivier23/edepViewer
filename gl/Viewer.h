@@ -80,10 +80,12 @@ namespace mygl
 
       bool on_click(GdkEventButton* evt); //Handle user selection of drawn objects
 
-      sigc::signal<void, const mygl::VisID, const int, const int> signal_selection(); //User access to this Viewer's signal that it selected an object
+      //Int parameters useful if I want to draw a tooltip
+      typedef sigc::signal<void, const mygl::VisID/*, const int, const int*/> SignalSelection;
+      SignalSelection signal_selection(); //User access to this Viewer's signal that it selected an object
 
-      void on_selection(const mygl::VisID id, const int, const int);
-    
+      void on_selection(const mygl::VisID id/*, const int, const int*/);
+ 
     protected:
       //Viewer parameters the user can customize
       //TODO: Allow the user to set the camera to use in the future
@@ -121,9 +123,9 @@ namespace mygl
       float fZPerPixel; //z units per pixel
 
       void PrepareToAddScene(const std::string& name);
-      Gtk::TreeView& ConfigureNewScene(const std::string& name, mygl::Scene& scene);      
+      Gtk::TreeView& ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols);      
 
-      sigc::signal<void, const mygl::VisID, const int, const int> fSignalSelection;
+      SignalSelection fSignalSelection; 
   };
 }
 #endif //End ifndef MYGL_VIEWER_H

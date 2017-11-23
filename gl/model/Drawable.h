@@ -31,8 +31,12 @@ namespace mygl
       //Add other interfaces here.  My current plan is that anything the 
       //drawing manager knows about should appear here.
 
+      void SetBorder(const float width, const glm::vec4& color);
+
     protected:
       const glm::mat4 fModel; //Describes the origin of the coordinate system in which to place this Drawable
+      float fBorderWidth; //Width of silhouette around object.  Setting to 0 presumably disables the border.
+      glm::vec4 fBorderColor; //Color of border around object.  
 
       //All Drawables must implement this.
       virtual void DoDraw(mygl::ShaderProg& shader) = 0;

@@ -94,7 +94,7 @@ namespace mygl
   {
     PrepareToAddScene(name);
     return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second); //lol
+                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, cols); //lol
   }
 
   Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc, 
@@ -102,7 +102,7 @@ namespace mygl
   {
     PrepareToAddScene(name);
     return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                                    std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second); //lol
+                                    std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, cols); //lol
   }
 
   void Viewer::PrepareToAddScene(const std::string& name)
@@ -117,11 +117,15 @@ namespace mygl
     fArea.make_current();
   }
 
-  Gtk::TreeView& Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene)
+  Gtk::TreeView& Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols)
   {
     //Now, tell this Viewer's GUI about the Scene's GUI
     auto& treeView = scene.fTreeView;
     treeView.set_enable_search(true);
+    //TODO: This doesn't work
+    //auto selection = treeView.get_selection();
+    //selection->signal_changed().connect([&selection, &cols, this]() { this->fSignalSelection.emit((*selection->get_selected())[cols.fVisID]); });
+
     fScrolls.emplace_back();
     auto& scroll = fScrolls.back().second;
     scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
@@ -293,36 +297,23 @@ namespace mygl
     //and/or Scenes can react to.  
     //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
     //      I would want a way for multiple Viewers to post events to this Selection object.  
-    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2]), evt->x, evt->y); 
+    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); //, evt->x, evt->y); 
 
     return true;
   }
 
-  sigc::signal<void, const mygl::VisID, const int, const int> Viewer::signal_selection()
+  Viewer::SignalSelection Viewer::signal_selection()
   {
     return fSignalSelection;
   }
 
-  void Viewer::on_selection(const mygl::VisID id, const int x, const int y)  
+  void Viewer::on_selection(const mygl::VisID id/*, const int x, const int y*/)  
   {
-    //std::cout << "Selected object with VisID " << id 
-    //          << " at screen coordinates (" << x << ", " << y << ")\n"; 
-
-    //TODO: Highlight selected object.  Requires work with shaders and probably adjacency information in geometry.
-    
     //Tell Scenes to select chosen object.
-    //TODO: Get ToolTips from scenes
     for(auto& scenePair: fSceneMap) 
     {
-      //TODO: If this scene found an object, make it the current TreeView.
-      const std::string tip = scenePair.second.SelectID(id);
-      if(tip != "") 
-      {
-        //TODO: Write a simple GUI widget for Scenes' TreeViews instead of this horrible nested parentage.
-        fNotebook.set_current_page(fNotebook.page_num(*(scenePair.second.fTreeView.get_parent()->get_parent())));
-      }
+      if(scenePair.second.SelectID(id)) fNotebook.set_current_page(fNotebook.page_num(
+                                                                   *(scenePair.second.fTreeView.get_parent()->get_parent())));
     }
-
-    //If any scene finds the selected object, it will return tool tip text.  Draw a tool tip from the text of the first match found.
   }
 }

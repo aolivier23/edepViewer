@@ -16,7 +16,7 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
                                                                                                                         fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
-                                                                                                                        fCutBar("")
+                                                                                                                        fCutBar(""), fSelection()
   {
     BuildGUI(cols);
   }
@@ -237,9 +237,9 @@ namespace mygl
     return result;
   }
 
-  std::string Scene::SelectID(const mygl::VisID& id)
+  bool Scene::SelectID(const mygl::VisID& id)
   {
-    //Find all objects with VisID id
+    //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
     //Gtk::TreeModel::foreach_iter appears to be copying my slot object.  
     //So, I cannot return anything through the slot object's members.  
     //...Or can I?  Lambda capture seems to work.  
@@ -251,18 +251,28 @@ namespace mygl
                             return found;
                           });
 
-    //Highlight selected objects in the TreeView
     if(result)
     {
+      //Highlight selected objects in the TreeView
       fTreeView.expand_to_path(result);
       fTreeView.set_cursor(result);
 
-      //TODO: Replace this with a real ToolTip
-      std::stringstream ss;
+      //Highlight selected objects in opengl.  You will need a geometry shader that knows how to do highlighting.  
+      //TODO: This is only supported for lines so far
+      const auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
+                                                  //it was selected.
+      if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+      fActive[id]->SetBorder(0.01, glm::vec4(1., 0., 0., 1.)); 
+      fSelection = id;
+
+      //Generate tooltip
+      /*std::stringstream ss;
       ss << id;
-      return ss.str();
+      return ss.str();*/
+      return true;
     }
 
-    return std::string("");
+    //return std::string("");
+    return false;
   }
 }
