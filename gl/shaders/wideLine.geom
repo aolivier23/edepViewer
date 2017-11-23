@@ -36,7 +36,7 @@ void TopBorderVertices(vec2 first, vec2 middle, vec2 last)
   gl_Position = vec4(middle+normal, 0., 1.);
   EmitVertex();
 
-  gl_Position = vec4(middle+normal+borderWidth/2., 0., 1.);
+  gl_Position = vec4(middle+normal+border, 0., 1.);
   EmitVertex();
 }
 
@@ -49,7 +49,7 @@ void BottomBorderVertices(vec2 first, vec2 middle, vec2 last)
   gl_Position = vec4(middle-normal, 0., 1.);
   EmitVertex();
 
-  gl_Position = vec4(middle-normal-borderWidth/2., 0., 1.);
+  gl_Position = vec4(middle-normal-border, 0., 1.);
   EmitVertex();
 }
 
