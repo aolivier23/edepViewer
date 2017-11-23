@@ -14,6 +14,16 @@
 #include <iostream>
 #include <set>
 
+//TODO: Remove me
+namespace
+{
+  std::ostream& operator <<(std::ostream& os, const glm::vec3& vec)
+  {
+    os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
+    return os;
+  }
+}
+
 namespace mygl
 {
   PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model)
@@ -39,6 +49,7 @@ namespace mygl
     //      2.) Form a vector between the current vertex and each other vertex, "next"
     //      3.) The next vertex is the vertex such that "next" dot "prev" is > 0 and a minimum.  
     //      Is there an easier way to do this?  This sounds like a lot of vector algebra for the CPU.
+
     //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
     std::vector<std::vector<unsigned int>> indices;
     size_t polPos = 0; //Position in the array of polygon "components".  See https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
@@ -65,60 +76,25 @@ namespace mygl
 
       //TODO: Maybe try this: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
       //TODO: Algorithm gets most volumes wrong.
-      //size_t prev = *(indicesFound.begin());
-      //const auto prevDir = glm::normalize(ptsVec[prev]-center);
-      //thisPol.push_back(prev); //Assert a beginning to the polygon as the first vertex ROOT specified
-      //indicesFound.erase(prev);
 
       //Sort vertices by angle from the first vertex
+      glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
       std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
-      std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec/*, &prevDir*/](const size_t first, const size_t second)
+      std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)
                                                 {
-                                                  /*const auto firstDir = glm::normalize(ptsVec[first]-center);
+                                                  const auto firstDir = glm::normalize(ptsVec[first]-center);
                                                   const auto secondDir = glm::normalize(ptsVec[second]-center);
                                                   const float firstCos = glm::dot(firstDir, prevDir);
                                                   const float secondCos = glm::dot(secondDir, prevDir);
                                                   const float firstSin = glm::length(glm::cross(prevDir, firstDir));
                                                   const float secondSin = glm::length(glm::cross(prevDir, secondDir));
-                                                  return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);*/
-                                                  const auto firstPt = ptsVec[first];
-                                                  const auto secondPt = ptsVec[second];
- 
-                                                  if((firstPt.x - center.x) < (secondPt.x - center.x))
-                                                  {
-                                                    return 
-                                                  }
-                                                  
+                                                  std::cout << "Angle between " << firstDir << " and " << prevDir << " is " 
+                                                            << atan2(firstSin, firstCos) << "\n Angle between " << secondDir 
+                                                            << " and " << prevDir << " is " << atan2(secondSin, secondCos) << "\n";
+                                                  return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
 
-      /*while(!indicesFound.empty())
-      {
-        const glm::vec3 prevVert = glm::normalize(ptsVec[prev]);
-        const auto next = std::min_element(indicesFound.begin(), indicesFound.end(), [&ptsVec, &prevVert](const size_t first, const size_t second) 
-                         { 
-                           const float firstCos = glm::dot(glm::normalize(ptsVec[first]-prevVert), prevVert);
-                           const float secondCos = glm::dot(glm::normalize(ptsVec[second]-prevVert), prevVert);
-                           if(firstCos > 0 && secondCos < 0) return true;
-                           if(firstCos < 0 && secondCos > 0) return false;
-                           return std::fabs(firstCos) < std::fabs(secondCos); 
-                         });
-        thisPol.push_back(*next);
-        prev = *next;
-        indicesFound.erase(next);
-      }*/
-        /*if(indicesFound.count(segToAdd) == 0)
-        {
-          thisPol.push_back(segToAdd);
-        }
-        indicesFound.insert(segToAdd);
-        segToAdd = segs[2+seg*3];
-        if(indicesFound.count(segToAdd) == 0)
-        {
-          thisPol.push_back(segToAdd);
-        }
-        indicesFound.insert(segToAdd);
-      }*/
       polPos += nVertices+2;
       indices.push_back(thisPol);
     }
@@ -165,7 +141,8 @@ namespace mygl
    
     //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
     //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
-    glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
+    //glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
+    glMultiDrawElements(GL_TRIANGLE_STRIP, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     //Note 2: After much digging, it appears that ROOT draws shapes using the kRaw section of TBuffer3D 
