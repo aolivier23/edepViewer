@@ -26,17 +26,17 @@ namespace
 
   struct hash
   {
-    size_t operator ()(const std::pair<size_t, size_t>& pair) const
+    size_t operator ()(const std::pair<int, int>& pair) const
     {
-      std::hash<size_t> stdHash;
-      return stdHash(pair.first) ^ (stdHash(pair.second) << 1);
+      //std::hash<int> stdHash;
+      return size_t(pair.first) << 32 | pair.second; //stdHash(pair.first) ^ (stdHash(pair.second) << 1);
     }
   };
 }
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model)
+  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets()
   {
     if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
@@ -49,7 +49,7 @@ namespace mygl
 
     //Put points into a std::vector for now
     std::vector<glm::vec3> ptsVec;
-    for(size_t pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
+    for(int pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
 
     //      Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
     //      ever draw convex polygons anyway.  So, I can draw any ROOT polygon with a triangle fan provided I can wind 
@@ -61,22 +61,20 @@ namespace mygl
     //      Is there an easier way to do this?  This sounds like a lot of vector algebra for the CPU.
 
     //Mapping from half-edge to third index of triangle
-    std::unordered_map<std::pair<size_t, size_t>, size_t, ::hash> edgeToIndex;
+    std::unordered_map<std::pair<int, int>, int, ::hash> edgeToIndex;
 
     //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
-    std::vector<std::vector<unsigned int>> indices;
+    std::vector<std::vector<int>> indices;
     size_t polPos = 0; //Position in the array of polygon "components".  See https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     for(size_t pol = 0; pol < nPols; ++pol)
     {
       size_t nVertices = pols[polPos+1]; //The second "component" of each polygon is the number of vertices it contains
-      std::vector<unsigned int> thisPol; //Collect the unique vertices in this polygon in the order they were intended for drawing
-      std::set<unsigned int> indicesFound; //Make sure that each index appears only once, but in eactly the order they appeared
+      std::set<int> indicesFound; //Make sure that each index appears only once, but in eactly the order they appeared
 
       //Get the list of vertices for this polygon
       for(size_t vert = 0; vert < nVertices; ++vert)
       {
         const auto seg = pols[polPos+2+vert];
-        //auto segToAdd = segs[1+seg*3];
         indicesFound.insert(segs[1+seg*3]);
         indicesFound.insert(segs[2+seg*3]);
       }
@@ -90,8 +88,10 @@ namespace mygl
       //Sort vertices by angle from the first vertex
       //TODO: Apparently, this ends up giving me the ordering for GL_TRIANGLE_STRIP.  That was my ultimate goal anyway, 
       //      so sticking with it.  However, be warned that I don't REALLY know why this algorithm works the way it does.  
+      //TODO: I very strongly suspect that the winding order this algorithm gives is inconsistent between edges.  This is causing 
+      //      my geometry shader to get adjacency completely wrong.  
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
-      std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
+      std::vector<int> indicesSort(indicesFound.begin(), indicesFound.end());
       std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)
                                                 {
                                                   const auto firstDir = glm::normalize(ptsVec[first]-center);
@@ -104,40 +104,91 @@ namespace mygl
                                                   //      constructor after all.
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
-      //Make sure this list of indices gets passed on to the eventual drawing command.  
-      thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
 
       //Fill map with HalfEdges
-      const auto begin = thisPol.begin();
-      const auto end = thisPol.end();
-
-      //Speical case for first edge
-      edgeToIndex[std::make_pair(*begin, *(begin+1))] = *(begin+2);
+      const auto begin = indicesSort.begin();
+      const auto end = indicesSort.end()-2;
 
       for(auto index = begin; index != end; ++index)
-      {
-        edgeToIndex[std::make_pair(*index, *(index+2))] = *(index+1);
+      { 
+        //TODO: I am getting multiple (2 so far) entries for the same edge!  
+        edgeToIndex[std::make_pair(*index, *(index+1))] = *(index+2);
+        std::cout << "Entered index " << *(index+2) << " for edge (" << *index << ", " << *(index+1) << ")\n";
+        edgeToIndex[std::make_pair(*(index+1), *(index+2))] = *index;
+        std::cout << "Entered index " << *index << " for edge (" << *(index+1) << ", " << *(index+2) << ")\n";
+        edgeToIndex[std::make_pair(*(index+2), *index)] = *(index+1);
+        std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *index << ")\n";
       }
 
-      //Special case for the last edge
-      edgeToIndex[std::make_pair(*(end-3), *(end-1))] = *(end-2);
-
       polPos += nVertices+2;
-      indices.push_back(thisPol);
+      indices.push_back(indicesSort);
     }
 
     //Add vertex for adjacent triangle to each polygon's triangles
+    /*for(auto& pol: indices)
+    {
+      //Special case for first edge
+      pol.insert(pol.begin()+1, edgeToIndex[std::make_pair(*(pol.begin()+1), *(pol.begin()))]);      
+
+      for(auto indexIt = pol.begin(); indexIt < pol.end()-4; ++indexIt)
+      {
+        if(edgeToIndex.find(std::make_pair(*(indexIt+3), *indexIt)) == edgeToIndex.end()) 
+          std::cout << "Could not find edge (" << *(indexIt+3) << ", " << *indexIt << ") that was needed.\n";
+        std::cout << "Inserting index " << edgeToIndex[std::make_pair(*(indexIt+3), *indexIt)] << " between " << *(indexIt+2)
+                  << " and " << *(indexIt+3) << "\n";
+        indexIt = pol.insert(indexIt+3, edgeToIndex[std::make_pair(*(indexIt+3), *indexIt)])+1;
+      }
+
+      //Special case for last edge
+      pol.insert(pol.end(), edgeToIndex[std::make_pair(*(pol.end()-1), *(pol.end()-2))]);
+    }*/
+
     for(auto& pol: indices)
     {
-      for(auto indexIt = pol.begin(); indexIt != pol.end(); ++indexIt)
+      const auto polCopy = pol;
+      std::cout << "Before I add any indices to pol, polCopy is:\n(";
+      for(const auto& index: polCopy)
       {
-        indexIt = pol.insert(indexIt+1, edgeToIndex[std::make_pair(*(indexIt+2), *indexIt)])+1;
+        std::cout << index << ", ";
       }
+      std::cout << ")\n";
+
+      pol.clear();
+      pol.push_back(polCopy[0]);
+      pol.push_back(edgeToIndex[std::make_pair(polCopy[1], polCopy[0])]); 
+      if(edgeToIndex.find(std::make_pair(polCopy[1], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                  << "edge (" << polCopy[0] << ", " 
+                                                                                                  << polCopy[1] << ")\n";
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[1], polCopy[0])] << " for edge (" << polCopy[0] << ", "
+                << polCopy[1] << ")\n";
+      pol.push_back(polCopy[1]);
+
+      pol.push_back(edgeToIndex[std::make_pair(polCopy[0], polCopy[2])]);
+      if(edgeToIndex.find(std::make_pair(polCopy[2], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                  << "edge (" << polCopy[0] << ", "
+                                                                                                  << polCopy[2] << ")\n";
+      pol.push_back(polCopy[2]);
+
+      for(auto indexIt = polCopy.begin()+1; indexIt < polCopy.end()-2; ++indexIt)
+      {
+        pol.push_back(edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))]);
+        pol.push_back(*(indexIt+2));
+      }
+
+      pol.push_back(edgeToIndex[std::make_pair(*(polCopy.end()), *(polCopy.end()-1))]);
     }
 
     //Print out ptsVec for debugging
-    /*std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
+    std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
     for(const auto& point: ptsVec) std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
+
+    std::cout << "Printing indices to draw " << indices.size() << " polygons:\n";
+    for(const auto& pol: indices)
+    {
+      std::cout << "{";
+      for(const size_t index: pol) std::cout << index << ", ";
+      std::cout << "}\n";
+    }
 
     std::cout << "Printing " << nPols << " polygons from volume " << vol->GetName() << ":\n";
     for(size_t polInd = 0; polInd < indices.size(); ++polInd)
@@ -149,7 +200,9 @@ namespace mygl
         std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
       }
       std::cout << "\n";
-    }*/
+    }
+
+    //Use computer indices to send data to the GPU
     Init(ptsVec, indices, color);
   }
 
@@ -164,20 +217,8 @@ namespace mygl
   {
     glBindVertexArray(fVAO);
 
-    //TODO: Set up these indices in the constructor
-    //TODO: This algorithm is no longer correct when drawing with adjacency information.
-    std::vector<GLuint*> indexOffsets(1, nullptr);
-    GLuint indexPos = 0;
-    for(auto nVert = fNVertices.begin(); nVert != --(fNVertices.end()); ++nVert)
-    {
-      indexPos += *nVert;
-      indexOffsets.push_back((GLuint*)(indexPos*sizeof(GLuint)));
-    }
-   
     //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
-    //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
-    //glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
-    glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
+    glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     //Note 2: After much digging, it appears that ROOT draws shapes using the kRaw section of TBuffer3D 

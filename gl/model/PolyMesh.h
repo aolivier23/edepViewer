@@ -29,7 +29,7 @@ namespace mygl
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
       PolyMesh(const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
-               const glm::vec4& color): Drawable(model)
+               const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets()
       {
         Init(vertices, indices, color);
       }
@@ -48,33 +48,33 @@ namespace mygl
       GLuint fVBO; //Location of vertex buffer object from opengl.  
       GLuint fEBO; //Location of element buffer object from opengl.  
 
-      std::vector<Vertex> fVertices; //Vertices to be drawn.  
       std::vector<int> fNVertices; //Number of vertices in each polygon.  Using int instead of size_t for compatibility with opengl
-      std::vector<GLuint> fIndexData; //Array of all indices to be used.  Really, 
-                                            //this is constructed from a "2D" array, but 
-                                            //I want to store it as a 1D array so that 
-                                            //its elements are contiguous.  I just have 
-                                            //to keep track of where each index array begins.  
-                                            //This is handled by fNVertices.
+      std::vector<GLuint*> fIndexOffsets; //Pointer to the beginning of the indices for each polygon
+
     private:
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
       void Init(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
       {
+        std::vector<Vertex> vertexData;
         for(const auto& vertex: vertices)
         {
           Vertex vert;
           vert.position = vertex;
           vert.color = color;
-          fVertices.push_back(vert);
+          vertexData.push_back(vert);
         }
 
         //Construct containers of all of the indices concatenated and the number of indices in each index array
+        std::vector<GLuint> flatIndices;
+        GLuint indexPos = 0;
         for(const auto& indexArr: indices)
         {
-          fIndexData.insert(fIndexData.end(), indexArr.begin(), indexArr.end());
+          flatIndices.insert(flatIndices.end(), indexArr.begin(), indexArr.end());
           fNVertices.push_back(indexArr.size());
+          indexPos += indexArr.size();
+          fIndexOffsets.push_back((GLuint*)(indexPos*sizeof(GLuint)));
         }
 
         //Set up vertices for drawing. 
@@ -84,13 +84,13 @@ namespace mygl
         //Set up indices for drawing
         glGenBuffers(1, &fEBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndexData.size()*sizeof(GLuint), &fIndexData[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, flatIndices.size()*sizeof(GLuint), &flatIndices[0], GL_STATIC_DRAW);
 
         //Construct buffer for vertices 
         glGenBuffers(1, &fVBO);
         glBindBuffer(GL_ARRAY_BUFFER, fVBO);
 
-        glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(Vertex), &fVertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertexData.size()*sizeof(Vertex), &vertexData[0], GL_STATIC_DRAW);
 
         //Set up vertex attributes expected by vertex shader
         glEnableVertexAttribArray(0);
