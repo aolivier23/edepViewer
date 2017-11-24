@@ -29,7 +29,7 @@ namespace mygl
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
       PolyMesh(const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
-               const glm::vec4& color): Drawable(model), fVertices(vertices.begin(), vertices.end()), fColor(color)
+               const glm::vec4& color): Drawable(model)
       {
         Init(vertices, indices, color);
       }
@@ -48,7 +48,7 @@ namespace mygl
       GLuint fVBO; //Location of vertex buffer object from opengl.  
       GLuint fEBO; //Location of element buffer object from opengl.  
 
-      std::vector<glm::vec3> fVertices; //Vertices to be drawn.  
+      std::vector<Vertex> fVertices; //Vertices to be drawn.  
       std::vector<int> fNVertices; //Number of vertices in each polygon.  Using int instead of size_t for compatibility with opengl
       std::vector<GLuint> fIndexData; //Array of all indices to be used.  Really, 
                                             //this is constructed from a "2D" array, but 
@@ -56,16 +56,20 @@ namespace mygl
                                             //its elements are contiguous.  I just have 
                                             //to keep track of where each index array begins.  
                                             //This is handled by fNVertices.
-      glm::vec4 fColor; //Color to render this whole object.  Passed as a uniform to fragment shader.
-
     private:
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
       void Init(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
       {
-        fVertices.assign(vertices.begin(), vertices.end());
-        fColor = color;
+        for(const auto& vertex: vertices)
+        {
+          Vertex vert;
+          vert.position = vertex;
+          vert.color = color;
+          fVertices.push_back(vert);
+        }
+
         //Construct containers of all of the indices concatenated and the number of indices in each index array
         for(const auto& indexArr: indices)
         {
@@ -86,11 +90,14 @@ namespace mygl
         glGenBuffers(1, &fVBO);
         glBindBuffer(GL_ARRAY_BUFFER, fVBO);
 
-        glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(glm::vec3), &fVertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(Vertex), &fVertices[0], GL_STATIC_DRAW);
 
         //Set up vertex attributes expected by vertex shader
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)(0));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(0));
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(glm::vec3)));
 
         //glBindVertexArray(0); //TODO: This freezes the TreeView.  Is there a memory leak here?
       }

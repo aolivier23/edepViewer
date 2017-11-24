@@ -33,6 +33,13 @@ namespace mygl
 
       void SetBorder(const float width, const glm::vec4& color);
 
+      //Standard vertex structure for all Drawables
+      struct Vertex
+      {
+        glm::vec3 position;
+        glm::vec4 color;
+      };
+
     protected:
       const glm::mat4 fModel; //Describes the origin of the coordinate system in which to place this Drawable
       float fBorderWidth; //Width of silhouette around object.  Setting to 0 presumably disables the border.

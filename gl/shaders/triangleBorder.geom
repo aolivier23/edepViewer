@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (triangles_adjacency) in;
-layout (triangle_strip, max_vertices = 9) out;
+layout (triangle_strip, max_vertices = 12) out;
 
 in VS_OUT
 {
@@ -16,7 +16,7 @@ out vec4 userColor;
 
 bool isFront(vec3 first, vec3 second, vec3 third)
 {
-  return cross(second-first, third-second).z > 0.0;
+  return cross(second-first, third-first).z > 0.0;
 }
 
 bool IsEdge(vec3 first, vec3 second, vec3 third, vec3 other)
@@ -33,21 +33,21 @@ void EmitQuad(vec3 first, vec3 second)
   gl_Position = vec4(first, 1.0);
   EmitVertex();
 
-  gl_Position = vec4(first+borderWidth*vec2(0., 1.), 1.0);
+  gl_Position = vec4(first+borderWidth*vec3(0.0, 1.0, 0.0), 1.0);
   EmitVertex();
 
   gl_Position = vec4(second, 1.0);
   EmitVertex();
 
-  gl_Position = vec4(second+borderWidth*vec2(0., 1.), 1.0);
+  gl_Position = vec4(second+borderWidth*vec3(0.0, 1.0, 0.0), 1.0);
   EmitVertex();
 }
 
-void EmitEdgeIfFront(vec3 first, vec3 second, vec3 other)
+void EmitEdgeIfFront(vec4 first, vec4 second, vec4 third, vec4 other)
 {
   //TODO: Is it really a good idea to emit multiple primitives like this, or should I work more on 
   //      tesselating the shape I ultimately want to draw?  
-  if(isEdge(first, second, other)) EmitQuad(first, second);
+  if(IsEdge(first.xyz, second.xyz, third.xyz, other.xyz)) EmitQuad(first.xyz, second.xyz);
   EndPrimitive();
 }
 
@@ -68,7 +68,7 @@ void main()
   EndPrimitive();
 
   //Draw border if any edge of this triangle borders the back of the object drawn
-  EmitEdgeIfFront(gl_in[0].gl_Position, gl_in[2].gl_Position, gl_in[1].gl_Position);
-  EmitEdgeIfFront(gl_in[2].gl_Position, gl_in[4].gl_Position, gl_in[3].gl_Position);
-  EmitEdgeIfFront(gl_in[4].gl_Position, gl_in[0].gl_Position, gl_in[5].gl_Position);
+  EmitEdgeIfFront(gl_in[0].gl_Position, gl_in[2].gl_Position, gl_in[4].gl_Position, gl_in[1].gl_Position);
+  EmitEdgeIfFront(gl_in[2].gl_Position, gl_in[4].gl_Position, gl_in[0].gl_Position, gl_in[3].gl_Position);
+  EmitEdgeIfFront(gl_in[4].gl_Position, gl_in[0].gl_Position, gl_in[2].gl_Position, gl_in[5].gl_Position);
 }

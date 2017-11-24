@@ -20,12 +20,6 @@ namespace mygl
   class Point: public Drawable //A Point is a Drawable
   {
     public:
-      struct Vertex
-      {
-        glm::vec3 position;
-        glm::vec4 color;
-      };
-
       Point(const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
       virtual ~Point() = default;
 

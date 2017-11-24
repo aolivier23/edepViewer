@@ -22,12 +22,6 @@ namespace mygl
   class Path: public Drawable //A Path is a Drawable
   {
     public:
-      struct Vertex
-      {
-        glm::vec3 position;
-        glm::vec4 color;
-      };
-
       Path(const glm::mat4& model, const std::vector<Vertex>& points, const float width);
       Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, const float width);
       virtual ~Path() = default;

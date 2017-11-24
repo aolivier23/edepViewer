@@ -13,15 +13,25 @@
 //c++ includes
 #include <iostream>
 #include <set>
+#include <unordered_map>
 
-//TODO: Remove me
 namespace
 {
+  //TODO: Remove me
   std::ostream& operator <<(std::ostream& os, const glm::vec3& vec)
   {
     os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
     return os;
   }
+
+  struct hash
+  {
+    size_t operator ()(const std::pair<size_t, size_t>& pair) const
+    {
+      std::hash<size_t> stdHash;
+      return stdHash(pair.first) ^ (stdHash(pair.second) << 1);
+    }
+  };
 }
 
 namespace mygl
@@ -41,7 +51,7 @@ namespace mygl
     std::vector<glm::vec3> ptsVec;
     for(size_t pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
 
-    //TODO: Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
+    //      Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
     //      ever draw convex polygons anyway.  So, I can draw any ROOT polygon with a triangle fan provided I can wind 
     //      the vertices of that polygon in the correct order.  To determine the order of vertices, I am considering the 
     //      following algorithm:
@@ -49,6 +59,9 @@ namespace mygl
     //      2.) Form a vector between the current vertex and each other vertex, "next"
     //      3.) The next vertex is the vertex such that "next" dot "prev" is > 0 and a minimum.  
     //      Is there an easier way to do this?  This sounds like a lot of vector algebra for the CPU.
+
+    //Mapping from half-edge to third index of triangle
+    std::unordered_map<std::pair<size_t, size_t>, size_t, ::hash> edgeToIndex;
 
     //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
     std::vector<std::vector<unsigned int>> indices;
@@ -74,10 +87,9 @@ namespace mygl
       for(const size_t index: indicesFound) center += ptsVec[index];
       center *= 1./nVertices;
 
-      //TODO: Maybe try this: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
-      //TODO: Algorithm gets most volumes wrong.
-
       //Sort vertices by angle from the first vertex
+      //TODO: Apparently, this ends up giving me the ordering for GL_TRIANGLE_STRIP.  That was my ultimate goal anyway, 
+      //      so sticking with it.  However, be warned that I don't REALLY know why this algorithm works the way it does.  
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
       std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
       std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)
@@ -88,12 +100,39 @@ namespace mygl
                                                   const float secondCos = glm::dot(secondDir, prevDir);
                                                   const float firstSin = glm::length(glm::cross(prevDir, firstDir));
                                                   const float secondSin = glm::length(glm::cross(prevDir, secondDir));
+                                                  //TODO: Avoiding atan2 might be desirable, but this is only the 
+                                                  //      constructor after all.
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
+      //Make sure this list of indices gets passed on to the eventual drawing command.  
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
+
+      //Fill map with HalfEdges
+      const auto begin = thisPol.begin();
+      const auto end = thisPol.end();
+
+      //Speical case for first edge
+      edgeToIndex[std::make_pair(*begin, *(begin+1))] = *(begin+2);
+
+      for(auto index = begin; index != end; ++index)
+      {
+        edgeToIndex[std::make_pair(*index, *(index+2))] = *(index+1);
+      }
+
+      //Special case for the last edge
+      edgeToIndex[std::make_pair(*(end-3), *(end-1))] = *(end-2);
 
       polPos += nVertices+2;
       indices.push_back(thisPol);
+    }
+
+    //Add vertex for adjacent triangle to each polygon's triangles
+    for(auto& pol: indices)
+    {
+      for(auto indexIt = pol.begin(); indexIt != pol.end(); ++indexIt)
+      {
+        indexIt = pol.insert(indexIt+1, edgeToIndex[std::make_pair(*(indexIt+2), *indexIt)])+1;
+      }
     }
 
     //Print out ptsVec for debugging
@@ -123,11 +162,10 @@ namespace mygl
 
   void PolyMesh::DoDraw(ShaderProg& shader)
   {
-    shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);
-
     glBindVertexArray(fVAO);
 
     //TODO: Set up these indices in the constructor
+    //TODO: This algorithm is no longer correct when drawing with adjacency information.
     std::vector<GLuint*> indexOffsets(1, nullptr);
     GLuint indexPos = 0;
     for(auto nVert = fNVertices.begin(); nVert != --(fNVertices.end()); ++nVert)
@@ -139,7 +177,7 @@ namespace mygl
     //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
     //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
     //glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
-    glMultiDrawElements(GL_TRIANGLE_STRIP, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
+    glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     //Note 2: After much digging, it appears that ROOT draws shapes using the kRaw section of TBuffer3D 

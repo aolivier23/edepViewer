@@ -489,7 +489,7 @@ namespace mygl
   void EvdWindow::make_scenes()
   {
     //Configure Geometry Scene
-    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord);
+    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
     geoTree.append_column("Volume Name", fGeoRecord.fName);
     geoTree.append_column("Material", fGeoRecord.fMaterial);
  
