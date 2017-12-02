@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (triangles_adjacency) in;
-layout (triangle_strip, max_vertices = 12) out;
+layout (triangle_strip, max_vertices = 30) out; //was 12, then 15
 
 in VS_OUT
 {
@@ -29,6 +29,7 @@ void EmitQuad(vec3 first, vec3 second)
   //TODO: Extend quad so that it matches the end of the next triangle's quad.  
   //      I think I could do this with the angle that the edges of this triangle make 
   //      at each vertex.
+  //TODO: I need to use vec2s here to not get ribbons
   userColor = borderColor;
   gl_Position = vec4(first, 1.0);
   EmitVertex();
@@ -47,7 +48,9 @@ void EmitEdgeIfFront(vec4 first, vec4 second, vec4 third, vec4 other)
 {
   //TODO: Is it really a good idea to emit multiple primitives like this, or should I work more on 
   //      tesselating the shape I ultimately want to draw?  
-  if(IsEdge(first.xyz, second.xyz, third.xyz, other.xyz)) EmitQuad(first.xyz, second.xyz);
+  //if(IsEdge(first.xyz, second.xyz, third.xyz, other.xyz)) EmitQuad(first.xyz, second.xyz);
+  //TODO: Restore the above line and remove this one.  Drawing all edges for debugging
+  EmitQuad(first.xyz, second.xyz); 
   EndPrimitive();
 }
 

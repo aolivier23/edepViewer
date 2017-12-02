@@ -28,8 +28,7 @@ namespace
   {
     size_t operator ()(const std::pair<int, int>& pair) const
     {
-      //std::hash<int> stdHash;
-      return size_t(pair.first) << 32 | pair.second; //stdHash(pair.first) ^ (stdHash(pair.second) << 1);
+      return size_t(pair.first) << 32 | pair.second; 
     }
   };
 }
@@ -47,9 +46,17 @@ namespace mygl
     auto pols = buf.fPols;
     auto nPols = buf.NbPols();
 
-    //Put points into a std::vector for now
+    //Put points into a std::vector for now.  
+    //Also find the "center" of the points.  Hopefully, this will give me a good idea of which polygons are facing "out".
     std::vector<glm::vec3> ptsVec;
-    for(int pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
+    glm::vec3 ptsCenter(0.0, 0.0, 0.0);
+    for(int pt = 0; pt < nPts; ++pt) 
+    {
+      glm::vec3 point(points[3*pt], points[3*pt+1], points[3*pt+2]);
+      ptsVec.push_back(point);
+      ptsCenter += point;
+    }
+    ptsCenter *= 1.0/ptsVec.size();
 
     //      Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
     //      ever draw convex polygons anyway.  So, I can draw any ROOT polygon with a triangle fan provided I can wind 
@@ -63,7 +70,7 @@ namespace mygl
     //Mapping from half-edge to third index of triangle
     std::unordered_map<std::pair<int, int>, int, ::hash> edgeToIndex;
 
-    //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
+    //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon.  
     std::vector<std::vector<int>> indices;
     size_t polPos = 0; //Position in the array of polygon "components".  See https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     for(size_t pol = 0; pol < nPols; ++pol)
@@ -84,13 +91,16 @@ namespace mygl
       glm::vec3 center(0., 0., 0.);
       for(const size_t index: indicesFound) center += ptsVec[index];
       center *= 1./nVertices;
+      const glm::vec3 out = glm::normalize(center-ptsCenter);
+      std::cout << "The surface normal is " << out << "\n";
 
-      //Sort vertices by angle from the first vertex
+      //First, sort vertices by absolute angle from the first vertex
       //TODO: Apparently, this ends up giving me the ordering for GL_TRIANGLE_STRIP.  That was my ultimate goal anyway, 
       //      so sticking with it.  However, be warned that I don't REALLY know why this algorithm works the way it does.  
       //TODO: I very strongly suspect that the winding order this algorithm gives is inconsistent between edges.  This is causing 
       //      my geometry shader to get adjacency completely wrong.  
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
+      std::cout << "prevDir is " << prevDir << "\n";
       std::vector<int> indicesSort(indicesFound.begin(), indicesFound.end());
       std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)
                                                 {
@@ -98,50 +108,56 @@ namespace mygl
                                                   const auto secondDir = glm::normalize(ptsVec[second]-center);
                                                   const float firstCos = glm::dot(firstDir, prevDir);
                                                   const float secondCos = glm::dot(secondDir, prevDir);
-                                                  const float firstSin = glm::length(glm::cross(prevDir, firstDir));
-                                                  const float secondSin = glm::length(glm::cross(prevDir, secondDir));
-                                                  //TODO: Avoiding atan2 might be desirable, but this is only the 
-                                                  //      constructor after all.
-                                                  return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
+                                                  const float firstSin = glm::length(glm::cross(firstDir, prevDir));
+                                                  const float secondSin = glm::length(glm::cross(secondDir, prevDir));
+                                                  const float firstAngle = atan2(firstSin, firstCos);
+                                                  const float secondAngle = atan2(secondSin, secondCos);
+                                                  return firstAngle < secondAngle;
                                                 });
+
+      //Next, make sure that pairs of vertices alternate sides of the polygon in the winding order 
+      //TODO: I think I am getting first and last entries in adjacent polygons that match.  This method should prevent that.
+      for(auto first = indicesSort.begin()+1; first < indicesSort.end()-1; first += 2)
+      {
+        auto second = first+1;
+        const auto firstDir = glm::normalize(ptsVec[*first]-center);
+        std::cout << "firstDir is " << firstDir << "\n";
+        const auto secondDir = glm::normalize(ptsVec[*second]-center);
+        std::cout << "secondDir is " << secondDir << "\n";
+        const float projFromCenter = glm::dot(glm::cross(prevDir, firstDir), out);
+        std::cout << "projFromCenter is " << projFromCenter << "\n";
+        if(projFromCenter < 0) 
+        {
+          std::cout << "Swapping indices " << *first << " and " << *second << "\n";
+          const int tmp = *first;
+          *first = *second;
+          *second = tmp;
+          std::cout << "After the swap, projFromCenter is " << glm::dot(glm::cross(prevDir, glm::normalize(ptsVec[*first]-center)), out) << "\n";
+        }
+      }
 
       //Fill map with HalfEdges
       const auto begin = indicesSort.begin();
       const auto end = indicesSort.end()-2;
 
-      for(auto index = begin; index != end; ++index)
+      //Special case for second edge of first triangle in each polygon
+      edgeToIndex[std::make_pair(*(begin), *(begin+1))] = *(begin+2);
+      std::cout << "Entered index " << *(begin+2) << " for edge (" << *(begin) << ", " << *(begin+1) << ")\n";
+
+      for(auto index = begin; index < end; ++index)
       { 
-        //TODO: I am getting multiple (2 so far) entries for the same edge!  
-        edgeToIndex[std::make_pair(*index, *(index+1))] = *(index+2);
-        std::cout << "Entered index " << *(index+2) << " for edge (" << *index << ", " << *(index+1) << ")\n";
-        edgeToIndex[std::make_pair(*(index+1), *(index+2))] = *index;
-        std::cout << "Entered index " << *index << " for edge (" << *(index+1) << ", " << *(index+2) << ")\n";
+        //Only include edges on the border
         edgeToIndex[std::make_pair(*(index+2), *index)] = *(index+1);
-        std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *index << ")\n";
+        std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *(index) << ")\n";
       }
+
+      //Special case for second edge of last triangle in each polygon
+      edgeToIndex[std::make_pair(*(end), *(end+1))] = *(end-1);
+      std::cout << "Entered index " << *(end-1) << " for edge (" << *(end) << ", " << *(end+1) << ")\n";
 
       polPos += nVertices+2;
       indices.push_back(indicesSort);
     }
-
-    //Add vertex for adjacent triangle to each polygon's triangles
-    /*for(auto& pol: indices)
-    {
-      //Special case for first edge
-      pol.insert(pol.begin()+1, edgeToIndex[std::make_pair(*(pol.begin()+1), *(pol.begin()))]);      
-
-      for(auto indexIt = pol.begin(); indexIt < pol.end()-4; ++indexIt)
-      {
-        if(edgeToIndex.find(std::make_pair(*(indexIt+3), *indexIt)) == edgeToIndex.end()) 
-          std::cout << "Could not find edge (" << *(indexIt+3) << ", " << *indexIt << ") that was needed.\n";
-        std::cout << "Inserting index " << edgeToIndex[std::make_pair(*(indexIt+3), *indexIt)] << " between " << *(indexIt+2)
-                  << " and " << *(indexIt+3) << "\n";
-        indexIt = pol.insert(indexIt+3, edgeToIndex[std::make_pair(*(indexIt+3), *indexIt)])+1;
-      }
-
-      //Special case for last edge
-      pol.insert(pol.end(), edgeToIndex[std::make_pair(*(pol.end()-1), *(pol.end()-2))]);
-    }*/
 
     for(auto& pol: indices)
     {
@@ -155,27 +171,39 @@ namespace mygl
 
       pol.clear();
       pol.push_back(polCopy[0]);
-      pol.push_back(edgeToIndex[std::make_pair(polCopy[1], polCopy[0])]); 
       if(edgeToIndex.find(std::make_pair(polCopy[1], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
-                                                                                                  << "edge (" << polCopy[0] << ", " 
+                                                                                                  << "edge (" << polCopy[0] << ", "
                                                                                                   << polCopy[1] << ")\n";
+      pol.push_back(edgeToIndex[std::make_pair(polCopy[1], polCopy[0])]); 
       std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[1], polCopy[0])] << " for edge (" << polCopy[0] << ", "
                 << polCopy[1] << ")\n";
       pol.push_back(polCopy[1]);
 
+      if(edgeToIndex.find(std::make_pair(polCopy[0], polCopy[2])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                  << "edge (" << polCopy[2] << ", "
+                                                                                                  << polCopy[0] << ")\n";
       pol.push_back(edgeToIndex[std::make_pair(polCopy[0], polCopy[2])]);
-      if(edgeToIndex.find(std::make_pair(polCopy[2], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
-                                                                                                  << "edge (" << polCopy[0] << ", "
-                                                                                                  << polCopy[2] << ")\n";
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[0], polCopy[2])] << " for edge (" << polCopy[2] << ", "
+                << polCopy[0] << ")\n";
       pol.push_back(polCopy[2]);
 
       for(auto indexIt = polCopy.begin()+1; indexIt < polCopy.end()-2; ++indexIt)
       {
+        if(edgeToIndex.find(std::make_pair(*(indexIt), *(indexIt+2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                      << "edge (" << *(indexIt+2) << ", "
+                                                                                                      << *(indexIt) << ")\n";
         pol.push_back(edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))]);
+        std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))] << " for edge (" << *(indexIt+2) << ", "
+                  << *indexIt << ")\n";
         pol.push_back(*(indexIt+2));
       }
 
-      pol.push_back(edgeToIndex[std::make_pair(*(polCopy.end()), *(polCopy.end()-1))]);
+      if(edgeToIndex.find(std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                      << "edge (" << *(polCopy.end()-2) << ", "
+                                                                                                      << *(polCopy.end()-1) << ")\n";
+      pol.push_back(edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))]);
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))] << " for edge (" << *(polCopy.end()-2) << ", "
+                << *(polCopy.end()-1) << ")\n";
     }
 
     //Print out ptsVec for debugging
