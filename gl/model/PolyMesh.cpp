@@ -39,7 +39,14 @@ namespace mygl
 
     //Put points into a std::vector for now
     std::vector<glm::vec3> ptsVec;
-    for(size_t pt = 0; pt < nPts; ++pt) ptsVec.push_back(glm::vec3(points[3*pt], points[3*pt+1], points[3*pt+2]));
+    glm::vec3 polCenter;
+    for(size_t pt = 0; pt < nPts; ++pt) 
+    {
+      const glm::vec3 point(points[3*pt], points[3*pt+1], points[3*pt+2]);
+      ptsVec.push_back(point);
+      polCenter += point;
+    }
+    polCenter *= 1./ptsVec.size();
 
     //TODO: Clockwise ordering instead of using ROOT's ordering.  From my notes below, it seems that ROOT can only 
     //      ever draw convex polygons anyway.  So, I can draw any ROOT polygon with a triangle fan provided I can wind 
@@ -73,6 +80,7 @@ namespace mygl
       glm::vec3 center(0., 0., 0.);
       for(const size_t index: indicesFound) center += ptsVec[index];
       center *= 1./nVertices;
+      const auto out = glm::normalize(center-polCenter);
 
       //TODO: Maybe try this: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
       //TODO: Algorithm gets most volumes wrong.
@@ -93,6 +101,28 @@ namespace mygl
                                                             << " and " << prevDir << " is " << atan2(secondSin, secondCos) << "\n";
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
+
+     
+      //Next, make sure that pairs of vertices alternate sides of the polygon in the winding order 
+      //TODO: I think I am getting first and last entries in adjacent polygons that match.  This method should prevent that.
+      for(auto first = indicesSort.begin()+1; first < indicesSort.end()-1; first += 2)
+      {
+        auto second = first+1;
+        const auto firstDir = glm::normalize(ptsVec[*first]-center);
+        std::cout << "firstDir is " << firstDir << "\n";
+        const auto secondDir = glm::normalize(ptsVec[*second]-center);
+        std::cout << "secondDir is " << secondDir << "\n";
+        const float projFromCenter = glm::dot(glm::cross(prevDir, firstDir), out);
+        std::cout << "projFromCenter is " << projFromCenter << "\n";
+        if(projFromCenter < 0) 
+        {
+          std::cout << "Swapping indices " << *first << " and " << *second << "\n";
+          const int tmp = *first;
+          *first = *second;
+          *second = tmp;
+          std::cout << "After the swap, projFromCenter is " << glm::dot(glm::cross(prevDir, glm::normalize(ptsVec[*first]-center)), out) << "\n";
+        }
+      }
 
       //TODO: Dummy indices to test drawing with adjacency information
       for(auto index = indicesSort.begin(); index < indicesSort.end(); ++index)
