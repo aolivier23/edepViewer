@@ -246,6 +246,10 @@ namespace mygl
     glBindVertexArray(fVAO);
 
     //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
+    //TODO: I tried resetting this to just drawing triangle strips, and it still doesn't draw one face of each cube.  So, 
+    //      there is a really big problem here that is not related to trying to include adjacency information.  
+    //      I need to solve that problem first.  It might be a good idea to start back from the last commit with which 
+    //      cubes drew correctly.  
     glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
