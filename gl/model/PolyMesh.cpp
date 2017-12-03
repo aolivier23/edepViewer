@@ -93,6 +93,13 @@ namespace mygl
                                                             << " and " << prevDir << " is " << atan2(secondSin, secondCos) << "\n";
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
+
+      //TODO: Dummy indices to test drawing with adjacency information
+      for(auto index = indicesSort.begin(); index < indicesSort.end(); ++index)
+      {
+        index = indicesSort.insert(index+1, 0);
+      }
+
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
 
       polPos += nVertices+2;
@@ -126,12 +133,10 @@ namespace mygl
 
   void PolyMesh::DoDraw(ShaderProg& shader)
   {
-    //shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);
-
     glBindVertexArray(fVAO);
 
     //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
-    glMultiDrawElements(GL_TRIANGLE_STRIP, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
+    glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     //Note 2: After much digging, it appears that ROOT draws shapes using the kRaw section of TBuffer3D 
