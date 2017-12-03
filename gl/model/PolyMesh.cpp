@@ -94,9 +94,6 @@ namespace mygl
       center *= 1./nVertices;
       const auto out = glm::normalize(center-polCenter);
 
-      //TODO: Maybe try this: https://stackoverflow.com/questions/6989100/sort-points-in-clockwise-order
-      //TODO: Algorithm gets most volumes wrong.
-
       //Sort vertices by angle from the first vertex
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
       std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
@@ -108,15 +105,12 @@ namespace mygl
                                                   const float secondCos = glm::dot(secondDir, prevDir);
                                                   const float firstSin = glm::length(glm::cross(prevDir, firstDir));
                                                   const float secondSin = glm::length(glm::cross(prevDir, secondDir));
-                                                  std::cout << "Angle between " << firstDir << " and " << prevDir << " is " 
-                                                            << atan2(firstSin, firstCos) << "\n Angle between " << secondDir 
-                                                            << " and " << prevDir << " is " << atan2(secondSin, secondCos) << "\n";
                                                   return atan2(firstSin, firstCos) < atan2(secondSin, secondCos);
                                                 });
 
      
       //Next, make sure that pairs of vertices alternate sides of the polygon in the winding order 
-      //TODO: I think I am getting first and last entries in adjacent polygons that match.  This method should prevent that.
+      //TODO: This is the problem.  Something is wrong here.
       for(auto first = indicesSort.begin()+1; first < indicesSort.end()-1; first += 2)
       {
         auto second = first+1;
@@ -136,15 +130,10 @@ namespace mygl
         }
       }
 
-      //TODO: Dummy indices to test drawing with adjacency information
-      /*for(auto index = indicesSort.begin(); index < indicesSort.end(); ++index)
-      {
-        index = indicesSort.insert(index+1, 0);
-      }*/
-
       //Fill map with HalfEdges
       const auto begin = indicesSort.begin();
       const auto end = indicesSort.end()-2;
+
 
       //Special case for second edge of first triangle in each polygon
       edgeToIndex[std::make_pair(*(begin), *(begin+1))] = *(begin+2);
