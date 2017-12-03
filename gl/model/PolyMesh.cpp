@@ -137,10 +137,10 @@ namespace mygl
       }
 
       //TODO: Dummy indices to test drawing with adjacency information
-      for(auto index = indicesSort.begin(); index < indicesSort.end(); ++index)
+      /*for(auto index = indicesSort.begin(); index < indicesSort.end(); ++index)
       {
         index = indicesSort.insert(index+1, 0);
-      }
+      }*/
 
       //Fill map with HalfEdges
       const auto begin = indicesSort.begin();
@@ -165,6 +165,54 @@ namespace mygl
 
       polPos += nVertices+2;
       indices.push_back(thisPol);
+    }
+
+    
+    for(auto& pol: indices)
+    {
+      const auto polCopy = pol;
+      std::cout << "Before I add any indices to pol, polCopy is:\n(";
+      for(const auto& index: polCopy)
+      {
+        std::cout << index << ", ";
+      }
+      std::cout << ")\n";
+                                                                                                                                                            
+      pol.clear();
+      pol.push_back(polCopy[0]);
+      if(edgeToIndex.find(std::make_pair(polCopy[1], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                  << "edge (" << polCopy[0] << ", "
+                                                                                                  << polCopy[1] << ")\n";
+      pol.push_back(edgeToIndex[std::make_pair(polCopy[1], polCopy[0])]); 
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[1], polCopy[0])] << " for edge (" << polCopy[0] << ", "
+                << polCopy[1] << ")\n";
+      pol.push_back(polCopy[1]);
+                                                                                                                                                            
+      if(edgeToIndex.find(std::make_pair(polCopy[0], polCopy[2])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                  << "edge (" << polCopy[2] << ", "
+                                                                                                  << polCopy[0] << ")\n";
+      pol.push_back(edgeToIndex[std::make_pair(polCopy[0], polCopy[2])]);
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[0], polCopy[2])] << " for edge (" << polCopy[2] << ", "
+                << polCopy[0] << ")\n";
+      pol.push_back(polCopy[2]);
+                                                                                                                                                            
+      for(auto indexIt = polCopy.begin()+1; indexIt < polCopy.end()-2; ++indexIt)
+      {
+        if(edgeToIndex.find(std::make_pair(*(indexIt), *(indexIt+2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                      << "edge (" << *(indexIt+2) << ", "
+                                                                                                      << *(indexIt) << ")\n";
+        pol.push_back(edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))]);
+        std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))] << " for edge (" << *(indexIt+2) << ", "
+                  << *indexIt << ")\n";
+        pol.push_back(*(indexIt+2));
+      }
+                                                                                                                                                            
+      if(edgeToIndex.find(std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+                                                                                                      << "edge (" << *(polCopy.end()-2) << ", "
+                                                                                                      << *(polCopy.end()-1) << ")\n";
+      pol.push_back(edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))]);
+      std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))] << " for edge (" << *(polCopy.end()-2) << ", "
+                << *(polCopy.end()-1) << ")\n";
     }
 
     //Print out ptsVec for debugging
