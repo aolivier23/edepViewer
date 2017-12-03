@@ -13,6 +13,7 @@
 //c++ includes
 #include <iostream>
 #include <set>
+#include <unordered_map>
 
 //TODO: Remove me
 namespace
@@ -22,6 +23,14 @@ namespace
     os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
     return os;
   }
+
+  struct hash
+  {
+    size_t operator ()(const std::pair<int, int>& pair) const
+    {
+      return size_t(pair.first) << 32 | pair.second;
+    }
+  };
 }
 
 namespace mygl
@@ -56,6 +65,9 @@ namespace mygl
     //      2.) Form a vector between the current vertex and each other vertex, "next"
     //      3.) The next vertex is the vertex such that "next" dot "prev" is > 0 and a minimum.  
     //      Is there an easier way to do this?  This sounds like a lot of vector algebra for the CPU.
+
+    //Mapping from half-edge to third index of triangle
+    std::unordered_map<std::pair<int, int>, int, ::hash> edgeToIndex;
 
     //Construct nested vector of indices.  Each vector corresponds to the indices needed by one polygon
     std::vector<std::vector<unsigned int>> indices;
@@ -129,6 +141,25 @@ namespace mygl
       {
         index = indicesSort.insert(index+1, 0);
       }
+
+      //Fill map with HalfEdges
+      const auto begin = indicesSort.begin();
+      const auto end = indicesSort.end()-2;
+
+      //Special case for second edge of first triangle in each polygon
+      edgeToIndex[std::make_pair(*(begin), *(begin+1))] = *(begin+2);
+      std::cout << "Entered index " << *(begin+2) << " for edge (" << *(begin) << ", " << *(begin+1) << ")\n";
+
+      for(auto index = begin; index < end; ++index)
+      {
+        //Only include edges on the border
+        edgeToIndex[std::make_pair(*(index+2), *index)] = *(index+1);
+        std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *(index) << ")\n";
+      }
+
+      //Special case for second edge of last triangle in each polygon
+      edgeToIndex[std::make_pair(*(end), *(end+1))] = *(end-1);
+      std::cout << "Entered index " << *(end-1) << " for edge (" << *(end) << ", " << *(end+1) << ")\n";
 
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
 
