@@ -29,7 +29,7 @@ namespace mygl
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
       PolyMesh(const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
-               const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets()
+               const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets(1, nullptr)
       {
         Init(vertices, indices, color);
       }

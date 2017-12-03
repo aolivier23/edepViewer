@@ -26,7 +26,7 @@ namespace
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model)
+  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
   {
     if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
@@ -130,19 +130,8 @@ namespace mygl
 
     glBindVertexArray(fVAO);
 
-    //TODO: Set up these indices in the constructor
-    std::vector<GLuint*> indexOffsets(1, nullptr);
-    GLuint indexPos = 0;
-    for(auto nVert = fNVertices.begin(); nVert != --(fNVertices.end()); ++nVert)
-    {
-      indexPos += *nVert;
-      indexOffsets.push_back((GLuint*)(indexPos*sizeof(GLuint)));
-    }
-   
-    //std::cout << "Calling glMultiDrawElements() in mygl::PolyMesh::Draw().\n"; 
     //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
-    //glMultiDrawElements(GL_TRIANGLE_FAN, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
-    glMultiDrawElements(GL_TRIANGLE_STRIP, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&indexOffsets[0]), fNVertices.size());
+    glMultiDrawElements(GL_TRIANGLE_STRIP, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
     //        https://root.cern.ch/doc/master/viewer3DLocal_8C_source.html
     //Note 2: After much digging, it appears that ROOT draws shapes using the kRaw section of TBuffer3D 
