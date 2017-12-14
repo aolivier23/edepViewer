@@ -16,5 +16,7 @@ add_library(glad glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
 target_link_libraries("glad" ${CMAKE_DL_LIBS})
 
+add_subdirectory(util)
 add_subdirectory(gl)
 add_subdirectory(gtk)
+add_subdirectory(plugins)
