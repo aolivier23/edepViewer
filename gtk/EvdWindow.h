@@ -4,6 +4,9 @@
 //       the geometry hierarchy and a 3D view. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//Plugin includes
+#include "plugins/drawing/Drawer.cpp"
+
 //Gtkmm includes
 #include <gtkmm.h>
 
@@ -73,10 +76,6 @@ namespace mygl
       TGeoManager* fGeoManager; //The current geometry 
 
     private:
-      Gtk::TreeModel::Row AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth);
-      void AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
-      //void AppendTrajectories(const Gtk::TreeModel::Row& parent, const int id, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-      //                        const Gtk::TreeModel::Row& ptRow);
       void AppendTrajectory(const Gtk::TreeModel::Row& parent, const TG4Trajectory& traj, 
                             std::map<int, std::vector<TG4Trajectory>>& parentToTraj, const Gtk::TreeModel::Row& ptRow);
       Gtk::TreeModel::Row AddTrajPt(const std::string& particle, const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, 
@@ -86,10 +85,7 @@ namespace mygl
       void DrawGuides(); 
 
       mygl::VisID fNextID;
-      std::unique_ptr<mygl::ColorIter> fGeoColor; //unique_ptr so I can reset() it
       mygl::ColorIter fPDGColor;
-      const size_t fMaxGeoDepth; //The maximum recursion depth when processing a geometry file
-      VisID fAfterLastGeo; //The VisID after the last VisID used for the geometry.  Allows reusing VisIDs for event objects 
 
       std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
       TDatabasePDG fPdgDB;
@@ -115,22 +111,6 @@ namespace mygl
       float fLineWidth; //The default line width to use
       float fPointRad; //The default point radius to use
 
-      //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
-      class GeoRecord: public ColRecord
-      {
-        public:
-          GeoRecord(): ColRecord()
-          {
-            add(fName);
-            add(fMaterial);
-          }
-  
-          Gtk::TreeModelColumn<std::string> fName;
-          Gtk::TreeModelColumn<std::string> fMaterial;
-      };
-
-      GeoRecord fGeoRecord;
-
       class TrajRecord: public ColRecord
       {
         public:
@@ -151,6 +131,9 @@ namespace mygl
       TrajRecord fTrajRecord;
       Gtk::CellRendererText fColorRender; //Customized renderer for particle name to write name in color
       void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
+
+      //plugins
+      std::vector<std::unique_ptr<draw::Drawer<TGeoManager>>> fGlobalDrawers;
 
      class GuideRecord: public ColRecord
      {

@@ -74,12 +74,6 @@ namespace draw
     auto top = *(viewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
     top[fGeoRecord.fName] = data.GetTitle();
     top[fGeoRecord.fMaterial] = "FIXME";
-    std::cout << "Generating gemoetry drawing instructions.  This could take a while depending on "
-              << "the number of nodes to draw since I currently have to multiply each node's matrix "
-              << "by its' parent in c++. This should only happen once per file.  Consider reducing the "
-              << "number of nodes in your geometry if this step is prohibitively long since you "
-              << "might not even enable them all.  I usually just need to draw the first 5 or so "
-              << "layers of the hierarchy.\n";
     AppendNode(viewer, nextID, data.GetTopNode(), *id, top, 0);
   }
 

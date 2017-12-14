@@ -13,6 +13,9 @@
 #include "gl/model/Point.h"
 #include "gl/camera/PlaneCam.h"
 
+//TODO: Replace this with a factory
+#include "plugins/drawing/GeoDrawer.h"
+
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 
@@ -83,8 +86,7 @@ namespace mygl
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fNextID(0, 0, 0), fGeoColor(new mygl::ColorIter()), fPDGColor(), fPDGToColor(), fPdgDB(), fMaxGeoDepth(7), 
-    //TODO: Make fMaxGeoDepth a user parameter
+    fFileName(fileName), fNextID(0, 0, 0), fPDGColor(), fPDGToColor(), fPdgDB(),
     fPalette(0., 8.), fLineWidth(0.008), fPointRad(0.010)
   {
     set_title("edepsim Display Window");
@@ -100,6 +102,9 @@ namespace mygl
                                                                                  //children are realize()d
 
 
+    //TODO: Load and configure as a plugin
+    fGlobalDrawers.emplace_back(new draw::GeoDrawer());
+    
     show_all_children();
   }
 
@@ -117,31 +122,13 @@ namespace mygl
 
   void EvdWindow::ReadGeo()
   {
-    //TODO: Just make this a local variable
-    fGeoColor.reset(new mygl::ColorIter());
-    //Remove the old geometry
-    fViewer.GetScenes().find("Geometry")->second.RemoveAll();
-    //TODO: Reset first VisID to (0, 0, 0)?
-
+    fNextID = mygl::VisID();
+    
     fGeoManager = (TGeoManager*)(fFile->Get("EDepSimGeometry"));
     auto man = fGeoManager;
     if(man != nullptr)
     {
-      auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
-                                    //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 
-                                    //I have yet to find a way to unregister a TGeoMatrix.  So, it appears that there is no such 
-                                    //thing as a temporary TGeoIdentity.  Good job ROOT... :(
-      auto top = *(fViewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
-      top[fGeoRecord.fName] = man->GetTitle();
-      top[fGeoRecord.fMaterial] = "FIXME";
-      std::cout << "Generating gemoetry drawing instructions.  This could take a while depending on "
-                << "the number of nodes to draw since I currently have to multiply each node's matrix "
-                << "by its' parent in c++. This should only happen once per file.  Consider reducing the "
-                << "number of nodes in your geometry if this step is prohibitively long since you "
-                << "might not even enable them all.  I usually just need to draw the first 5 or so "
-                << "layers of the hierarchy.\n";
-      AppendNode(man->GetTopNode(), *id, top, 0);
-      fAfterLastGeo = fNextID;
+      for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
       //Make sure a sensible fiducial node is set
       fFiducialName.set_text(man->GetTopNode()->GetName());
@@ -154,11 +141,11 @@ namespace mygl
   void EvdWindow::ReadEvent()
   { 
     //First, remove the previous event from all scenes except geometry
+    //TODO: Let Drawer do this
     for(auto& scenePair: fViewer.GetScenes())
     {
       if(scenePair.first != "Geometry" && scenePair.first != "Guides") scenePair.second.RemoveAll();
     }
-    fNextID = fAfterLastGeo;
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -345,35 +332,6 @@ namespace mygl
     //TODO: Drawing the 1mm grid is very slow.  
   }
 
-  Gtk::TreeModel::Row EvdWindow::AppendNode(TGeoNode* node, TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
-  {
-    //Get the model matrix for node using it's parent's matrix
-    TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
-    local.MultiplyLeft(&mat);
-    double matPtr[16] = {};
-    local.GetHomogenousMatrix(matPtr);
-
-    //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
-    //TODO: Adding the line immediately below this causes weird GUI behavior.  The problem does not seem to be in Scene or Polymesh::Draw().  
-    auto row = fViewer.AddDrawable<mygl::PolyMesh>("Geometry", fNextID++, parent, false, glm::make_mat4(matPtr),
-                                                           node->GetVolume(), glm::vec4((glm::vec3)(*fGeoColor), 0.2)); 
-                                                                                               
-    row[fGeoRecord.fName] = node->GetName();
-    row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
-    ++(*fGeoColor);
-    AppendChildren(row, node, local, depth);
-    
-    return row;
-  }  
-  
-  void EvdWindow::AppendChildren(const Gtk::TreeModel::Row& parent, TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
-  {
-    auto children = parentNode->GetNodes();
-    //if(children != nullptr && children->GetEntries() != 0) ++fGeoColor; //One color for each level of the geometry hierarchy instead of per node
-    if(depth == fMaxGeoDepth) return;
-    for(auto child: *children) AppendNode((TGeoNode*)(child), mat, parent, depth+1); 
-  }
-
   Gtk::TreeModel::Row EvdWindow::AddTrajPt(const std::string& particle, const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& parent, 
                                            const glm::vec4& color)
   {
@@ -488,11 +446,9 @@ namespace mygl
 
   void EvdWindow::make_scenes()
   {
-    //Configure Geometry Scene
-    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
-    geoTree.append_column("Volume Name", fGeoRecord.fName);
-    geoTree.append_column("Material", fGeoRecord.fMaterial);
- 
+    //Configure Geometry Scenes
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
+
     //Configure trajectory Scene
     auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
