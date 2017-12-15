@@ -21,10 +21,10 @@ include_directories( ${GTKMM_INCLUDE_DIRS} )
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Add libraries of plugins
-add_library( Drawer Drawer.cpp )
+add_library( Drawer SHARED Drawer.cpp )
 target_link_libraries( Drawer ${GTKMM_LIBRARIES} Color Scene )
 install( TARGETS Drawer DESTINATION lib )
 
-add_library( Geo GeoDrawer.cpp )
-target_link_libraries( Geo Drawer ${ROOT_LIBRARIES} Color Drawable PolyMesh Viewer)
+add_library( Geo SHARED GeoDrawer.cpp )
+target_link_libraries( Geo Drawer ${ROOT_LIBRARIES} Color Drawable PolyMesh Viewer Factory)
 install( TARGETS Geo DESTINATION lib )

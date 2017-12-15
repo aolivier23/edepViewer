@@ -13,8 +13,8 @@
 #include "gl/model/Point.h"
 #include "gl/camera/PlaneCam.h"
 
-//TODO: Replace this with a factory
-#include "plugins/drawing/GeoDrawer.h"
+//Load plugins for drawing from Factory
+#include "plugins/Factory.cpp"
 
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
@@ -103,7 +103,8 @@ namespace mygl
 
 
     //TODO: Load and configure as a plugin
-    fGlobalDrawers.emplace_back(new draw::GeoDrawer());
+    auto& geoFactory = plgn::Factory<draw::Drawer<TGeoManager>>::instance();
+    fGlobalDrawers.emplace_back(geoFactory.Get("GeoDrawer"));
     
     show_all_children();
   }

@@ -6,6 +6,9 @@
 //draw includes
 #include "plugins/drawing/GeoDrawer.h"
 
+//plugin factory for macro
+#include "plugins/Factory.cpp"
+
 //util includes
 #include "util/ColorIter.cxx"
 
@@ -83,4 +86,7 @@ namespace draw
     geoTree.append_column("Volume Name", fGeoRecord.fName);
     geoTree.append_column("Material", fGeoRecord.fMaterial);
   }
+
+  REGISTER_PLUGIN(GeoDrawer, Drawer<TGeoManager>);
 }
+
