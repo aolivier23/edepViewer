@@ -17,11 +17,6 @@ include(${ROOT_USE_FILE})
 link_directories( ${GTKMM_LIBRARY_DIRS} )
 include_directories( ${GTKMM_INCLUDE_DIRS} )
 
-#Set up edep-sim
-set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-include_directories( "${EDEP_DIR}/include/edep-sim" )
-link_directories( "${EDEP_DIR}/lib" )
-
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
@@ -54,7 +49,7 @@ install( TARGETS GeoDraw DESTINATION bin )
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             ColorIter Palette edepsim Drawer Factory Geo tinyxml2 )
+                                             ColorIter Palette edepsim Factory Drawers tinyxml2 )
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )

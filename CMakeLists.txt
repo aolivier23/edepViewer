@@ -19,6 +19,11 @@ add_library(glad SHARED glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
 target_link_libraries("glad" ${CMAKE_DL_LIBS})
 
+#Set up edep-sim
+set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
+include_directories( "${EDEP_DIR}/include/edep-sim" )
+link_directories( "${EDEP_DIR}/lib" )
+
 add_subdirectory(util)
 add_subdirectory(gl)
 add_subdirectory(gtk)

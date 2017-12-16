@@ -5,7 +5,8 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Plugin includes
-#include "plugins/drawing/Drawer.cpp"
+#include "plugins/drawing/GeoDrawer.cpp"
+#include "plugins/drawing/EventDrawer.cpp"
 
 //Gtkmm includes
 #include <gtkmm.h>
@@ -133,7 +134,8 @@ namespace mygl
       void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
 
       //plugins
-      std::vector<std::unique_ptr<draw::Drawer<TGeoManager>>> fGlobalDrawers;
+      std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
+      std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
 
      class GuideRecord: public ColRecord
      {

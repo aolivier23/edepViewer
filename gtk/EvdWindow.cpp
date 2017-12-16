@@ -115,7 +115,7 @@ namespace mygl
     }
 
     //Load global plugins
-    auto& geoFactory = plgn::Factory<draw::Drawer<TGeoManager>>::instance();
+    auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
 
     const auto top = config.FirstChildElement();
     const auto drawers = top->FirstChildElement();
@@ -125,14 +125,29 @@ namespace mygl
       tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
       while(pluginConfig != nullptr)
       {
-        std::cout << pluginConfig->Value() << "\n";
         auto drawer = geoFactory.Get(pluginConfig->ToElement());
         if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
-        else std::cerr << "Failed to get plugin named " << pluginConfig->Value() << "\n";
+        else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
         pluginConfig = pluginConfig->NextSibling();
       }
     }
     else std::cerr << "Failed to get an element named global from config.xml.\n";
+
+    //Load event plugins
+    auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
+    const auto eventConfig = drawers->FirstChildElement("event"); //TODO: Use a Handle
+    if(eventConfig)
+    {
+      tinyxml2::XMLNode* pluginConfig = eventConfig->FirstChildElement();
+      while(pluginConfig != nullptr)
+      {
+        auto drawer = evtFactory.Get(pluginConfig->ToElement());
+        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
+        else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
+        pluginConfig = pluginConfig->NextSibling();
+      }
+    }
+    else std::cerr << "Failed to get an element named event from config.xml.\n";
 
     show_all_children();
   }
@@ -169,6 +184,10 @@ namespace mygl
 
   void EvdWindow::ReadEvent()
   { 
+    //TODO: Move all per-event drawing code to plugins
+    mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), *fGeoManager, fViewer, id);
+
     //First, remove the previous event from all scenes except geometry
     //TODO: Let Drawer do this
     for(auto& scenePair: fViewer.GetScenes())
@@ -477,6 +496,9 @@ namespace mygl
   {
     //Configure Geometry Scenes
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
+
+    //Configure Event Scenes
+    for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
 
     //Configure trajectory Scene
     auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");

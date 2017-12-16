@@ -11,6 +11,8 @@
 //c++ includes
 #include <memory> //For std::unique_ptr
 #include <map>
+//TODO: Remove me
+#include <iostream>
 
 #ifndef PLGN_FACTORY_CPP
 #define PLGN_FACTORY_CPP
@@ -75,6 +77,7 @@ namespace plgn
       {
         auto& reg = Factory<BASE>::instance();
         reg.Add(name, this);
+        std::cout << "Registered a plugin named " << name << "\n";
       }
 
       virtual ~Registrar() = default;

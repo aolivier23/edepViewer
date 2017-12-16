@@ -1,10 +1,10 @@
-//File: GeoDrawer.h
+//File: DefaultGeo.h
 //Brief: A plugin that draws the ROOT geometry for the edepsim display.  Takes a TGeoManager as drawing data and 
 //       draws 3D shapes using ROOT's tesselation facilities.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //draw includes
-#include "plugins/drawing/Drawer.cpp"
+#include "plugins/drawing/GeoDrawer.cpp"
 
 //ROOT includes
 #include "TGeoManager.h" //For data
@@ -12,8 +12,8 @@
 //tinyxml2 include for configuration
 #include <tinyxml2.h>
 
-#ifndef DRAW_GEODRAWER_H
-#define DRAW_GEODRAWER_H
+#ifndef DRAW_DEFAULTGEO_H
+#define DRAW_DEFAULTGEO_H
 
 namespace mygl
 {
@@ -23,12 +23,12 @@ namespace mygl
 
 namespace draw
 {
-  class GeoDrawer: public Drawer<TGeoManager>
+  class DefaultGeo: public GeoDrawer
   {
     public:
       //TODO: Configuration information when I implement a configuration system
-      GeoDrawer(const tinyxml2::XMLElement* config);
-      virtual ~GeoDrawer() = default;
+      DefaultGeo(const tinyxml2::XMLElement* config);
+      virtual ~DefaultGeo() = default;
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
@@ -63,4 +63,4 @@ namespace draw
 }
 
 //TODO: Factory macro when I get around to writing the factory
-#endif //DRAW_GEODRAWER_H
+#endif //DRAW_DEFAULTGEO_H
