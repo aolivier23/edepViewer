@@ -195,7 +195,8 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-    fViewer.GetScenes().find("Trajectories")->second.fTreeView.expand_to_path(Gtk::TreePath("0")); //TODO: Move this to the Viewer?
+    auto trajs = fViewer.GetScenes().find("Trajectories");
+    if(trajs != fViewer.GetScenes().end()) trajs->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
 
     //Draw true energy deposits color-coded by energy
     auto edepToDet = (*fCurrentEvt)->SegmentDetectors; //A map from sensitive volume to energy deposition
