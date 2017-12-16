@@ -77,61 +77,20 @@ namespace mygl
       TGeoManager* fGeoManager; //The current geometry 
 
     private:
-      void AppendTrajectory(const Gtk::TreeModel::Row& parent, const TG4Trajectory& traj, 
-                            std::map<int, std::vector<TG4Trajectory>>& parentToTraj, const Gtk::TreeModel::Row& ptRow);
-      Gtk::TreeModel::Row AddTrajPt(const std::string& particle, const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, 
-                                    const glm::vec4& color);
       void ReadGeo();
       void ReadEvent();
       void DrawGuides(); 
 
       mygl::VisID fNextID;
-      mygl::ColorIter fPDGColor;
-
-      std::map<int, glm::vec3> fPDGToColor; //TODO: A separate interface from the main window for better organization.  
-      TDatabasePDG fPdgDB;
 
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
       void goto_event();
       void next_event();
 
-      //Information for fiducial volume cut
-      Gtk::ToolItem fFiducialLabelWrap;
-      Gtk::Label fFiducialLabel;
-      Gtk::ToolItem fFiducialWrap;
-      Gtk::Entry fFiducialName;
-      TGeoNode* fFiducialNode; //The node for the fiducial volume.  Trajectory points outside this volume will not be drawn.
-      TGeoMatrix* fFiducialMatrix; //A matrix that translates objects from the top Node's coordinate system to fFiducialNode's 
-                                   //coordinate system. 
-
-      void set_fiducial();
-      bool find_node(const std::string& name, TGeoNode* parent, TGeoMatrix& mat);
-
       //Drawing settings
       float fLineWidth; //The default line width to use
       float fPointRad; //The default point radius to use
-
-      class TrajRecord: public ColRecord
-      {
-        public:
-          TrajRecord(): ColRecord()
-          {
-            add(fPartName);
-            add(fEnergy);
-            add(fColor);
-            //add(fProcess); //TODO: Learn to get end process from Track
-          }
-       
-          Gtk::TreeModelColumn<std::string> fPartName; 
-          Gtk::TreeModelColumn<double> fEnergy;
-          Gtk::TreeModelColumn<Gdk::RGBA> fColor;
-          //Gtk::TreeModelColumn<std::string> fProcess;
-      };
-
-      TrajRecord fTrajRecord;
-      Gtk::CellRendererText fColorRender; //Customized renderer for particle name to write name in color
-      void ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it);
 
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
@@ -170,24 +129,6 @@ namespace mygl
          Gtk::TreeModelColumn<double>      fdEdx;
      };
      EDepRecord fEDepRecord;
-
-     class TrajPtRecord: public ColRecord
-     {
-       public:
-         TrajPtRecord(): ColRecord()
-         {
-           add(fMomMag);
-           add(fTime);
-           add(fProcess);
-           add(fParticle);
-         }
-
-         Gtk::TreeModelColumn<double> fMomMag;
-         Gtk::TreeModelColumn<double> fTime;
-         Gtk::TreeModelColumn<std::string> fProcess;
-         Gtk::TreeModelColumn<std::string> fParticle;
-     };
-     TrajPtRecord fTrajPtRecord;
 
      Palette fPalette;
   };

@@ -89,8 +89,8 @@ namespace mygl
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fNextID(0, 0, 0), fPDGColor(), fPDGToColor(), fPdgDB(),
-    fPalette(0., 8.), fLineWidth(0.008), fPointRad(0.010)
+    fFileName(fileName), fNextID(0, 0, 0), 
+    fPalette(0., 8.), fLineWidth(0.008)
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -175,8 +175,6 @@ namespace mygl
       for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
       //Make sure a sensible fiducial node is set
-      fFiducialName.set_text(man->GetTopNode()->GetName());
-      set_fiducial();
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
     else std::cerr << "Failed to read geometry manager from file.\n";
@@ -192,53 +190,7 @@ namespace mygl
     //TODO: Let Drawer do this
     for(auto& scenePair: fViewer.GetScenes())
     {
-      if(scenePair.first != "Geometry" && scenePair.first != "Guides") scenePair.second.RemoveAll();
-    }
-
-    //Next, make maps of trackID to particle and parent ID to particle
-    std::map<int, std::vector<TG4Trajectory>> parentID;
-
-    for(auto& traj: (*fCurrentEvt)->Trajectories)
-    {
-      parentID[traj.ParentId].push_back(traj);
-    }
-
-    //Then, add particles to list tree and viewer
-    std::regex genieToEvd(R"(nu:(-?[[:digit:]]+);tgt:([[:digit:]]+);N:([[:digit:]]+)(.*);proc:Weak\[([[:alpha:]]+)\],([[:alpha:]]+);(.*))");
-    auto& primaries = (*fCurrentEvt)->Primaries;
-    for(auto& prim: primaries)
-    {
-      auto row = *(fViewer.GetScenes().find("Trajectories")->second.NewTopLevelNode());
-      
-      //Turn GENIE's interaction string into something easier to read
-      std::smatch match;
-      if(!std::regex_match(prim.Reaction, match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
-                                                                        << prim.Reaction << "\n";
-
-      const std::string nu = fPdgDB.GetParticle(std::stoi(match[1].str()))->GetName();
-      //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
-      const std::string nucleon = fPdgDB.GetParticle(std::stoi(match[3].str()))->GetName(); 
-      row[fTrajRecord.fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
-      row[fTrajRecord.fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
-      row[fTrajRecord.fColor] = Gdk::RGBA("(0., 0., 0.)");
-
-      //Add this interaction vertex to the scene of trajectory points
-      const auto ptPos = prim.Position;
-      const int pdg = std::stoi(match[1].str());
-      if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
-      const auto color = fPDGToColor[pdg];
-
-      //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
-      auto ptRow = fViewer.AddDrawable<mygl::Point>("TrajPts", fNextID++, 
-                                                    *(fViewer.GetScenes().find("TrajPts")->second.NewTopLevelNode()), true, 
-                                                    glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
-      ptRow[fTrajPtRecord.fMomMag] = -1.; //TODO: Get primary momentum
-      ptRow[fTrajPtRecord.fTime] = ptPos.T();
-      ptRow[fTrajPtRecord.fProcess] = nu+" "+match[5].str()+" "+match[6].str();
-      ptRow[fTrajPtRecord.fParticle] = nu;
-
-      const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajectory(row, child, parentID, ptRow);
+      if(scenePair.first == "EDep") scenePair.second.RemoveAll();
     }
 
     //Last, set current event number for GUI
@@ -380,118 +332,6 @@ namespace mygl
     //TODO: Drawing the 1mm grid is very slow.  
   }
 
-  Gtk::TreeModel::Row EvdWindow::AddTrajPt(const std::string& particle, const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& parent, 
-                                           const glm::vec4& color)
-  {
-    //Add Trajectory Point
-    const auto pos = pt.Position;
-    auto ptRow = fViewer.AddDrawable<mygl::Point>("TrajPts", fNextID++,
-                                                  parent, true,
-                                                  glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
-    ptRow[fTrajPtRecord.fMomMag] = pt.Momentum.Mag(); 
-    ptRow[fTrajPtRecord.fTime] = pos.T();
-    ptRow[fTrajPtRecord.fProcess] = ::ProcStr(pt); //TODO: Convert Geant process codes to string
-    ptRow[fTrajPtRecord.fParticle] = particle;
-
-    return ptRow;
-  }
-
-  void EvdWindow::AppendTrajectory(const Gtk::TreeModel::Row& parent, const TG4Trajectory& traj, 
-                                   std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                                   const Gtk::TreeModel::Row& parentPt)
-  {
-    const int pdg = traj.PDGCode;
-    //TODO: Legend
-    if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
-    auto color = fPDGToColor[pdg];
-
-    auto points = traj.Points;
-    std::vector<glm::vec3> vertices;
-    for(auto pointIt = points.begin(); pointIt != points.end(); ++pointIt)
-    {
-      auto& point = *pointIt;
-      const auto& pos = point.Position;
-
-      //Require that point is inside fiducial volume
-      double master[] = {pos.X(), pos.Y(), pos.Z()};
-      double local[3] = {}; 
-      fFiducialMatrix->MasterToLocal(master, local);
-
-      if(fFiducialNode->GetVolume()->Contains(local)) 
-      {
-        vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
-      }
-      else if(pointIt != points.begin()) //Extrapolate to the face of the fiducial volume
-      {
-        //Make sure previous point was in the fiducial volume
-        const auto& prevPoint = (pointIt-1)->Position;
-        master[0] = prevPoint.X();
-        master[1] = prevPoint.Y();
-        master[2] = prevPoint.Z();
-        fFiducialMatrix->MasterToLocal(master, local);
-        if(fFiducialNode->GetVolume()->Contains(local))
-        {
-          //TGeoShape::DistFromInside needs two 3-vectors in the local frame:
-          //The direction
-          const auto dirVec = (pos-prevPoint).Vect().Unit();
-          double dir[] = {dirVec.X(), dirVec.Y(), dirVec.Z()};
-          double dirLocal[3] = {};
-          fFiducialMatrix->MasterToLocalVect(dir, dirLocal);
-
-          //The position inside the volume
-          double prevMaster[] = {prevPoint.X(), prevPoint.Y(), prevPoint.Z()};
-          fFiducialMatrix->MasterToLocal(prevMaster, local);
-  
-          const auto dist = fFiducialNode->GetVolume()->GetShape()->DistFromInside(local, dirLocal, 3); 
-  
-          //Now, convert the position of the point to draw back to the master frame in which everything is drawn          
-          double newPtLocal[] = {local[0]+dirLocal[0]*dist, local[1]+dirLocal[1]*dist, local[2]+dirLocal[2]*dist};
-          fFiducialMatrix->LocalToMaster(newPtLocal, master);
-          vertices.emplace_back(master[0], master[1], master[2]);
-        }
-      }
-    }
-
-    //TODO: Change "false" back to "true" to draw trajectories by default
-    auto row = fViewer.AddDrawable<mygl::Path>("Trajectories", fNextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
-    row[fTrajRecord.fPartName] = traj.Name;
-    auto p = traj.InitialMomentum;
-    const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
-                                                                       //photons because of floating point precision behavior.  Never trust a computer to 
-                                                                       //calculate 0...
-    row[fTrajRecord.fEnergy] = p.E()-invariantMass; //Kinetic energy
-    Gdk::RGBA gdkColor;
-    gdkColor.set_rgba(color.r, color.g, color.b, 1.0);
-    row[fTrajRecord.fColor] = gdkColor;
-    ++fNextID;
-
-    //TODO: Append children based on what points they start at
-    //Second pass over trajectory points to find starting points of children.
-    auto children = parentToTraj[traj.TrackId];
-    //Produce map of closest trajectory point to child trajectory
-    std::map<std::vector<TG4TrajectoryPoint>::iterator, std::vector<TG4Trajectory>> ptToTraj;
-    for(const auto& child: children)
-    {
-      ptToTraj[std::min_element(points.begin(), points.end(), [&child](const TG4TrajectoryPoint& first, 
-                                                                       const TG4TrajectoryPoint& second)
-                                                              {
-                                                                return (first.Position - child.Points.front().Position).Mag() < 
-                                                                       (second.Position - child.Points.front().Position).Mag();
-                                                              })].push_back(child);
-    } 
-
-    for(auto ptIt = points.begin(); ptIt != points.end(); ++ptIt)
-    {
-      const auto& point = *ptIt;
-      auto ptRow = AddTrajPt(traj.Name, point, parentPt, glm::vec4(color, 1.0));
-      const auto& subChildren = ptToTraj[ptIt];
-      for(const auto& child: subChildren)
-      {
-        AppendTrajectory(row, child, parentToTraj, ptRow);
-      }
-    }
-  }
-
   void EvdWindow::make_scenes()
   {
     //Configure Geometry Scenes
@@ -499,13 +339,6 @@ namespace mygl
 
     //Configure Event Scenes
     for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
-
-    //Configure trajectory Scene
-    auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    trajTree.append_column("Particle Type", fTrajRecord.fPartName);
-    //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
-    trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
-    trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
 
     //Configure guide scene
     auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom"); 
@@ -520,13 +353,6 @@ namespace mygl
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
-
-    //Configure Trajectory Point Scene
-    auto& ptTree = fViewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
-    ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
-    ptTree.append_column("Process", fTrajPtRecord.fProcess);
-    ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
-    ptTree.append_column("Time", fTrajPtRecord.fTime);
 
     //TODO: Make fFileName a command line option to the application that runs this window.
     choose_file();
@@ -562,12 +388,6 @@ namespace mygl
     fFileChoose.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::choose_file));
     fFileLabelWrap.add(fFileLabel);
     fNavBar.add(fFileLabelWrap);
-
-    fFiducialLabelWrap.add(fFiducialLabel);
-    fNavBar.add(fFiducialLabelWrap);
-    fFiducialWrap.add(fFiducialName);
-    fNavBar.add(fFiducialWrap);
-    fFiducialName.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::set_fiducial));
   }
 
   void EvdWindow::choose_file()
@@ -602,50 +422,6 @@ namespace mygl
       ReadEvent();
     }
     else std::cerr << "Failed to get event " << newEvt << " from file " << fFileName << "\n";
-  }
-
-  void EvdWindow::ColToColor(Gtk::CellRenderer* render, const Gtk::TreeModel::iterator& it)
-  {
-    Gdk::RGBA color = (*it)[fTrajRecord.fColor];
-    auto textRender = ((Gtk::CellRendererText*)render);
-    textRender->property_background_rgba().set_value(color);
-  }
-
-  void EvdWindow::set_fiducial()
-  {
-    const std::string nodeName = fFiducialName.get_text();
-
-    auto id = new TGeoIdentity();
-    if(find_node(nodeName, fGeoManager->GetTopNode(), *id))
-    {
-      std::cout << "Set fiducial node to " << fFiducialNode->GetName() << "\n";
-      ReadEvent();
-    }
-    else
-    {
-      fFiducialName.set_text(fFiducialNode->GetName());
-      std::cerr << "Failed to find node with name " << nodeName << " in file " << fFile->GetName() << "\n";
-    }
-  }
-
-  bool EvdWindow::find_node(const std::string& name, TGeoNode* parent, TGeoMatrix& mat)
-  {
-    TGeoHMatrix local(mat);
-    local.Multiply(parent->GetMatrix());
-    if(std::string(parent->GetName()) == name) 
-    {
-      fFiducialNode = parent;
-      fFiducialMatrix = new TGeoHMatrix(local);
-      return true;
-    }
-
-    auto children = parent->GetNodes();
-    for(auto child: *children)
-    {
-      auto node = (TGeoNode*)child;
-      if(find_node(name, node, local)) return true;
-    }
-    return false;
   }
 }
 

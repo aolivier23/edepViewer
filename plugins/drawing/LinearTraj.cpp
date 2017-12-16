@@ -100,6 +100,11 @@ namespace draw
 
   void LinearTraj::doDrawEvent(const TG4Event& evt, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID) 
   {
+    std::cout << "Calling LinearTraj::doDrawEvent.\n";
+    //First, clear the scenes I plan to draw on
+    viewer.GetScenes().find("Trajectories")->second.RemoveAll();
+    viewer.GetScenes().find("TrajPts")->second.RemoveAll();
+
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
     for(auto& traj: evt.Trajectories)
@@ -151,6 +156,7 @@ namespace draw
                                     const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                                     const Gtk::TreeModel::Row& parentPt)
   {
+    std::cout << "Calling LinearTraj::AppendTrajectory.\n";
     const int pdg = traj.PDGCode;
     //TODO: Legend
     if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
@@ -194,6 +200,7 @@ namespace draw
     }
 
     //TODO: Change "false" back to "true" to draw trajectories by default
+    std::cout << "Adding Drawable to viewer in draw::LinearTraj::AppendTrajectory.\n";
     auto row = viewer.AddDrawable<mygl::Path>("Trajectories", nextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     row[fTrajRecord.fPartName] = traj.Name;
     auto p = traj.InitialMomentum;
