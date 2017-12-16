@@ -9,6 +9,9 @@
 //ROOT includes
 #include "TGeoManager.h" //For data
 
+//tinyxml2 include for configuration
+#include <tinyxml2.h>
+
 #ifndef DRAW_GEODRAWER_H
 #define DRAW_GEODRAWER_H
 
@@ -24,7 +27,7 @@ namespace draw
   {
     public:
       //TODO: Configuration information when I implement a configuration system
-      GeoDrawer();
+      GeoDrawer(const tinyxml2::XMLElement* config);
       virtual ~GeoDrawer() = default;
 
     protected:
@@ -38,7 +41,7 @@ namespace draw
                                   TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
 
       //Data needed when appending geometry nodes
-      const size_t fMaxDepth; //The maximum depth drawn in geometry hierarchy
+      size_t fMaxDepth; //The maximum depth drawn in geometry hierarchy
       std::unique_ptr<mygl::ColorIter> fColor;
 
       //ColRecord-derived classes to make unique TreeViews for geometry and trajectories

@@ -26,5 +26,5 @@ target_link_libraries( Drawer ${GTKMM_LIBRARIES} Color Scene )
 install( TARGETS Drawer DESTINATION lib )
 
 add_library( Geo SHARED GeoDrawer.cpp )
-target_link_libraries( Geo Drawer ${ROOT_LIBRARIES} Color Drawable PolyMesh Viewer Factory)
+target_link_libraries( Geo Drawer ${ROOT_LIBRARIES} Color Drawable PolyMesh Viewer Factory tinyxml2)
 install( TARGETS Geo DESTINATION lib )

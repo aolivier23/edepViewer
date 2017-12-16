@@ -29,6 +29,9 @@
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
 
+//Tinyxml include
+#include <tinyxml2.h>
+
 //c++ includes
 #include <regex>
 
@@ -102,10 +105,35 @@ namespace mygl
                                                                                  //children are realize()d
 
 
-    //TODO: Load and configure as a plugin
+    //TODO: Test of loading an XML document
+    tinyxml2::XMLDocument config;
+    const auto status = config.LoadFile("config.xml"); //TODO: Gtk::Application shenanigans to read in a file from the command line
+    if(status != tinyxml2::XML_SUCCESS) 
+    {
+      std::cerr << "Got error code " << status << " when loading document config.xml.\n";
+      //TODO: Proper error handling by throwing an exception.  I think the Gtk::Application will really handle this anyway.  
+    }
+
+    //Load global plugins
     auto& geoFactory = plgn::Factory<draw::Drawer<TGeoManager>>::instance();
-    fGlobalDrawers.emplace_back(geoFactory.Get("GeoDrawer"));
-    
+
+    const auto top = config.FirstChildElement();
+    const auto drawers = top->FirstChildElement();
+    const auto globalConfig = drawers->FirstChildElement("global");
+    if(globalConfig)
+    {
+      tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
+      while(pluginConfig != nullptr)
+      {
+        std::cout << pluginConfig->Value() << "\n";
+        auto drawer = geoFactory.Get(pluginConfig->ToElement());
+        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
+        else std::cerr << "Failed to get plugin named " << pluginConfig->Value() << "\n";
+        pluginConfig = pluginConfig->NextSibling();
+      }
+    }
+    else std::cerr << "Failed to get an element named global from config.xml.\n";
+
     show_all_children();
   }
 

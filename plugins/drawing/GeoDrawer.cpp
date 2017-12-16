@@ -31,9 +31,9 @@
 
 namespace draw
 {
-  GeoDrawer::GeoDrawer(): fMaxDepth(7), fColor(new mygl::ColorIter())
+  GeoDrawer::GeoDrawer(const tinyxml2::XMLElement* config): fColor(new mygl::ColorIter())
   {
-    //TODO: Configuration
+    fMaxDepth = config->IntAttribute("MaxDepth", 7);
   }
 
   void GeoDrawer::AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 

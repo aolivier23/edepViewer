@@ -5,6 +5,9 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 //Inspired by the conversation at https://codereview.stackexchange.com/questions/119812/compile-time-plugin-system
 
+//tinyxml2 include for configuration
+#include <tinyxml2.h>
+
 //c++ includes
 #include <memory> //For std::unique_ptr
 #include <map>
@@ -20,7 +23,7 @@ namespace plgn
     public:
       virtual ~RegistrarBase() = default;
 
-      virtual std::unique_ptr<BASE> NewPlugin(const std::string& /*config*/) = 0;
+      virtual std::unique_ptr<BASE> NewPlugin(const tinyxml2::XMLElement* config) = 0;
   };
 
   template <class BASE>
@@ -45,14 +48,11 @@ namespace plgn
       }
 
       //TODO: Turn string into parameter system interface
-      std::unique_ptr<BASE> Get(const std::string& name)
+      std::unique_ptr<BASE> Get(const tinyxml2::XMLElement* config)
       {
-        const auto found = fNameToReg.find(name);
-        if(found != fNameToReg.end()) return found->second->NewPlugin(name); //TODO: Make name, which is currently a dummy variable, a 
-                                                                             //      configuration object instead.  I am currently looking 
-                                                                             //      into using TinyXML.  However, it might be better to 
-                                                                             //      create some thin DOM wrapper over whatever library 
-                                                                             //      I use so that I could install any backend I need.  
+        if(config == nullptr) return std::unique_ptr<BASE>(); //Return invalid unique_ptr
+        const auto found = fNameToReg.find(config->Value());
+        if(found != fNameToReg.end()) return found->second->NewPlugin(config); 
         return std::unique_ptr<BASE>(); //Return invalid unique_ptr
       }
 
@@ -79,9 +79,9 @@ namespace plgn
 
       virtual ~Registrar() = default;
 
-      virtual std::unique_ptr<BASE> NewPlugin(const std::string& /*config*/)
+      virtual std::unique_ptr<BASE> NewPlugin(const tinyxml2::XMLElement* config)
       {
-        return std::unique_ptr<BASE>(new DERIVED(/*config*/));
+        return std::unique_ptr<BASE>(new DERIVED(config));
       }
   };
 }

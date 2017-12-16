@@ -11,6 +11,9 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
 
+#XML parser library for configuration
+find_package( tinyxml2 REQUIRED )
+
 #Support for glad
 add_library(glad SHARED glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
