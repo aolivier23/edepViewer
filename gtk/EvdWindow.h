@@ -90,7 +90,6 @@ namespace mygl
 
       //Drawing settings
       float fLineWidth; //The default line width to use
-      float fPointRad; //The default point radius to use
 
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
@@ -108,29 +107,6 @@ namespace mygl
      };
 
      GuideRecord fGuideRecord;
-
-     class EDepRecord: public ColRecord
-     {
-       public: 
-         EDepRecord(): ColRecord()
-         {
-           add(fPrimName);
-           add(fEnergy);
-           add(fdEdx);
-           add(fT0);
-           add(fScintE);
-           //TODO: Is it fair to call energy/length dE/dx?  
-         }
-
-         Gtk::TreeModelColumn<double>      fEnergy;
-         Gtk::TreeModelColumn<std::string> fPrimName;
-         Gtk::TreeModelColumn<double>      fT0;
-         Gtk::TreeModelColumn<double>      fScintE;
-         Gtk::TreeModelColumn<double>      fdEdx;
-     };
-     EDepRecord fEDepRecord;
-
-     Palette fPalette;
   };
 }
 
