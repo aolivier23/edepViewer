@@ -41,7 +41,7 @@ namespace mygl
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fNextID(0, 0, 0)
+    fFileName(fileName), fNextID(0, 0, 0), fServices()
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -135,7 +135,7 @@ namespace mygl
   { 
     //TODO: Move all per-event drawing code to plugins
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), *fGeoManager, fViewer, id);
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), *fGeoManager, fViewer, id, fServices);
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));

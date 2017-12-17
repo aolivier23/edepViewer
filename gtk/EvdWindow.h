@@ -7,6 +7,7 @@
 //Plugin includes
 #include "plugins/drawing/GeoDrawer.cpp"
 #include "plugins/drawing/EventDrawer.cpp"
+#include "plugins/drawing/Services.cpp"
 
 //Gtkmm includes
 #include <gtkmm.h>
@@ -15,10 +16,6 @@
 #include "gl/Viewer.h"
 #include "gl/Scene.h"
 #include "gl/ColRecord.cpp"
-
-//gtk directory includes
-#include "ColorIter.cxx"
-#include "gtk/Palette.cpp"
 
 //ROOT includes
 #include "TFile.h"
@@ -46,14 +43,12 @@ namespace mygl
       virtual ~EvdWindow();
 
       void SetFile(const std::string& fileName); //Set the file to be processed
-      //TODO: Overhaul drawing model to use boolean widgets in TreeView
       void Print(); //Print the current window to a file
 
       virtual void make_scenes();
 
     protected:
       //Child Widgets
-      Glib::RefPtr<Gtk::TreeSelection> fSelection;
       mygl::Viewer fViewer;
 
       //Toolbar for event navigation and printing
@@ -82,6 +77,7 @@ namespace mygl
       void DrawGuides(); 
 
       mygl::VisID fNextID;
+      draw::Services fServices;
 
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
@@ -95,18 +91,18 @@ namespace mygl
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
       std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
 
-     class GuideRecord: public ColRecord
-     {
-       public:
-         GuideRecord(): ColRecord()
-         {
-           add(fName);
-         }
+      class GuideRecord: public ColRecord
+      {
+        public:
+          GuideRecord(): ColRecord()
+          {
+            add(fName);
+          }
 
-         Gtk::TreeModelColumn<std::string> fName;
-     };
+          Gtk::TreeModelColumn<std::string> fName;
+      };
 
-     GuideRecord fGuideRecord;
+      GuideRecord fGuideRecord;
   };
 }
 

@@ -20,36 +20,10 @@ include_directories( ${GTKMM_INCLUDE_DIRS} )
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
-#Add libraries to test visualization with geometry
-add_library( GeoDispWindow GeoDispWindow.cpp )
-target_link_libraries( GeoDispWindow ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} )
-install( TARGETS GeoDispWindow DESTINATION lib )
-
-add_executable( GeoDisp GeoDisp.cpp )
-target_link_libraries( GeoDisp GeoDispWindow )
-install( TARGETS GeoDisp DESTINATION bin )
-
-add_library( ColorIter ColorIter.cxx )
-target_link_libraries( ColorIter ${ROOT_LIBRARIES} )
-install( TARGETS ColorIter DESTINATION lib )
-
-add_library( Palette Palette.cpp )
-target_link_libraries( Palette )
-install( TARGETS Palette DESTINATION lib )
-
-#Add libraries for drawing geometry based on list tree
-add_library( GeoDrawWindow GeoDrawWindow.cpp )
-target_link_libraries( GeoDrawWindow ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Camera Drawable PolyMesh ColorIter )
-install( TARGETS GeoDrawWindow DESTINATION lib )
-
-add_executable( GeoDraw GeoDraw.cpp )
-target_link_libraries( GeoDraw GeoDrawWindow )
-install( TARGETS GeoDraw DESTINATION bin )
-
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             ColorIter Palette edepsim Factory Drawers tinyxml2 )
+                                             edepsim Factory Drawers tinyxml2 )
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )

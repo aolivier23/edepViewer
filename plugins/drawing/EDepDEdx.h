@@ -36,7 +36,8 @@ namespace draw
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer);
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID);
+      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+                               mygl::VisID& nextID, Services& services);
 
       //Drawing data
       mygl::Palette fPalette; //Mapping from dE/dx to color

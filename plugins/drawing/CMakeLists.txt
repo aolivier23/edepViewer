@@ -21,6 +21,7 @@ include_directories( ${GTKMM_INCLUDE_DIRS} )
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Add libraries of plugins
-add_library( Drawers SHARED GeoDrawer.cpp DefaultGeo.cpp EventDrawer.cpp FiducialDrawer.cpp LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp)
+add_library( Drawers SHARED GeoDrawer.cpp DefaultGeo.cpp Services.cpp EventDrawer.cpp FiducialDrawer.cpp 
+                            LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp)
 target_link_libraries( Drawers ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Viewer Factory tinyxml2 )
 install( TARGETS Drawers DESTINATION lib )

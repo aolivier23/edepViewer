@@ -42,7 +42,7 @@ namespace draw
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
   }
 
-  void EDepDEdx::doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID)
+  void EDepDEdx::doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
   {
     //Remove old drawing elements
     viewer.GetScenes().find("EDep")->second.RemoveAll();

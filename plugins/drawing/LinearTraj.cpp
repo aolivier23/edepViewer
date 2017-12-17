@@ -76,7 +76,7 @@ namespace
 
 namespace draw
 {
-  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): FiducialDrawer(config), fPDGToColor()
+  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): FiducialDrawer(config)
   {
     fPointRad = config->FloatAttribute("PointRad", 0.010);
     fLineWidth = config->FloatAttribute("LineWidth", 0.008);
@@ -98,9 +98,8 @@ namespace draw
     ptTree.append_column("Time", fTrajPtRecord.fTime);
   }
 
-  void LinearTraj::doDrawEvent(const TG4Event& evt, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID) 
+  void LinearTraj::doDrawEvent(const TG4Event& evt, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
   {
-    std::cout << "Calling LinearTraj::doDrawEvent.\n";
     //First, clear the scenes I plan to draw on
     viewer.GetScenes().find("Trajectories")->second.RemoveAll();
     viewer.GetScenes().find("TrajPts")->second.RemoveAll();
@@ -134,8 +133,7 @@ namespace draw
       //Add this interaction vertex to the scene of trajectory points
       const auto ptPos = prim.Position;
       const int pdg = std::stoi(match[1].str());
-      if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
-      const auto color = fPDGToColor[pdg];
+      const auto color = (*(services.fPDGToColor))[pdg];
 
       //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
       auto ptRow = viewer.AddDrawable<mygl::Point>("TrajPts", nextID++, 
@@ -147,20 +145,17 @@ namespace draw
       ptRow[fTrajPtRecord.fParticle] = nu;
 
       const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajectory(viewer, man, nextID, row, child, parentID, ptRow);
+      for(const auto& child: children) AppendTrajectory(viewer, man, nextID, row, child, parentID, ptRow, services);
     }
   }
 
   //Helper functions for drawing trajectories and trajectory points
   void LinearTraj::AppendTrajectory(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
                                     const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                                    const Gtk::TreeModel::Row& parentPt)
+                                    const Gtk::TreeModel::Row& parentPt, Services& services)
   {
-    std::cout << "Calling LinearTraj::AppendTrajectory.\n";
     const int pdg = traj.PDGCode;
-    //TODO: Legend
-    if(fPDGToColor.find(pdg) == fPDGToColor.end()) fPDGToColor[pdg] = fPDGColor++;
-    auto color = fPDGToColor[pdg];
+    const auto color = (*(services.fPDGToColor))[pdg];
                                                                                                                                                                
     auto points = traj.Points;
     std::vector<glm::vec3> vertices;
@@ -200,7 +195,6 @@ namespace draw
     }
 
     //TODO: Change "false" back to "true" to draw trajectories by default
-    std::cout << "Adding Drawable to viewer in draw::LinearTraj::AppendTrajectory.\n";
     auto row = viewer.AddDrawable<mygl::Path>("Trajectories", nextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     row[fTrajRecord.fPartName] = traj.Name;
     auto p = traj.InitialMomentum;
@@ -234,7 +228,7 @@ namespace draw
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
-        AppendTrajectory(viewer, man, nextID, row, child, parentToTraj, ptRow);
+        AppendTrajectory(viewer, man, nextID, row, child, parentToTraj, ptRow, services);
       }
     }
   }

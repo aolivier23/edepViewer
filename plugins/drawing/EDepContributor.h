@@ -35,8 +35,9 @@ namespace draw
       virtual ~EDepContributor() = default;
 
     protected:
-      virtual void doRequestScenes(mygl::Viewer& viewer);
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID);
+      virtual void doRequestScenes(mygl::Viewer& viewer) override;
+      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+                               mygl::VisID& nextID, Services& services) override;
 
       //Drawing data
       std::map<int, glm::vec3> fPDGToColor;

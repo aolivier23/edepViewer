@@ -41,7 +41,8 @@ namespace draw
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
   }
 
-  void EDepContributor::doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID)
+  void EDepContributor::doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+                                    mygl::VisID& nextID, Services& services)
   {
     //Remove old drawing elements
     viewer.GetScenes().find("EDep")->second.RemoveAll();
@@ -56,12 +57,6 @@ namespace draw
       auto edeps = det.second;
 
       detRow[fEDepRecord.fPrimName] = detName;
-      //TODO: Map sensitive volume name to detector name and use same VisID?  This would seem to require infrastructure that 
-      //      I don't yet have both in terms of Scenes communicating when an object is toggled (not too hard) and ROOT not 
-      //      knowing about sensitive detector auxiliary tags (potentially very hard).  
-      //TODO: Energy depositions children of sensitive detector?  This doesn't seem so useful at the moment, and sensitive detectors 
-      //      do not have the "properties" I plan to include in the energy deposition tree. I will just cut out energy depositions 
-      //      in volumes by setting the frustrum box from the camera API (hopefully).   
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
       for(auto& edep: edeps)
@@ -98,11 +93,7 @@ namespace draw
         //MeV*cm^2/g goes as Z/A.  To get comparable stopping powers for all materials, try to "remove the Z/A dependence".
         if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ; //*mat->GetA()/mat->GetZ(); 
 
-        //TODO: This should be shared as a "framework service".  Then, the PDG palette could also have a GUI
-        const auto found = fPDGToColor.find(data.Trajectories[edep.PrimaryId].PDGCode);
-        if(found == fPDGToColor.end()) fPDGToColor[data.Trajectories[edep.PrimaryId].PDGCode] = fPDGColor++;
-        
-        auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPDGToColor[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
+        auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
         row[fEDepRecord.fdEdx]    = dEdx;

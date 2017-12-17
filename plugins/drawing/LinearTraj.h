@@ -7,9 +7,6 @@
 #include "plugins/drawing/EventDrawer.cpp"
 #include "plugins/drawing/FiducialDrawer.cpp"
 
-//util includes
-#include "util/ColorIter.cxx"
-
 //ROOT includes
 #include "TGeoManager.h" //For data
 #include "TDatabasePDG.h"
@@ -44,21 +41,20 @@ namespace draw
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
-      virtual void doDrawEvent(const TG4Event& evt, const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;
+      virtual void doDrawEvent(const TG4Event& evt, const TGeoManager& data, mygl::Viewer& viewer, 
+                               mygl::VisID& nextID, Services& services) override;
 
       //Drawing data
-      std::map<int, glm::vec3> fPDGToColor; 
-      mygl::ColorIter fPDGColor; //TODO: Merge this with fPDGToColor 
-
       float fPointRad; //Radius of points to draw
       float fLineWidth; //Width of lines to draw
 
       //Helper functions for drawing trajectories and trajectory points
-      void AppendTrajectory(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, const TG4Trajectory& traj,
-                            std::map<int, std::vector<TG4Trajectory>>& parentToTraj, const Gtk::TreeModel::Row& ptRow);
+      void AppendTrajectory(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+                            const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
+                            const Gtk::TreeModel::Row& ptRow, Services& services);
 
-      Gtk::TreeModel::Row AddTrajPt(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const std::string& particle, const TG4TrajectoryPoint& pt, 
-                                    const Gtk::TreeModel::Row& ptRow, const glm::vec4& color);
+      Gtk::TreeModel::Row AddTrajPt(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const std::string& particle, 
+                                    const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, const glm::vec4& color);
 
       //Description of the data saved for a trajectory
       class TrajRecord: public mygl::ColRecord

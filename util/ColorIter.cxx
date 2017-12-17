@@ -8,6 +8,9 @@
 //glm includes
 #include <glm/glm.hpp>
 
+#ifndef MYGL_COLORITER_CXX
+#define MYGL_COLORITER_CXX
+
 namespace mygl
 {
   class ColorIter
@@ -96,3 +99,4 @@ namespace mygl
   };
 }
 
+#endif //MYGL_COLORITER_CXX

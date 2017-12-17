@@ -46,7 +46,8 @@ namespace draw
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all FiducialDrawers here.
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID) = 0;
+      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+                               mygl::VisID& nextID, Services& services) = 0;
 
       //Helper function for derived classes
       bool IsFiducial(const TVector3& point, const TGeoManager& man) 
