@@ -154,7 +154,8 @@ namespace mygl
       rows.emplace_back(name, color);
     }
     fLegend.reset(new LegendView("Particles", *this, std::move(rows)));
-    fLegend->set_position(Gtk::WindowPosition::WIN_POS_NONE);
+    //TODO: Not even close to portable
+    fLegend->move(150, 150); //The fact that I specified this in pixels should indicate how frustrated I am...
     fLegend->show();
   }
   
