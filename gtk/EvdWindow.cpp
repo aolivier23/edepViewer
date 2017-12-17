@@ -39,9 +39,9 @@ namespace mygl
 {
   EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
-            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), 
+            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), fOverViewer(),  
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fNextID(0, 0, 0), fServices()
+    fFileName(fileName), fLegend(nullptr), fNextID(0, 0, 0), fServices()
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -49,6 +49,7 @@ namespace mygl
 
     build_toolbar();
     add(fVBox);
+
     fVBox.pack_start(fNavBar, Gtk::PACK_SHRINK);
     fVBox.pack_end(fViewer);
 
@@ -141,6 +142,20 @@ namespace mygl
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
     auto trajs = fViewer.GetScenes().find("Trajectories");
     if(trajs != fViewer.GetScenes().end()) trajs->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+
+    //Pop up legend of particle colors used
+    std::vector<LegendView::Row> rows;
+    auto db = TDatabasePDG::Instance();
+    for(const auto& pdg: *(this->fServices.fPDGToColor))
+    {
+      const std::string name = db->GetParticle(pdg.first)->GetName();
+      Gdk::RGBA color;
+      color.set_rgba(pdg.second.r, pdg.second.g, pdg.second.b, 1.0);
+      rows.emplace_back(name, color);
+    }
+    fLegend.reset(new LegendView("Particles", *this, std::move(rows)));
+    fLegend->set_position(Gtk::WindowPosition::WIN_POS_NONE);
+    fLegend->show();
   }
   
   //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 

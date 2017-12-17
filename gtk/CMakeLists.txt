@@ -20,10 +20,14 @@ include_directories( ${GTKMM_INCLUDE_DIRS} )
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
+#Libraries for small GUIS
+add_library( GUI LegendView.cpp )
+target_link_libraries( GUI LINK_PUBLIC ${GTKMM_LIBRARIES} )
+
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             edepsim Factory Drawers tinyxml2 )
+                                             edepsim Factory Drawers tinyxml2 GUI )
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )

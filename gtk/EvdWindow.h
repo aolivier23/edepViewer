@@ -12,6 +12,9 @@
 //Gtkmm includes
 #include <gtkmm.h>
 
+//custom GUI includes
+#include "gtk/LegendView.h"
+
 //gl includes
 #include "gl/Viewer.h"
 #include "gl/Scene.h"
@@ -50,6 +53,7 @@ namespace mygl
     protected:
       //Child Widgets
       mygl::Viewer fViewer;
+      Gtk::Overlay fOverViewer;
 
       //Toolbar for event navigation and printing
       //TODO: event navigation
@@ -63,6 +67,8 @@ namespace mygl
       Gtk::ToolButton fFileChoose; 
       Gtk::ToolItem fFileLabelWrap;
       Gtk::Label fFileLabel; //Displays the current file name so that it shows up in printouts 
+
+      std::unique_ptr<LegendView> fLegend;
 
       //Source of data for drawing
       std::string fFileName;
