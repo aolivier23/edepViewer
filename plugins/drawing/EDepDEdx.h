@@ -18,7 +18,6 @@
 #ifndef DRAW_EDEPDEDX_CPP
 #define DRAW_EDEPDEDX_CPP
 
-class TGeoManager;
 class TG4Event;
 
 namespace tinyxml2
@@ -36,7 +35,7 @@ namespace draw
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer);
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+      virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services);
 
       //Drawing data

@@ -29,9 +29,6 @@
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
 
-//Tinyxml include
-#include <tinyxml2.h>
-
 //c++ includes
 #include <regex>
 
@@ -41,7 +38,7 @@ namespace mygl
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
             darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), fOverViewer(),  
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fLegend(nullptr), fNextID(0, 0, 0), fServices()
+    fFileName(fileName), fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument())
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -58,8 +55,7 @@ namespace mygl
 
 
     //TODO: Test of loading an XML document
-    tinyxml2::XMLDocument config;
-    const auto status = config.LoadFile("config.xml"); //TODO: Gtk::Application shenanigans to read in a file from the command line
+    const auto status = fConfig->LoadFile("config.xml"); //TODO: Gtk::Application shenanigans to read in a file from the command line
     if(status != tinyxml2::XML_SUCCESS) 
     {
       std::cerr << "Got error code " << status << " when loading document config.xml.\n";
@@ -69,7 +65,7 @@ namespace mygl
     //Load global plugins
     auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
 
-    const auto top = config.FirstChildElement();
+    const auto top = fConfig->FirstChildElement();
     const auto drawers = top->FirstChildElement();
     const auto globalConfig = drawers->FirstChildElement("global");
     if(globalConfig)
@@ -120,7 +116,13 @@ namespace mygl
   {
     fNextID = mygl::VisID();
     
-    fGeoManager = (TGeoManager*)(fFile->Get("EDepSimGeometry"));
+    fGeoManager.reset((TGeoManager*)(fFile->Get("EDepSimGeometry")));
+
+    //Load service information
+    const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services");
+    const auto geoConfig = serviceConfig->FirstChildElement("geo");
+
+    fServices.fGeometry.reset(new util::Geometry(geoConfig, fGeoManager));
     auto man = fGeoManager;
     if(man != nullptr)
     {
@@ -136,7 +138,7 @@ namespace mygl
   { 
     //TODO: Move all per-event drawing code to plugins
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), *fGeoManager, fViewer, id, fServices);
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), fViewer, id, fServices);
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
@@ -146,7 +148,7 @@ namespace mygl
     //Pop up legend of particle colors used
     std::vector<LegendView::Row> rows;
     auto db = TDatabasePDG::Instance();
-    for(const auto& pdg: *(this->fServices.fPDGToColor))
+    for(const auto& pdg: *(fServices.fPDGToColor))
     {
       const std::string name = db->GetParticle(pdg.first)->GetName();
       Gdk::RGBA color;

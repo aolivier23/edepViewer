@@ -1,14 +1,12 @@
 //File: LinearTraj.h
-//Brief: A plugin that draws the ROOT geometry for the edepsim display.  Takes a TGeoManager as drawing data and 
-//       draws 3D shapes using ROOT's tesselation facilities.  
+//Brief: A plugin that draws the true trajectories of particles by linearly extrapolating between trajectory points.  
+//       Doesn't know anything about EM fields, but does know about fiducial volumes.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //draw includes
 #include "plugins/drawing/EventDrawer.cpp"
-#include "plugins/drawing/FiducialDrawer.cpp"
 
 //ROOT includes
-#include "TGeoManager.h" //For data
 #include "TDatabasePDG.h"
 
 //Gtkmm includes
@@ -32,7 +30,7 @@ class TG4TrajectoryPoint;
 
 namespace draw
 {
-  class LinearTraj: public FiducialDrawer
+  class LinearTraj: public EventDrawer
   {
     public:
       //TODO: Configuration information when I implement a configuration system
@@ -41,7 +39,7 @@ namespace draw
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
-      virtual void doDrawEvent(const TG4Event& evt, const TGeoManager& data, mygl::Viewer& viewer, 
+      virtual void doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services) override;
 
       //Drawing data
@@ -49,11 +47,11 @@ namespace draw
       float fLineWidth; //Width of lines to draw
 
       //Helper functions for drawing trajectories and trajectory points
-      void AppendTrajectory(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+      void AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
                             const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                             const Gtk::TreeModel::Row& ptRow, Services& services);
 
-      Gtk::TreeModel::Row AddTrajPt(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const std::string& particle, 
+      Gtk::TreeModel::Row AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
                                     const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, const glm::vec4& color);
 
       //Description of the data saved for a trajectory

@@ -27,7 +27,7 @@ target_link_libraries( GUI LINK_PUBLIC ${GTKMM_LIBRARIES} )
 #Libraries for final EDepSim visualization window
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             edepsim Factory Drawers tinyxml2 GUI )
+                                             edepsim Factory Drawers tinyxml2 GUI Geometry )
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_executable( EvdDraw EvdDraw.cpp )

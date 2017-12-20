@@ -17,7 +17,6 @@
 #ifndef DRAW_EVENTDRAWER_CPP
 #define DRAW_EVENTDRAWER_CPP
 
-class TGeoManager;
 class TG4Event;
 
 namespace draw
@@ -34,17 +33,17 @@ namespace draw
         doRequestScenes(viewer);
       }
 
-      void DrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
+      void DrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
       //Remove old objects and draw new ones
       {
-        doDrawEvent(data, man, viewer, nextID, services);
+        doDrawEvent(data, viewer, nextID, services);
       }
 
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all EventDrawers here.
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+      virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services) = 0;
   };
 }

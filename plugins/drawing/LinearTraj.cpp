@@ -1,6 +1,5 @@
 //File: LinearTraj.cpp
-//Brief: A plugin that draws the ROOT geometry for the edepsim display.  Takes a TGeoManager as drawing data and 
-//       draws 3D shapes using ROOT's tesselation facilities.  
+//Brief: A plugin that draws true trajectories of particles.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //draw includes
@@ -14,7 +13,6 @@
 #include "plugins/Factory.cpp"
 
 //ROOT includes
-#include "TGeoManager.h" 
 #include "TDatabasePDG.h"
 
 //edepsim includes
@@ -76,7 +74,7 @@ namespace
 
 namespace draw
 {
-  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): FiducialDrawer(config)
+  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config)
   {
     fPointRad = config->FloatAttribute("PointRad", 0.010);
     fLineWidth = config->FloatAttribute("LineWidth", 0.008);
@@ -98,7 +96,7 @@ namespace draw
     ptTree.append_column("Time", fTrajPtRecord.fTime);
   }
 
-  void LinearTraj::doDrawEvent(const TG4Event& evt, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
+  void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
   {
     //First, clear the scenes I plan to draw on
     viewer.GetScenes().find("Trajectories")->second.RemoveAll();
@@ -145,12 +143,12 @@ namespace draw
       ptRow[fTrajPtRecord.fParticle] = nu;
 
       const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajectory(viewer, man, nextID, row, child, parentID, ptRow, services);
+      for(const auto& child: children) AppendTrajectory(viewer, nextID, row, child, parentID, ptRow, services);
     }
   }
 
   //Helper functions for drawing trajectories and trajectory points
-  void LinearTraj::AppendTrajectory(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+  void LinearTraj::AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
                                     const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                                     const Gtk::TreeModel::Row& parentPt, Services& services)
   {
@@ -165,7 +163,7 @@ namespace draw
       const auto& pos = point.Position;
 
       //Require that point is inside fiducial volume
-      if(IsFiducial(pos.Vect(), man))
+      if(services.fGeometry->IsFiducial(pos.Vect()))
       {
         vertices.emplace_back(pos.X(), pos.Y(), pos.Z());
       }
@@ -174,21 +172,22 @@ namespace draw
         const auto prevPoint = (pointIt-1)->Position;
 
         //Make sure previous point was in the fiducial volume
-        if(IsFiducial(prevPoint.Vect(), man))
+        if(services.fGeometry->IsFiducial(prevPoint.Vect()))
         {
           //TGeoShape::DistFromInside needs two 3-vectors in the local frame:
           //The direction
-          const auto dirLocalV = InLocal((pos-prevPoint).Vect().Unit(), man);
+          const auto dirLocalV = services.fGeometry->InLocal((pos-prevPoint).Vect().Unit());
           double dirLocal[] = {dirLocalV.X(), dirLocalV.Y(), dirLocalV.Z()};
 
           //The position inside the volume
-          const auto prevLocal = InLocal(prevPoint.Vect(), man);          
+          const auto prevLocal = services.fGeometry->InLocal(prevPoint.Vect());          
           double local[] = {prevLocal.X(), prevLocal.Y(), prevLocal.Z()};
 
-          const auto dist = GetFiducial().GetVolume()->GetShape()->DistFromInside(local, dirLocal, 3); 
+          const auto dist = services.fGeometry->GetFiducial().GetVolume()->GetShape()->DistFromInside(local, dirLocal, 3); 
 
           //Now, convert the position of the point to draw back to the master frame in which everything is drawn          
-          const auto master = InMaster(TVector3(local[0]+dirLocal[0]*dist, local[1]+dirLocal[1]*dist, local[2]+dirLocal[2]*dist), man);
+          const auto master = services.fGeometry->InMaster(TVector3(local[0]+dirLocal[0]*dist, local[1]+dirLocal[1]*dist, 
+                                                                    local[2]+dirLocal[2]*dist));
           vertices.emplace_back(master.X(), master.Y(), master.Z());
         }
       }
@@ -224,16 +223,16 @@ namespace draw
     for(auto ptIt = points.begin(); ptIt != points.end(); ++ptIt)
     {
       const auto& point = *ptIt;
-      auto ptRow = AddTrajPt(viewer, man, nextID, traj.Name, point, parentPt, glm::vec4(color, 1.0));
+      auto ptRow = AddTrajPt(viewer, nextID, traj.Name, point, parentPt, glm::vec4(color, 1.0));
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
-        AppendTrajectory(viewer, man, nextID, row, child, parentToTraj, ptRow, services);
+        AppendTrajectory(viewer, nextID, row, child, parentToTraj, ptRow, services);
       }
     }
   }
 
-  Gtk::TreeModel::Row LinearTraj::AddTrajPt(mygl::Viewer& viewer, const TGeoManager& man, mygl::VisID& nextID, const std::string& particle, 
+  Gtk::TreeModel::Row LinearTraj::AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
                                             const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& parent, const glm::vec4& color)
   {
     //Add Trajectory Point

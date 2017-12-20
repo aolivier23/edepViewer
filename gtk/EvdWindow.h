@@ -26,6 +26,9 @@
 #include "TGeoMatrix.h"
 #include "TDatabasePDG.h"
 
+//Tinyxml include
+#include <tinyxml2.h>
+
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
 #include "TG4Event.h" //TODO: Make CMake figure out this path
@@ -51,6 +54,9 @@ namespace mygl
       virtual void make_scenes();
 
     protected:
+      //Configuration file
+      std::unique_ptr<tinyxml2::XMLDocument> fConfig;
+
       //Child Widgets
       mygl::Viewer fViewer;
       Gtk::Overlay fOverViewer;
@@ -75,7 +81,7 @@ namespace mygl
       std::unique_ptr<TFile> fFile;
       std::unique_ptr<TTreeReader> fReader;
       std::unique_ptr<TTreeReaderValue<TG4Event>> fCurrentEvt; //The current event being drawn.
-      TGeoManager* fGeoManager; //The current geometry 
+      std::shared_ptr<TGeoManager> fGeoManager; //The current geometry 
 
     private:
       void ReadGeo();

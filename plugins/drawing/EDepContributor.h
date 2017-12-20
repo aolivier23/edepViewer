@@ -36,7 +36,7 @@ namespace draw
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
-      virtual void doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, 
+      virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services) override;
 
       //Drawing data

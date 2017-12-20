@@ -28,6 +28,7 @@ namespace mygl
     set_orientation(Gtk::Orientation::ORIENTATION_HORIZONTAL);
     fColorSrc = color;
     fColor.override_background_color(fColorSrc);
+    fColor.set_size_request(30, -1);
 
     pack_start(fColor);
     pack_start(fLabel);

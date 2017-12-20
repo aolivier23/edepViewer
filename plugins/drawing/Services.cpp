@@ -8,6 +8,7 @@
 
 //util includes
 #include "util/PDGToColor.h"
+#include "util/Geometry.cpp"
 
 //c++ includes
 #include <memory>
@@ -22,6 +23,7 @@ namespace draw
     Services(): fPDGToColor(new mygl::PDGToColor()) {}
 
     std::unique_ptr<mygl::PDGToColor> fPDGToColor;
+    std::unique_ptr<util::Geometry> fGeometry;
   };
 }
 

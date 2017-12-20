@@ -42,7 +42,7 @@ namespace draw
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
   }
 
-  void EDepDEdx::doDrawEvent(const TG4Event& data, const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
+  void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
   {
     //Remove old drawing elements
     viewer.GetScenes().find("EDep")->second.RemoveAll();
@@ -90,7 +90,6 @@ namespace draw
         //Get the density of material at the middle of this energy deposit
         /*const auto diff = start.Vect()-stop.Vect();
         const auto mid = start.Vect()+diff.Unit()*diff.Mag();
-        auto mat = man.FindNode(mid.X(), mid.Y(), mid.Z())->GetVolume()->GetMaterial();
         const double density = mat->GetDensity()/6.24e24*1e6;*/
 
         //Get the weighted density of the material that most of this energy deposit was deposited in.  Increase the accuracy of this 
@@ -104,12 +103,10 @@ namespace draw
         for(size_t sample = 0; sample < nSamples; ++sample)
         {
           const auto pos = start.Vect()+diff.Unit()*dist;
-          const auto mat = gGeoManager->FindNode(pos.X(), pos.Y(), pos.Z())->GetVolume()->GetMaterial(); //TODO: Come up with a 
-                                                                                                         //      solution that avoids 
-                                                                                                         //      gGeoManager
-          sumDensity += mat->GetDensity();
-          sumA += mat->GetA();
-          sumZ += mat->GetZ();
+          const auto& mat = services.fGeometry->FindMaterial(pos); 
+          sumDensity += mat.GetDensity();
+          sumA += mat.GetA();
+          sumZ += mat.GetZ();
         }
         const double density = sumDensity/nSamples/6.24e24*1e6;
         //std::cout << "density is " << density << "\n";
