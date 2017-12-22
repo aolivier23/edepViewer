@@ -30,6 +30,10 @@ target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES
                                              edepsim Factory Drawers tinyxml2 GUI Geometry )
 install( TARGETS EvdWindow DESTINATION lib )
 
+add_library( EvdApp EvdApp.cpp )
+target_link_libraries( EvdApp LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} EvdWindow )
+install( TARGETS EvdApp DESTINATION lib )
+
 add_executable( EvdDraw EvdDraw.cpp )
 target_link_libraries( EvdDraw EvdWindow )
 install( TARGETS EvdDraw DESTINATION bin )
