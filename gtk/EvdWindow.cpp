@@ -36,7 +36,7 @@ namespace mygl
 {
   EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
-            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.), fOverViewer(),  
+            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
     fFileName(fileName), fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument())
   {
@@ -164,38 +164,6 @@ namespace mygl
     fLegend->show();
   }
   
-  //Function to draw any guides the user requests, like axes or a scale.  Starting with a one meter scale at the 
-  //center of the screen broken into mm for now.  
-  void EvdWindow::DrawGuides() 
-  {
-    auto root = *(fViewer.GetScenes().find("Guides")->second.NewTopLevelNode());
-    root[fGuideRecord.fName] = "Measurement Objects";
-  
-    const double gridSize = 1e5;
-    //A 1m grid 
-    auto row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 1000., gridSize, 1000., 
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1m Grid";
-
-    //A 1dm grid 
-    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 100., gridSize, 100.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1dm Grid";
-
-    //A 1cm grid
-    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 10., gridSize, 10.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1cm Grid";
-
-    //A 1mm grid
-    row = fViewer.AddDrawable<mygl::Grid>("Guides", fNextID++, root, false, glm::mat4(), gridSize, 1., gridSize, 1.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1mm Grid";
-    
-    //TODO: Smaller grids, maybe with dashed lines
-    //TODO: Drawing the 1mm grid is very slow.  
-  }
-
   void EvdWindow::make_scenes()
   {
     //Configure Geometry Scenes
@@ -203,12 +171,6 @@ namespace mygl
 
     //Configure Event Scenes
     for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
-
-    //Configure guide scene
-    auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom"); 
-    guideTree.append_column("Name", fGuideRecord.fName);
-    guideTree.expand_to_path(Gtk::TreePath("0"));
-    DrawGuides(); //Only do this once ever
 
     //TODO: Make fFileName a command line option to the application that runs this window.
     choose_file();

@@ -59,7 +59,6 @@ namespace mygl
 
       //Child Widgets
       mygl::Viewer fViewer;
-      Gtk::Overlay fOverViewer;
 
       //Toolbar for event navigation and printing
       //TODO: event navigation
@@ -86,7 +85,6 @@ namespace mygl
     private:
       void ReadGeo();
       void ReadEvent();
-      void DrawGuides(); 
 
       mygl::VisID fNextID;
       draw::Services fServices;
@@ -96,25 +94,10 @@ namespace mygl
       void goto_event();
       void next_event();
 
-      //Drawing settings
-      float fLineWidth; //The default line width to use
-
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
       std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
 
-      class GuideRecord: public ColRecord
-      {
-        public:
-          GuideRecord(): ColRecord()
-          {
-            add(fName);
-          }
-
-          Gtk::TreeModelColumn<std::string> fName;
-      };
-
-      GuideRecord fGuideRecord;
   };
 }
 
