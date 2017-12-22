@@ -143,14 +143,17 @@ namespace mygl
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
     auto trajs = fViewer.GetScenes().find("Trajectories");
-    if(trajs != fViewer.GetScenes().end()) trajs->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+    //if(trajs != fViewer.GetScenes().end()) trajs->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
 
     //Pop up legend of particle colors used
     std::vector<LegendView::Row> rows;
     auto db = TDatabasePDG::Instance();
     for(const auto& pdg: *(fServices.fPDGToColor))
     {
-      const std::string name = db->GetParticle(pdg.first)->GetName();
+      const auto particle = db->GetParticle(pdg.first);
+      std::string name;
+      if(particle) name = particle->GetName();
+      else name = std::to_string(pdg.first);
       Gdk::RGBA color;
       color.set_rgba(pdg.second.r, pdg.second.g, pdg.second.b, 1.0);
       rows.emplace_back(name, color);
