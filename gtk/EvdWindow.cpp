@@ -34,7 +34,7 @@
 
 namespace mygl
 {
-  EvdWindow::EvdWindow(): Gtk::Window(),
+  EvdWindow::EvdWindow(): Gtk::ApplicationWindow(),
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(),
@@ -76,7 +76,7 @@ namespace mygl
         pluginConfig = pluginConfig->NextSibling();
       }
     }
-    else std::cerr << "Failed to get an element named global from config.xml.\n";
+    else throw std::runtime_error("Failed to get an element named global from config.xml.\n");
 
     //Load event plugins
     auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
@@ -92,7 +92,7 @@ namespace mygl
         pluginConfig = pluginConfig->NextSibling();
       }
     }
-    else std::cerr << "Failed to get an element named event from config.xml.\n";
+    else throw std::runtime_error("Failed to get an element named event from config.xml.\n");
   }
 
   EvdWindow::~EvdWindow() {}
@@ -124,7 +124,7 @@ namespace mygl
       //Make sure a sensible fiducial node is set
       std::cout << "Done generating the geometry.\n";
     } //TODO: else throw exception
-    else std::cerr << "Failed to read geometry manager from file.\n";
+    else throw std::runtime_error("Failed to read geometry manager from file "+fFileName+".\n");
   }
 
   void EvdWindow::ReadEvent()

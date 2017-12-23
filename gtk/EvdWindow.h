@@ -42,7 +42,7 @@ class TChain;
 
 namespace mygl
 {
-  class EvdWindow: public Gtk::Window //Gtk::ApplicationWindow 
+  class EvdWindow: public Gtk::ApplicationWindow 
   {
     public: 
       EvdWindow();

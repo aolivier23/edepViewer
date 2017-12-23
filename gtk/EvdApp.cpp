@@ -39,7 +39,7 @@ namespace mygl
         const auto status = config->LoadFile(name.c_str());
         if(status != tinyxml2::XML_SUCCESS) 
         {
-          std::cerr << "Got error " << status << " when trying to load configuration file " << name << " with tinyxml2.\n";
+          throw std::runtime_error("Got error "+std::to_string(status)+" when trying to load configuration file "+name+" with tinyxml2.\n");
         }
       }
 
@@ -79,13 +79,12 @@ namespace mygl
     const auto status = config->LoadFile("default.xml");
     if(status != tinyxml2::XML_SUCCESS)
     {
-      std::cerr << "Failed to find an XML configuration file named default.xml in the current directory.\n";
-      //TODO: Throw exception
+      throw std::runtime_error("Failed to find an XML configuration file named default.xml in the current directory.\n");
     }
 
     Gtk::FileChooserDialog chooser("Choose an edep-sim file to view");
+    //TODO: Parent window?
     //TODO: configure dialog to only show .root files and directories
-    //TODO: Let Gtk automatically manage chooser
 
     chooser.add_button("Open", Gtk::RESPONSE_OK);
 
@@ -95,7 +94,7 @@ namespace mygl
     {
       input = chooser.get_filename();
     }
-    //TODO: else throw exception?
+    else throw std::runtime_error("Failed to get edepsim ROOT file for reading.\n");
 
     //Create an EvdWindow that will be shown. 
     fWindow.reset(new EvdWindow());
