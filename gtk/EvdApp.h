@@ -14,7 +14,7 @@ namespace mygl
   class EvdApp: public Gtk::Application
   {
     public:
-      EvdApp() = default;
+      EvdApp();
       virtual ~EvdApp() = default;
 
       static Glib::RefPtr<EvdApp> create();

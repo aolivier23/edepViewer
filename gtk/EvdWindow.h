@@ -37,21 +37,23 @@
 #define EVD_EVDWINDOW
 
 //Forward declaration of ROOT classes
-class TGeoNode;
 class TGeoManager;
+class TChain;
 
 namespace mygl
 {
   class EvdWindow: public Gtk::Window //Gtk::ApplicationWindow 
   {
     public: 
-      EvdWindow(const std::string& fileName, const bool darkColors = true); //, const Glib::RefPtr<Gtk::Application>& app);
+      EvdWindow();
       virtual ~EvdWindow();
 
-      void SetFile(const std::string& fileName); //Set the file to be processed
+      void SetFile(const std::string& input); //Set the tree to be visualized
       void Print(); //Print the current window to a file
 
       virtual void make_scenes();
+
+      virtual void reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config);
 
     protected:
       //Configuration file

@@ -34,11 +34,11 @@
 
 namespace mygl
 {
-  EvdWindow::EvdWindow(const std::string& fileName, const bool darkColors): Gtk::Window(), 
-    fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 
-            darkColors?Gdk::RGBA("(0.f, 0.f, 0.f)"):Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
-    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(fileName),
-    fFileName(fileName), fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument())
+  EvdWindow::EvdWindow(): Gtk::Window(),
+    fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
+            Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
+    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(),
+    fFileName("NONE"), fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument())
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -51,16 +51,13 @@ namespace mygl
     fVBox.pack_end(fViewer);
 
     fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
-                                                                                 //children are realize()d
+    
+    show_all_children();                                                                             //children are realize()d
+  }
 
-
-    //TODO: Test of loading an XML document
-    const auto status = fConfig->LoadFile("config.xml"); //TODO: Gtk::Application shenanigans to read in a file from the command line
-    if(status != tinyxml2::XML_SUCCESS) 
-    {
-      std::cerr << "Got error code " << status << " when loading document config.xml.\n";
-      //TODO: Proper error handling by throwing an exception.  I think the Gtk::Application will really handle this anyway.  
-    }
+  void EvdWindow::reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config)
+  {
+    fConfig = std::move(config); //Take ownership of config and manage its' lifetime
 
     //Load global plugins
     auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
@@ -96,8 +93,6 @@ namespace mygl
       }
     }
     else std::cerr << "Failed to get an element named event from config.xml.\n";
-
-    show_all_children();
   }
 
   EvdWindow::~EvdWindow() {}
@@ -108,8 +103,6 @@ namespace mygl
     fReader.reset(new TTreeReader("EDepSimEvents", fFile.get()));
     fCurrentEvt.reset(new TTreeReaderValue<TG4Event>(*fReader, "Event"));
     fReader->Next(); //TODO: replace with a dedicated event controller
-    ReadGeo(); 
-    ReadEvent();
   }
 
   void EvdWindow::ReadGeo()
@@ -119,7 +112,7 @@ namespace mygl
     fGeoManager.reset((TGeoManager*)(fFile->Get("EDepSimGeometry")));
 
     //Load service information
-    const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services");
+    const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fGeoManager));
@@ -172,8 +165,8 @@ namespace mygl
     //Configure Event Scenes
     for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
 
-    //TODO: Make fFileName a command line option to the application that runs this window.
-    choose_file();
+    ReadGeo();
+    ReadEvent();
   }
   
   void EvdWindow::Print()
