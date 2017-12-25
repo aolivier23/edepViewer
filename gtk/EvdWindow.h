@@ -15,6 +15,9 @@
 //custom GUI includes
 #include "gtk/LegendView.h"
 
+//Source includes
+#include "gtk/Source.h"
+
 //gl includes
 #include "gl/Viewer.h"
 #include "gl/Scene.h"
@@ -40,6 +43,11 @@
 class TGeoManager;
 class TChain;
 
+namespace src
+{
+  class Source;
+}
+
 namespace mygl
 {
   class EvdWindow: public Gtk::ApplicationWindow 
@@ -48,7 +56,7 @@ namespace mygl
       EvdWindow();
       virtual ~EvdWindow();
 
-      void SetFile(const std::string& input); //Set the tree to be visualized
+      void SetSource(std::unique_ptr<src::Source>&& source);
       void Print(); //Print the current window to a file
 
       virtual void make_scenes();
@@ -61,6 +69,9 @@ namespace mygl
 
       //Child Widgets
       mygl::Viewer fViewer;
+
+      //Source of events
+      std::unique_ptr<src::Source> fSource;
 
       //Toolbar for event navigation and printing
       //TODO: event navigation
@@ -77,13 +88,6 @@ namespace mygl
 
       std::unique_ptr<LegendView> fLegend;
 
-      //Source of data for drawing
-      std::string fFileName;
-      std::unique_ptr<TFile> fFile;
-      std::unique_ptr<TTreeReader> fReader;
-      std::unique_ptr<TTreeReaderValue<TG4Event>> fCurrentEvt; //The current event being drawn.
-      std::shared_ptr<TGeoManager> fGeoManager; //The current geometry 
-
     private:
       void ReadGeo();
       void ReadEvent();
@@ -91,10 +95,10 @@ namespace mygl
       mygl::VisID fNextID;
       draw::Services fServices;
 
+      void goto_event();
+
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
-      void goto_event();
-      void next_event();
 
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;

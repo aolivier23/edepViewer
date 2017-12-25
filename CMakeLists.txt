@@ -11,6 +11,10 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
 
+#gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
+link_directories( ${GTKMM_LIBRARY_DIRS} )
+include_directories( ${GTKMM_INCLUDE_DIRS} )
+
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 
@@ -19,10 +23,20 @@ add_library(glad SHARED glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
 target_link_libraries("glad" ${CMAKE_DL_LIBS})
 
-#Set up edep-sim
-set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-include_directories( "${EDEP_DIR}/include/edep-sim" )
-link_directories( "${EDEP_DIR}/lib" )
+#Stuff for Opengl
+find_package( OpenGL REQUIRED )
+
+#Set up to build against ROOT
+#I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake
+list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})
+find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer EG)
+include(${ROOT_USE_FILE})
+
+#Set output directory for executables
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin )
+
+#local stuff that GLDrawArea needs to know about
+include_directories( "${PROJECT_SOURCE_DIR}" )
 
 add_subdirectory(util)
 add_subdirectory(gl)

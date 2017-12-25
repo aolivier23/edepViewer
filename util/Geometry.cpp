@@ -26,8 +26,8 @@ namespace util
   class Geometry
   {
     public:
-      Geometry(const tinyxml2::XMLElement* config, std::shared_ptr<TGeoManager> man): fFiducialNode(nullptr), fFiducialMatrix(nullptr), 
-                                                                                      fManager(man)
+      Geometry(const tinyxml2::XMLElement* config, TGeoManager* man): fFiducialNode(nullptr), fFiducialMatrix(nullptr), 
+                                                                      fManager(man)
       {
         const auto fiducial = config->Attribute("fiducial");
         if(fiducial != nullptr) fFiducialName = fiducial;
@@ -75,8 +75,7 @@ namespace util
       const TGeoMatrix* fFiducialMatrix; //A matrix that translates objects from the top Node's coordinate system to fFiducialNode's 
                                          //coordinate system.
       std::string fFiducialName; //The name of the fiducial volume to search for
-      std::shared_ptr<TGeoManager> fManager; //Hold a shared pointer to TGeoManager so that this object has to be destroyed before 
-                                             //the TGeoManager it used can delete fFiducialNode.
+      TGeoManager* fManager; 
 
       bool find_node(const TGeoNode* parent, const TGeoMatrix& mat)
       {

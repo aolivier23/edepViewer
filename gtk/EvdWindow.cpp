@@ -38,7 +38,7 @@ namespace mygl
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
     fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(),
-    fFileName("NONE"), fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument())
+    fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
   {
     set_title("edepsim Display Window");
     set_border_width(5);
@@ -97,46 +97,35 @@ namespace mygl
 
   EvdWindow::~EvdWindow() {}
 
-  void EvdWindow::SetFile(const std::string& fileName)
+  void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
-    fFile.reset(new TFile(fileName.c_str()));
-    fReader.reset(new TTreeReader("EDepSimEvents", fFile.get()));
-    fCurrentEvt.reset(new TTreeReaderValue<TG4Event>(*fReader, "Event"));
-    fReader->Next(); //TODO: replace with a dedicated event controller
+    fSource = std::move(source);
   }
 
   void EvdWindow::ReadGeo()
   {
     fNextID = mygl::VisID();
     
-    fGeoManager.reset((TGeoManager*)(fFile->Get("EDepSimGeometry")));
-
     //Load service information
     const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
 
-    fServices.fGeometry.reset(new util::Geometry(geoConfig, fGeoManager));
-    auto man = fGeoManager;
-    if(man != nullptr)
-    {
-      for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
+    fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
+    auto man = fSource->Geo();
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
-      //Make sure a sensible fiducial node is set
-      std::cout << "Done generating the geometry.\n";
-    } //TODO: else throw exception
-    else throw std::runtime_error("Failed to read geometry manager from file "+fFileName+".\n");
+    //Make sure a sensible fiducial node is set
+    std::cout << "Done generating the geometry.\n";
   }
 
   void EvdWindow::ReadEvent()
   { 
     //TODO: Move all per-event drawing code to plugins
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(*(*fCurrentEvt), fViewer, id, fServices);
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
 
     //Last, set current event number for GUI
-    fEvtNum.set_text(std::to_string(fReader->GetCurrentEntry()));
-    auto trajs = fViewer.GetScenes().find("Trajectories");
-    //if(trajs != fViewer.GetScenes().end()) trajs->second.fTreeView.expand_to_path(Gtk::TreePath("0"));
+    fEvtNum.set_text(std::to_string(fSource->Entry()));
 
     //Pop up legend of particle colors used
     std::vector<LegendView::Row> rows;
@@ -175,8 +164,8 @@ namespace mygl
     const auto image = Gdk::Pixbuf::create(window, 0, 0, window->get_width(), window->get_height());
     const std::string type = "png"; //TODO: Let the user choose this
     std::stringstream name;
-    auto strippedName = fFileName.substr(0, fFileName.find_first_of('.')); 
-    name << "evd_" << strippedName.substr(strippedName.find_last_of("/")+1, std::string::npos) << "_event_" << fReader->GetCurrentEntry() << "." << type;
+    auto strippedName = fSource->GetFile().substr(0, fSource->GetFile().find_first_of('.')); 
+    name << "evd_" << strippedName.substr(strippedName.find_last_of("/")+1, std::string::npos) << "_event_" << fSource->Entry() << "." << type;
     image->save(name.str(), type);
   }
 
@@ -190,7 +179,7 @@ namespace mygl
     fEvtNum.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_event));
 
     fNavBar.add(fNext);
-    fNext.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::next_event));
+    fNext.signal_clicked().connect(sigc::mem_fun(fSource.get(), &src::Source::Next));
 
     fNavBar.add(fReload);
     fReload.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::ReadEvent));
@@ -212,27 +201,21 @@ namespace mygl
 
     if(result == Gtk::RESPONSE_OK)
     {
-      fFileName = chooser.get_filename();
-      SetFile(fFileName); //TODO: Either remove fFileName or update SetFile() to use fFileName
-      std::cout << "Set file to " << fFileName << "\n";
-      fFileLabel.set_text(fFileName);
+      const auto name = chooser.get_filename();
+      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
+      std::cout << "Set file to " << name << "\n";
+      fFileLabel.set_text(name);
     }
-  }
-
-  void EvdWindow::next_event()
-  {
-    if(fReader->Next()) ReadEvent();
-    else fReader->Restart(); //hopefully avoids disaster on next attempt to seek to an event
   }
 
   void EvdWindow::goto_event()
   {
     const auto newEvt = std::stoi(fEvtNum.get_text());
-    if(fReader->SetEntry(newEvt) == TTreeReader::kEntryValid) 
+    if(!fSource->GoTo(newEvt)) 
     {
       ReadEvent();
     }
-    else std::cerr << "Failed to get event " << newEvt << " from file " << fFileName << "\n";
+    else std::cerr << "Failed to get event " << newEvt << " from file " << fSource->GetFile() << "\n";
   }
 }
 

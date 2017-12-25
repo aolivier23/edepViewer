@@ -8,6 +8,9 @@
 //Header
 #include "gtk/EvdApp.h"
 
+//local includes
+#include "gtk/Source.h"
+
 //ROOT includes
 #include "TChain.h"
 
@@ -29,6 +32,7 @@ namespace mygl
     //TODO: Source class that knows how to handle multiple files
     std::string input("");
     std::unique_ptr<tinyxml2::XMLDocument> config(new tinyxml2::XMLDocument());   
+    std::vector<std::string> rootFiles;
 
     for(const auto& file: files)
     {
@@ -46,16 +50,9 @@ namespace mygl
       //The rest of these must be .root files, so create a TChain to read them all.
       else if(file->get_basename().find(".root") != std::string::npos) 
       {
-        input = name; 
+        rootFiles.push_back(name);
       }
       else std::cerr << "Got file " << name << " that is neither an XML configuration file nor a .root file.\n";
-    }
-
-    for(const auto& window: get_windows())
-    {
-      auto& evd = *dynamic_cast<EvdWindow*>(window);
-      evd.reconfigure(std::move(config));
-      evd.SetFile(input);
     }
 
     //Create an EvdWindow that will be shown. 
@@ -63,7 +60,7 @@ namespace mygl
     add_window(*fWindow);
 
     fWindow->reconfigure(std::move(config));
-    fWindow->SetFile(input);   
+    fWindow->SetSource(std::unique_ptr<src::Source>(new src::Source(rootFiles)));   
 
     fWindow->present();
   }
@@ -101,7 +98,7 @@ namespace mygl
     add_window(*fWindow);
 
     fWindow->reconfigure(std::move(config));
-    fWindow->SetFile(input);
+    fWindow->SetSource(std::unique_ptr<src::Source>(new src::Source(input)));
 
     fWindow->present(); 
   }
