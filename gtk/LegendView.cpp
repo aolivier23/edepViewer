@@ -9,11 +9,10 @@
 
 namespace mygl
 {
-  LegendView::LegendView(const std::string& title, Gtk::Window& parent, std::vector<Row>&& rows): Gtk::Dialog("Legend", parent, false), 
-                                                                                                  fTitle(title), fRows(rows)
+  LegendView::LegendView(Gtk::Window& parent, std::vector<Row>&& rows): Gtk::Dialog("Legend", parent, false), 
+                                                                                                  fRows(rows)
   {
     get_content_area()->set_orientation(Gtk::Orientation::ORIENTATION_VERTICAL);
-    get_content_area()->add(fTitle);
 
     for(auto& row: fRows) 
     {

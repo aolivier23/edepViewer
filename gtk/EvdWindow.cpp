@@ -114,7 +114,7 @@ namespace mygl
     auto man = fSource->Geo();
     //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
     //      with a trivial implementation of DrawEvent.
-    for(const auto& drawPtr: fGlobalDrawers) //drawPtr->DrawEvent(*man, fViewer, fNextID);
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
     //TODO: The following output is printed twice from a single call to next_event().  
     std::cout << "Done drawing the geometry.\n";
@@ -142,7 +142,7 @@ namespace mygl
       color.set_rgba(pdg.second.r, pdg.second.g, pdg.second.b, 1.0);
       rows.emplace_back(name, color);
     }
-    fLegend.reset(new LegendView("Particles", *this, std::move(rows)));
+    fLegend.reset(new LegendView(*this, std::move(rows)));
     //TODO: Not even close to portable
     fLegend->move(150, 150); //The fact that I specified this in pixels should indicate how frustrated I am...
     fLegend->show();
@@ -208,8 +208,6 @@ namespace mygl
     {
       const auto name = chooser.get_filename();
       SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
-      //TODO: When I do this, the event control bar GUI stops updating and doesn't interpret events correctly.  
-      //      It looks like the Scenes from the last event might also not be cleared correctly.  
       ReadGeo(); 
       ReadEvent();
       std::cout << "Set file to " << name << "\n";

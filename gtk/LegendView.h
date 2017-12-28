@@ -28,12 +28,11 @@ namespace mygl
           Gdk::RGBA  fColorSrc;
       };
 
-      LegendView(const std::string& title, Gtk::Window& parent, std::vector<Row>&& rows);
+      LegendView(Gtk::Window& parent, std::vector<Row>&& rows);
 
       virtual ~LegendView() = default;
 
     protected: 
-      Gtk::Label fTitle; //The title of this legend
       std::vector<Row> fRows;
   };
 }
