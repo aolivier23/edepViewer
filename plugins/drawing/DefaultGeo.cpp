@@ -45,7 +45,7 @@ namespace draw
   }
 
   Gtk::TreeModel::Row DefaultGeo::AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, 
-                                            TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
+                                             TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node

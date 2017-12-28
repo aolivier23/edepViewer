@@ -95,7 +95,9 @@ namespace mygl
       mygl::VisID fNextID;
       draw::Services fServices;
 
+      //Negotiate with the Source to find the right event 
       void goto_event();
+      void next_event();
 
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 

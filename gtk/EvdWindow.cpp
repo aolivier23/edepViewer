@@ -112,15 +112,17 @@ namespace mygl
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
-    for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
+    //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
+    //      with a trivial implementation of DrawEvent.
+    for(const auto& drawPtr: fGlobalDrawers) //drawPtr->DrawEvent(*man, fViewer, fNextID);
 
-    //Make sure a sensible fiducial node is set
-    std::cout << "Done generating the geometry.\n";
+    //TODO: The following output is printed twice from a single call to next_event().  
+    std::cout << "Done drawing the geometry.\n";
   }
 
   void EvdWindow::ReadEvent()
   { 
-    //TODO: Move all per-event drawing code to plugins
+    std::cout << "Going to next event.\n";
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
     for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
 
@@ -148,6 +150,8 @@ namespace mygl
   
   void EvdWindow::make_scenes()
   {
+    std::cout << "Calling function EvdWindow::make_scenes()\n";
+
     //Configure Geometry Scenes
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
 
@@ -179,7 +183,7 @@ namespace mygl
     fEvtNum.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_event));
 
     fNavBar.add(fNext);
-    fNext.signal_clicked().connect(sigc::mem_fun(fSource.get(), &src::Source::Next));
+    fNext.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::next_event));
 
     fNavBar.add(fReload);
     fReload.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::ReadEvent));
@@ -192,6 +196,7 @@ namespace mygl
 
   void EvdWindow::choose_file()
   {
+    std::cout << "Calling function EvdWindow::choose_file()\n";
     Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
     //TODO: configure dialog to only show .root files and directories
 
@@ -203,6 +208,10 @@ namespace mygl
     {
       const auto name = chooser.get_filename();
       SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
+      //TODO: When I do this, the event control bar GUI stops updating and doesn't interpret events correctly.  
+      //      It looks like the Scenes from the last event might also not be cleared correctly.  
+      ReadGeo(); 
+      ReadEvent();
       std::cout << "Set file to " << name << "\n";
       fFileLabel.set_text(name);
     }
@@ -210,12 +219,37 @@ namespace mygl
 
   void EvdWindow::goto_event()
   {
+    std::cout << "Calling function EvdWindow::goto_event()\n";
     const auto newEvt = std::stoi(fEvtNum.get_text());
-    if(!fSource->GoTo(newEvt)) 
+    if(fSource->GoTo(newEvt)) 
     {
       ReadEvent();
     }
     else std::cerr << "Failed to get event " << newEvt << " from file " << fSource->GetFile() << "\n";
+  }
+
+  void EvdWindow::next_event()
+  {
+    //TODO: One printout of the below message seems to correspond to two printouts of a message from ReadGeo().
+    std::cout << "Calling function EvdWindow::next_event()\n";
+    if(!fSource->Next()) //If this is the end of the current file
+    {
+      if(!fSource->NextFile()) //If this is the end of the last file in the Source
+      {
+        std::cerr << "Reached last event in input files.\n";
+      }
+      else 
+      {
+        std::cout << "Reading from file " << fSource->GetFile() << "\n";
+        ReadGeo();
+        ReadEvent();
+      }
+    }
+    else 
+    {
+      std::cout << "Reading from file " << fSource->GetFile() << "\n";
+      ReadEvent();
+    }
   }
 }
 

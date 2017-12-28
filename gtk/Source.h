@@ -6,7 +6,8 @@
 //ROOT includes
 #include "TTreeReader.h"
 #include "TGeoManager.h"
-#include "TChain.h"
+#include "TFile.h"
+#include "TTree.h"
 
 //edepsim includes
 #include "TG4Event.h"
@@ -32,15 +33,22 @@ namespace src
       virtual const TG4Event& Event();
       virtual TGeoManager* Geo();
 
-      virtual void Next();
+      virtual bool Next();
       virtual bool GoTo(const size_t evt);
+      virtual bool NextFile();
 
       virtual const std::string GetFile();
       virtual const size_t Entry();
 
     protected:
-      TChain fTree;
+      //Resources for figuring out what file to process next
+      std::vector<std::string> fFileList;
+      std::vector<std::string>::iterator fFilePos;
+
+      //Resources for the current file
+      std::unique_ptr<TFile> fFile;
       TTreeReader fReader;
+      TGeoManager* fGeo; //fGeo is managed by fFile, so this can only be an observer pointer
       TTreeReaderValue<TG4Event> fEvent;
   };
 }

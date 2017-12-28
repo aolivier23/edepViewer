@@ -115,18 +115,18 @@ namespace mygl
       {
         auto second = first+1;
         const auto firstDir = glm::normalize(ptsVec[*first]-center);
-        std::cout << "firstDir is " << firstDir << "\n";
+        //std::cout << "firstDir is " << firstDir << "\n";
         const auto secondDir = glm::normalize(ptsVec[*second]-center);
-        std::cout << "secondDir is " << secondDir << "\n";
+        //std::cout << "secondDir is " << secondDir << "\n";
         const float projFromCenter = glm::dot(glm::cross(prevDir, firstDir), out);
-        std::cout << "projFromCenter is " << projFromCenter << "\n";
+        //std::cout << "projFromCenter is " << projFromCenter << "\n";
         if(projFromCenter < 0) 
         {
-          std::cout << "Swapping indices " << *first << " and " << *second << "\n";
+          //std::cout << "Swapping indices " << *first << " and " << *second << "\n";
           const int tmp = *first;
           *first = *second;
           *second = tmp;
-          std::cout << "After the swap, projFromCenter is " << glm::dot(glm::cross(prevDir, glm::normalize(ptsVec[*first]-center)), out) << "\n";
+          //std::cout << "After the swap, projFromCenter is " << glm::dot(glm::cross(prevDir, glm::normalize(ptsVec[*first]-center)), out) << "\n";
         }
       }
 
@@ -137,18 +137,18 @@ namespace mygl
 
       //Special case for second edge of first triangle in each polygon
       edgeToIndex[std::make_pair(*(begin), *(begin+1))] = *(begin+2);
-      std::cout << "Entered index " << *(begin+2) << " for edge (" << *(begin) << ", " << *(begin+1) << ")\n";
+      //std::cout << "Entered index " << *(begin+2) << " for edge (" << *(begin) << ", " << *(begin+1) << ")\n";
 
       for(auto index = begin; index < end; ++index)
       {
         //Only include edges on the border
         edgeToIndex[std::make_pair(*(index+2), *index)] = *(index+1);
-        std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *(index) << ")\n";
+        //std::cout << "Entered index " << *(index+1) << " for edge (" << *(index+2) << ", " << *(index) << ")\n";
       }
 
       //Special case for second edge of last triangle in each polygon
       edgeToIndex[std::make_pair(*(end), *(end+1))] = *(end-1);
-      std::cout << "Entered index " << *(end-1) << " for edge (" << *(end) << ", " << *(end+1) << ")\n";
+      //std::cout << "Entered index " << *(end-1) << " for edge (" << *(end) << ", " << *(end+1) << ")\n";
 
       thisPol.insert(thisPol.end(), indicesSort.begin(), indicesSort.end());
 
@@ -160,52 +160,52 @@ namespace mygl
     for(auto& pol: indices)
     {
       const auto polCopy = pol;
-      std::cout << "Before I add any indices to pol, polCopy is:\n(";
+      /*std::cout << "Before I add any indices to pol, polCopy is:\n(";
       for(const auto& index: polCopy)
       {
         std::cout << index << ", ";
       }
-      std::cout << ")\n";
+      std::cout << ")\n";*/
                                                                                                                                                             
       pol.clear();
       pol.push_back(polCopy[0]);
-      if(edgeToIndex.find(std::make_pair(polCopy[1], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+      /*if(edgeToIndex.find(std::make_pair(polCopy[1], polCopy[0])) == edgeToIndex.end()) std::cout << "Could not find index across from "
                                                                                                   << "edge (" << polCopy[0] << ", "
-                                                                                                  << polCopy[1] << ")\n";
+                                                                                                  << polCopy[1] << ")\n";*/
       pol.push_back(edgeToIndex[std::make_pair(polCopy[1], polCopy[0])]); 
-      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[1], polCopy[0])] << " for edge (" << polCopy[0] << ", "
-                << polCopy[1] << ")\n";
+      //std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[1], polCopy[0])] << " for edge (" << polCopy[0] << ", "
+      //          << polCopy[1] << ")\n";
       pol.push_back(polCopy[1]);
                                                                                                                                                             
-      if(edgeToIndex.find(std::make_pair(polCopy[0], polCopy[2])) == edgeToIndex.end()) std::cout << "Could not find index across from "
+      /*if(edgeToIndex.find(std::make_pair(polCopy[0], polCopy[2])) == edgeToIndex.end()) std::cout << "Could not find index across from "
                                                                                                   << "edge (" << polCopy[2] << ", "
-                                                                                                  << polCopy[0] << ")\n";
+                                                                                                  << polCopy[0] << ")\n";*/
       pol.push_back(edgeToIndex[std::make_pair(polCopy[0], polCopy[2])]);
-      std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[0], polCopy[2])] << " for edge (" << polCopy[2] << ", "
-                << polCopy[0] << ")\n";
+      /*std::cout << "Looked up value " << edgeToIndex[std::make_pair(polCopy[0], polCopy[2])] << " for edge (" << polCopy[2] << ", "
+                << polCopy[0] << ")\n";*/
       pol.push_back(polCopy[2]);
                                                                                                                                                             
       for(auto indexIt = polCopy.begin()+1; indexIt < polCopy.end()-2; ++indexIt)
       {
-        if(edgeToIndex.find(std::make_pair(*(indexIt), *(indexIt+2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+        /*if(edgeToIndex.find(std::make_pair(*(indexIt), *(indexIt+2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
                                                                                                       << "edge (" << *(indexIt+2) << ", "
-                                                                                                      << *(indexIt) << ")\n";
+                                                                                                      << *(indexIt) << ")\n";*/
         pol.push_back(edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))]);
-        std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))] << " for edge (" << *(indexIt+2) << ", "
-                  << *indexIt << ")\n";
+        /*std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(indexIt), *(indexIt+2))] << " for edge (" << *(indexIt+2) << ", "
+                  << *indexIt << ")\n";*/
         pol.push_back(*(indexIt+2));
       }
                                                                                                                                                             
-      if(edgeToIndex.find(std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
+      /*if(edgeToIndex.find(std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))) == edgeToIndex.end()) std::cout << "Could not find index across from "
                                                                                                       << "edge (" << *(polCopy.end()-2) << ", "
-                                                                                                      << *(polCopy.end()-1) << ")\n";
+                                                                                                      << *(polCopy.end()-1) << ")\n";*/
       pol.push_back(edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))]);
-      std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))] << " for edge (" << *(polCopy.end()-2) << ", "
-                << *(polCopy.end()-1) << ")\n";
+      /*std::cout << "Looked up value " << edgeToIndex[std::make_pair(*(polCopy.end()-1), *(polCopy.end()-2))] << " for edge (" << *(polCopy.end()-2) << ", "
+                << *(polCopy.end()-1) << ")\n";*/
     }
 
     //Print out ptsVec for debugging
-    std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
+    /*std::cout << "Printing " << ptsVec.size() << " points from volume " << vol->GetName() << ":\n";
     for(const auto& point: ptsVec) std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
 
     std::cout << "Printing " << nPols << " polygons from volume " << vol->GetName() << ":\n";
@@ -218,7 +218,7 @@ namespace mygl
         std::cout << "(" << point.x << ", " << point.y << ", " << point.z << ")\n";
       }
       std::cout << "\n";
-    }
+    }*/
     Init(ptsVec, indices, color);
   }
 

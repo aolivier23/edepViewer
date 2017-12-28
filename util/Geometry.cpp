@@ -17,6 +17,7 @@
 
 //c++ includes
 #include <memory> //For std::shared_ptr
+#include <iostream> //TODO: remove me
 
 #ifndef UTIL_GEOMETRY_CPP
 #define UTIL_GEOMETRY_CPP
@@ -80,6 +81,7 @@ namespace util
       bool find_node(const TGeoNode* parent, const TGeoMatrix& mat)
       {
         TGeoHMatrix local(mat);
+        std::cout << "Multiplying matrix for node " << parent->GetName() << "\n";
         local.Multiply(parent->GetMatrix());
         if(std::string(parent->GetName()) == fFiducialName)
         {
@@ -100,8 +102,8 @@ namespace util
       void SetFiducial()
       {
         const auto top = fManager->GetTopNode();
-        TGeoIdentity id;
-        if(!find_node(top, id))
+        auto id = new TGeoIdentity();
+        if(!find_node(top, *id)) //TODO: Error handling?
         {
           fFiducialNode = top;
           fFiducialMatrix = new TGeoIdentity();
