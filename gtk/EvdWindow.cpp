@@ -70,8 +70,10 @@ namespace mygl
       tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
       while(pluginConfig != nullptr)
       {
-        auto drawer = geoFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
+        auto drawer = geoFactory.Get(pluginConfig->ToElement()); 
+        //TODO: Does drawer go out of scope here and delete its' underlying pointer causing undefined behavior?  
+        //      Changing this to a std::unique_ptr::release does not prevent a crash.  
+        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer)); 
         else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
         pluginConfig = pluginConfig->NextSibling();
       }
@@ -87,7 +89,7 @@ namespace mygl
       while(pluginConfig != nullptr)
       {
         auto drawer = evtFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
+        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer)); 
         else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
         pluginConfig = pluginConfig->NextSibling();
       }
@@ -99,21 +101,27 @@ namespace mygl
 
   void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
-    fSource = std::move(source);
+    fSource.reset(source.release()); // = std::move(source);
   }
 
   void EvdWindow::ReadGeo()
   {
+    std::cout << "Calling ReadGeo()\n";
     fNextID = mygl::VisID();
     
     //Load service information
     const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
 
-    fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
+    //TODO: The crash I am dealing with happens even when I do not set the geometry for fServices.
+    //fServices.fGeometry.reset(new util::Geometry(geoConfig, man));
     //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
     //      with a trivial implementation of DrawEvent.
+    //      Trivial GeoDrawer also causes crash.  Are copy symantics responsible?  Next, I could try taking a TGeoManager* 
+    //      instead of a reference.
+    //      Also crashes with just Guides in config file.  Does not crash if there are no GlobalDrawers at all in config file.    
+    //      Dereferencing man does not cause a problem by itself.
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
     //TODO: The following output is printed twice from a single call to next_event().  
@@ -124,7 +132,8 @@ namespace mygl
   { 
     std::cout << "Going to next event.\n";
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
+    //TODO: Undefined behavior persists when I don't use fEventDrawers here
+    //for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fSource->Entry()));
@@ -155,8 +164,9 @@ namespace mygl
     //Configure Geometry Scenes
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
 
+    //TODO: Undefined behavior persists when I remove RequestScenes
     //Configure Event Scenes
-    for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
+    //for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
 
     ReadGeo();
     ReadEvent();
@@ -207,6 +217,10 @@ namespace mygl
     if(result == Gtk::RESPONSE_OK)
     {
       const auto name = chooser.get_filename();
+      //TODO: The line below creates a new Source before the old one is destroyed.  This deletes the old TGeoManager 
+      //      while the old Source's file is still open, thus breaking TGeoManager's Init() function.  It seems like opening 
+      //      two TFiles that contain TGeoManagers at the same time is an error.  
+      fSource.reset();  
       SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
       ReadGeo(); 
       ReadEvent();

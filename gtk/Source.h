@@ -28,7 +28,7 @@ namespace src
     public:
       Source(const std::vector<std::string>& files);
       Source(const std::string& file);
-      virtual ~Source() = default;
+      virtual ~Source(); // = default;
 
       virtual const TG4Event& Event();
       virtual TGeoManager* Geo();
