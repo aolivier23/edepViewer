@@ -44,30 +44,34 @@ namespace draw
     for(auto child: *children) AppendNode(viewer, nextID, (TGeoNode*)(child), mat, parent, depth+1);
   }
 
-  Gtk::TreeModel::Row DefaultGeo::AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, 
+  void DefaultGeo::AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, 
                                              TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
-    local.MultiplyLeft(&mat);
+    //local.MultiplyLeft(&mat);
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
     //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
-    //TODO: Adding the line immediately below this causes weird GUI behavior.  The problem does not seem to be in Scene or Polymesh::Draw().  
-    auto row = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
-                                                  node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
+    //TODO: Removing this AddDrawable() call seems to prevent the unexpected GUI behavior I am searching for.
+    //      Look for bugs in AddDrawable() and/or PolyMesh.  
+    //node->GetVolume()->Print();
+    //glm::make_mat4(matPtr);
+    /*viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
+                                       node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));*/
 
-    row[fGeoRecord.fName] = node->GetName();
+    /*row[fGeoRecord.fName] = node->GetName();
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++(*fColor);
-    AppendChildren(viewer, nextID, row, node, local, depth);
+    AppendChildren(viewer, nextID, row, node, local, depth);*/
 
-    return row;
+    //return row;
   }
 
   void DefaultGeo::doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID)
-  { 
+  {
+    //TODO: Reset fColor here.  It probably needs to be a local variable instead of a member variable. 
     viewer.GetScenes().find("Geometry")->second.RemoveAll();
 
     auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
@@ -77,7 +81,7 @@ namespace draw
     auto top = *(viewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
     top[fGeoRecord.fName] = data.GetTitle();
     top[fGeoRecord.fMaterial] = "FIXME";
-    AppendNode(viewer, nextID, data.GetTopNode(), *id, top, 0);
+    AppendNode(viewer, nextID, data.GetTopNode(), *id, top, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
   }
 
   void DefaultGeo::doRequestScenes(mygl::Viewer& viewer)

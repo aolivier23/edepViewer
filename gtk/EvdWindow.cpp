@@ -101,7 +101,7 @@ namespace mygl
 
   void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
-    fSource.reset(source.release()); // = std::move(source);
+    fSource.reset(source.release()); //= std::move(source);
   }
 
   void EvdWindow::ReadGeo()
@@ -113,18 +113,12 @@ namespace mygl
     const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
 
-    auto man = fSource->Geo();
-    //TODO: The crash I am dealing with happens even when I do not set the geometry for fServices.
-    //fServices.fGeometry.reset(new util::Geometry(geoConfig, man));
-    //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
-    //      with a trivial implementation of DrawEvent.
-    //      Trivial GeoDrawer also causes crash.  Are copy symantics responsible?  Next, I could try taking a TGeoManager* 
-    //      instead of a reference.
-    //      Also crashes with just Guides in config file.  Does not crash if there are no GlobalDrawers at all in config file.    
-    //      Dereferencing man does not cause a problem by itself.
+    auto man = fSource->Geo(); //TODO: Using TGeoManager here instead of fSource->Geo() doesn't prevent unexpected GUI behavior.  
+    fServices.fGeometry.reset(new util::Geometry(geoConfig, man));
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
+    //TODO: Removing DefaultGeo drawer while leaving Guides drawer in place does not have unexpected GUI behavior.  DefaultGeo may be 
+    //      the problem.
 
-    //TODO: The following output is printed twice from a single call to next_event().  
     std::cout << "Done drawing the geometry.\n";
   }
 
@@ -132,8 +126,7 @@ namespace mygl
   { 
     std::cout << "Going to next event.\n";
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    //TODO: Undefined behavior persists when I don't use fEventDrawers here
-    //for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fSource->Entry()));
@@ -164,9 +157,8 @@ namespace mygl
     //Configure Geometry Scenes
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
 
-    //TODO: Undefined behavior persists when I remove RequestScenes
     //Configure Event Scenes
-    //for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
+    for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
 
     ReadGeo();
     ReadEvent();
@@ -206,6 +198,8 @@ namespace mygl
 
   void EvdWindow::choose_file()
   {
+    //TODO: The GUI bug where the wrong button is pressed seems to exist independently of the bug 
+    //      where drawing Guides failed.  So, this function still seems to trigger undefined behavior.
     std::cout << "Calling function EvdWindow::choose_file()\n";
     Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
     //TODO: configure dialog to only show .root files and directories
@@ -216,17 +210,20 @@ namespace mygl
 
     if(result == Gtk::RESPONSE_OK)
     {
-      const auto name = chooser.get_filename();
-      //TODO: The line below creates a new Source before the old one is destroyed.  This deletes the old TGeoManager 
-      //      while the old Source's file is still open, thus breaking TGeoManager's Init() function.  It seems like opening 
-      //      two TFiles that contain TGeoManagers at the same time is an error.  
+      /*const auto name = chooser.get_filename();
       fSource.reset();  
-      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
+      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); //TODO: SetSource can't be the problem since I get problems 
+                                                                      //      with this configuration.  
+      //TODO: Correct toolbar button is highlighted with ReadGeo() and ReadEvent() removed.
       ReadGeo(); 
       ReadEvent();
       std::cout << "Set file to " << name << "\n";
-      fFileLabel.set_text(name);
+      fFileLabel.set_text(name);*/
+      ReadGeo(); //TODO: Unexpected behavior dissappears if I comment ReadGeo() here.
+      ReadEvent(); //TODO: Unexpected behavior remains if I comment ReadEvent() and leave ReadGeo().
     }
+    //TODO: Just calling ReadGeo() and ReadEvent() without changing fSource at all causes the unexpected GUI behavior.  
+    //      So, Source's destructor is not the problem.  
   }
 
   void EvdWindow::goto_event()
@@ -242,7 +239,6 @@ namespace mygl
 
   void EvdWindow::next_event()
   {
-    //TODO: One printout of the below message seems to correspond to two printouts of a message from ReadGeo().
     std::cout << "Calling function EvdWindow::next_event()\n";
     if(!fSource->Next()) //If this is the end of the current file
     {

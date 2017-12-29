@@ -26,7 +26,6 @@ namespace draw
   class DefaultGeo: public GeoDrawer
   {
     public:
-      //TODO: Configuration information when I implement a configuration system
       DefaultGeo(const tinyxml2::XMLElement* config);
       virtual ~DefaultGeo() = default;
 
@@ -35,7 +34,7 @@ namespace draw
       virtual void doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;
 
       //Helper functions for drawing geometry volumes
-      Gtk::TreeRow AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
+      virtual void AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
                               const Gtk::TreeModel::Row& parent, size_t depth);
       virtual void AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
                                   TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
@@ -62,5 +61,4 @@ namespace draw
   };
 }
 
-//TODO: Factory macro when I get around to writing the factory
 #endif //DRAW_DEFAULTGEO_H

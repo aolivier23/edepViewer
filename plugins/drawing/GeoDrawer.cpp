@@ -32,7 +32,6 @@ namespace draw
 
       void DrawEvent(const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID) //Remove old objects and draw new ones
       {
-        //TODO: Removing the line below prevents undefined behavior
         doDrawEvent(man, viewer, nextID);
       }
 

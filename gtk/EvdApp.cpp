@@ -79,7 +79,11 @@ namespace mygl
       throw std::runtime_error("Failed to find an XML configuration file named default.xml in the current directory.\n");
     }
 
-    Gtk::FileChooserDialog chooser("Choose an edep-sim file to view");
+    //Create an EvdWindow that will be shown. 
+    fWindow.reset(new EvdWindow());
+    add_window(*fWindow);
+
+    Gtk::FileChooserDialog chooser(*fWindow, "Choose an edep-sim file to view");
     //TODO: Parent window?
     //TODO: configure dialog to only show .root files and directories
 
@@ -93,10 +97,7 @@ namespace mygl
     }
     else throw std::runtime_error("Failed to get edepsim ROOT file for reading.\n");
 
-    //Create an EvdWindow that will be shown. 
-    fWindow.reset(new EvdWindow());
-    add_window(*fWindow);
-
+    //Configure EvdWindow
     fWindow->reconfigure(std::move(config));
     fWindow->SetSource(std::unique_ptr<src::Source>(new src::Source(input)));
 

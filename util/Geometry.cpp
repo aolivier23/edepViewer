@@ -2,8 +2,6 @@
 //Brief: Provides access to specific geometry functions for drawing plugins.  Can cache results of expensive volume lookups 
 //       since it controls the lifetime of the TGeoManager it uses.  When loading a new file, this object needs to be 
 //       destroyed.  
-//TODO:  Make a Geometry responsible for exactly one Scene?  This would mean separate loops for trajectory point 
-//       and trajectory drawing with my current design. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //tinyxml2 includes
@@ -17,7 +15,6 @@
 
 //c++ includes
 #include <memory> //For std::shared_ptr
-#include <iostream> //TODO: remove me
 
 #ifndef UTIL_GEOMETRY_CPP
 #define UTIL_GEOMETRY_CPP
