@@ -489,25 +489,25 @@ namespace mygl
   void EvdWindow::make_scenes()
   {
     //Configure Geometry Scene
-    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    auto& geoTree = fViewer.MakeScene("Geometry", fGeoRecord, INSTALL_GLSL_DIR"colorPerVertex.frag", INSTALL_GLSL_DIR"colorPerVertex.vert", INSTALL_GLSL_DIR"triangleBorder.geom");
     geoTree.append_column("Volume Name", fGeoRecord.fName);
     geoTree.append_column("Material", fGeoRecord.fMaterial);
  
     //Configure trajectory Scene
-    auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    auto& trajTree = fViewer.MakeScene("Trajectories", fTrajRecord, INSTALL_GLSL_DIR"colorPerVertex.frag", INSTALL_GLSL_DIR"colorPerVertex.vert", INSTALL_GLSL_DIR"wideLine.geom");
     trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
     trajTree.insert_column_with_data_func(-1, "Color", fColorRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
 
     //Configure guide scene
-    auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom"); 
+    auto& guideTree = fViewer.MakeScene("Guides", fGuideRecord, INSTALL_GLSL_DIR"userColor.frag", INSTALL_GLSL_DIR"HUD.vert", INSTALL_GLSL_DIR"wideLine.geom"); 
     guideTree.append_column("Name", fGuideRecord.fName);
     guideTree.expand_to_path(Gtk::TreePath("0"));
     DrawGuides(); //Only do this once ever
 
     //Configure energy deposit Scene
-    auto& edepTree = fViewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    auto& edepTree = fViewer.MakeScene("EDep", fEDepRecord, INSTALL_GLSL_DIR"colorPerVertex.frag", INSTALL_GLSL_DIR"colorPerVertex.vert", INSTALL_GLSL_DIR"wideLine.geom");
     edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
@@ -515,7 +515,7 @@ namespace mygl
     edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
 
     //Configure Trajectory Point Scene
-    auto& ptTree = fViewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
+    auto& ptTree = fViewer.MakeScene("TrajPts", fTrajPtRecord, INSTALL_GLSL_DIR"colorPerVertex.frag", INSTALL_GLSL_DIR"colorPerVertex.vert", INSTALL_GLSL_DIR"widePoint.geom");
     ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
     ptTree.append_column("Process", fTrajPtRecord.fProcess);
     ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
