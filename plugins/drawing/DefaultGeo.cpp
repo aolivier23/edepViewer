@@ -49,7 +49,7 @@ namespace draw
   {
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
-    //local.MultiplyLeft(&mat);
+    local.MultiplyLeft(&mat);
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
@@ -58,13 +58,13 @@ namespace draw
     //      Look for bugs in AddDrawable() and/or PolyMesh.  
     //node->GetVolume()->Print();
     //glm::make_mat4(matPtr);
-    /*viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
-                                       node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));*/
+    auto row = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
+                                       node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
 
-    /*row[fGeoRecord.fName] = node->GetName();
+    row[fGeoRecord.fName] = node->GetName();
     row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++(*fColor);
-    AppendChildren(viewer, nextID, row, node, local, depth);*/
+    AppendChildren(viewer, nextID, row, node, local, depth);
 
     //return row;
   }
