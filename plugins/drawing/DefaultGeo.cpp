@@ -72,7 +72,7 @@ namespace draw
   void DefaultGeo::doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID)
   {
     //TODO: Reset fColor here.  It probably needs to be a local variable instead of a member variable. 
-    viewer.GetScenes().find("Geometry")->second.RemoveAll();
+    viewer.RemoveAll("Geometry");
 
     auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
                                   //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 

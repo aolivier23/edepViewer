@@ -73,6 +73,9 @@ namespace mygl
       Gtk::TreeView& MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc,
                                const std::string& geomSrc);
 
+      //Makes sure openGL context is current before destroying Drawables.  
+      void RemoveAll(const std::string& sceneName);
+
       //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 

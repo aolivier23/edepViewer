@@ -99,8 +99,8 @@ namespace draw
   void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
   {
     //First, clear the scenes I plan to draw on
-    viewer.GetScenes().find("Trajectories")->second.RemoveAll();
-    viewer.GetScenes().find("TrajPts")->second.RemoveAll();
+    viewer.RemoveAll("Trajectories");
+    viewer.RemoveAll("TrajPts");
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;

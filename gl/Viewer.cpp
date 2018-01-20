@@ -316,4 +316,15 @@ namespace mygl
                                                                    *(scenePair.second.fTreeView.get_parent()->get_parent())));
     }
   }
+
+  void Viewer::RemoveAll(const std::string& sceneName)
+  {
+    fArea.throw_if_error();
+    fArea.make_current();
+
+    //TODO: Error handling when sceneName is not found?  Really, this, along with AddDrawable, reveals that my Viewer/Scene system 
+    //      would benefit from a redesign.  
+    auto found = fSceneMap.find(sceneName);
+    if(found != fSceneMap.end()) found->second.RemoveAll();
+  }
 }

@@ -45,7 +45,7 @@ namespace draw
   void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
   {
     //Remove old drawing elements
-    viewer.GetScenes().find("EDep")->second.RemoveAll();
+    viewer.RemoveAll("EDep");
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition
