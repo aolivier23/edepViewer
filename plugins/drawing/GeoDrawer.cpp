@@ -23,6 +23,7 @@ namespace draw
   {
     public:
       GeoDrawer() = default; //Configure a new GeoDrawer
+                          //TODO: Standardized configuration based on XML
       virtual ~GeoDrawer() = default;
 
       virtual void RequestScenes(mygl::Viewer& viewer) //Request the needed Scene(s) from the Viewer

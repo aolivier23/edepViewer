@@ -78,6 +78,7 @@ namespace util
       bool find_node(const TGeoNode* parent, const TGeoMatrix& mat)
       {
         TGeoHMatrix local(mat);
+        std::cout << "Multiplying matrix for node " << parent->GetName() << "\n";
         local.Multiply(parent->GetMatrix());
         if(std::string(parent->GetName()) == fFiducialName)
         {

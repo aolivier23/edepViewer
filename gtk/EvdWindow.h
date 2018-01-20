@@ -26,6 +26,7 @@
 //ROOT includes
 #include "TFile.h"
 #include "TTreeReader.h"
+#include "TGeoMatrix.h"
 #include "TDatabasePDG.h"
 
 //Tinyxml include
@@ -39,6 +40,7 @@
 #define EVD_EVDWINDOW
 
 //Forward declaration of ROOT classes
+class TGeoManager;
 class TChain;
 
 namespace src

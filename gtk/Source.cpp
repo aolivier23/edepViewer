@@ -22,7 +22,6 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fGeo->LockGeometry();
     fReader.Next();
   }
 
@@ -43,14 +42,7 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fGeo->LockGeometry();
     fReader.Next();
-  }
-
-  Source::~Source()
-  {
-    std::cout << "Calling src::Source destructor.\n";
-    fGeo->UnlockGeometry();
   }
 
   const TG4Event& Source::Event()
@@ -60,7 +52,6 @@ namespace src
 
   TGeoManager* Source::Geo()
   {
-    //TODO: Try using gGeoManager instead?  
     return fGeo;
   }
 
@@ -98,7 +89,6 @@ namespace src
   //TODO: Undefined behavior seems to happen when this function is called.  It may or may not be the cause.
   bool Source::NextFile()
   {
-    std::cout << "NextFile() called.\n";
     ++fFilePos;
     if(fFilePos == fFileList.end()) 
     {
@@ -106,14 +96,12 @@ namespace src
       return false;
     }
 
-    fGeo->UnlockGeometry();
     fFile.reset(TFile::Open((fFilePos)->c_str()));
     fReader.SetTree("EDepSimEvents", fFile.get());
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fGeo->LockGeometry();
     fReader.Next();
     return true;
   }

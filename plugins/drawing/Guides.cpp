@@ -39,8 +39,6 @@ namespace draw
 
   void Guides::doDrawEvent(const TGeoManager& /*man*/, mygl::Viewer& viewer, mygl::VisID& nextID)
   {
-    viewer.GetScenes().find("Guides")->second.RemoveAll();
-
     auto root = *(viewer.GetScenes().find("Guides")->second.NewTopLevelNode());
     root[fGuideRecord.fName] = "Measurement Objects";
 

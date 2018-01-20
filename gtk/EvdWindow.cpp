@@ -70,10 +70,8 @@ namespace mygl
       tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
       while(pluginConfig != nullptr)
       {
-        auto drawer = geoFactory.Get(pluginConfig->ToElement()); 
-        //TODO: Does drawer go out of scope here and delete its' underlying pointer causing undefined behavior?  
-        //      Changing this to a std::unique_ptr::release does not prevent a crash.  
-        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer)); 
+        auto drawer = geoFactory.Get(pluginConfig->ToElement());
+        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
         else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
         pluginConfig = pluginConfig->NextSibling();
       }
@@ -89,7 +87,7 @@ namespace mygl
       while(pluginConfig != nullptr)
       {
         auto drawer = evtFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer)); 
+        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
         else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
         pluginConfig = pluginConfig->NextSibling();
       }
@@ -106,15 +104,16 @@ namespace mygl
 
   void EvdWindow::ReadGeo()
   {
-    std::cout << "Calling ReadGeo()\n";
     fNextID = mygl::VisID();
     
     //Load service information
     const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
 
-    auto man = fSource->Geo(); //TODO: Using TGeoManager here instead of fSource->Geo() doesn't prevent unexpected GUI behavior.  
-    fServices.fGeometry.reset(new util::Geometry(geoConfig, man));
+    fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
+    auto man = fSource->Geo();
+    //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
+    //      with a trivial implementation of DrawEvent.
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
     //TODO: Removing DefaultGeo drawer while leaving Guides drawer in place does not have unexpected GUI behavior.  DefaultGeo may be 
     //      the problem.
@@ -210,15 +209,12 @@ namespace mygl
 
     if(result == Gtk::RESPONSE_OK)
     {
-      /*const auto name = chooser.get_filename();
-      fSource.reset();  
-      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); //TODO: SetSource can't be the problem since I get problems 
-                                                                      //      with this configuration.  
-      //TODO: Correct toolbar button is highlighted with ReadGeo() and ReadEvent() removed.
+      const auto name = chooser.get_filename();
+      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
       ReadGeo(); 
       ReadEvent();
       std::cout << "Set file to " << name << "\n";
-      fFileLabel.set_text(name);*/
+      fFileLabel.set_text(name);
       ReadGeo(); //TODO: Unexpected behavior dissappears if I comment ReadGeo() here.
       ReadEvent(); //TODO: Unexpected behavior remains if I comment ReadEvent() and leave ReadGeo().
     }
