@@ -53,11 +53,6 @@ namespace draw
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
-    //TODO: Just take the row to add rather than the parent as an argument to AddDrawable().
-    //TODO: Removing this AddDrawable() call seems to prevent the unexpected GUI behavior I am searching for.
-    //      Look for bugs in AddDrawable() and/or PolyMesh.  
-    //node->GetVolume()->Print();
-    //glm::make_mat4(matPtr);
     auto row = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
                                        node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
 

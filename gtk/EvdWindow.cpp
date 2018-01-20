@@ -211,8 +211,6 @@ namespace mygl
     {
       const auto name = chooser.get_filename();
       SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
-      ReadGeo(); 
-      ReadEvent();
       std::cout << "Set file to " << name << "\n";
       fFileLabel.set_text(name);
       ReadGeo(); //TODO: Unexpected behavior dissappears if I comment ReadGeo() here.
