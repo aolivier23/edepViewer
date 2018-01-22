@@ -126,6 +126,7 @@ namespace mygl
     std::cout << "Going to next event.\n";
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
     for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
+    std::cout << "Done with event drawers.\n";
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fSource->Entry()));

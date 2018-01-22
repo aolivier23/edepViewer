@@ -49,9 +49,10 @@ namespace draw
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition
-            
+
     for(auto& det: edepToDet)
     {
+      std::cout << "Detector is " << det.first << "\n";
       auto detName = det.first;
       auto detRow = *(viewer.GetScenes().find("EDep")->second.NewTopLevelNode());
       auto edeps = det.second;
@@ -59,15 +60,18 @@ namespace draw
       detRow[fEDepRecord.fPrimName] = detName;
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
+      std::cout << "About to process " << edeps.size() << " energy deposits.\n";
       for(auto& edep: edeps)
       {
+        std::cout << "Processing a new edep.\n";
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
           
+        //TODO: dE/dx plugin so I can use a simpler algorithm when neded.
         //Get the weighted density of the material that most of this energy deposit was deposited in.  Increase the accuracy of this 
         //material guess by increasing the number of sample points, but beware of event loading time!
-        const size_t nSamples = 10;
+        /*const size_t nSamples = 1;
         const auto diff = start.Vect()-stop.Vect();
         const double dist = diff.Mag();
         double sumDensity = 0;
@@ -75,25 +79,31 @@ namespace draw
         double sumZ = 0;   
         for(size_t sample = 0; sample < nSamples; ++sample)
         {
+          std::cout << "Sample " << sample << " of material for dEdx.\n";
           const auto pos = start.Vect()+diff.Unit()*dist;
           const auto mat = gGeoManager->FindNode(pos.X(), pos.Y(), pos.Z())->GetVolume()->GetMaterial(); //TODO: Come up with a 
                                                                                                          //      solution that avoids 
                                                                                                          //      gGeoManager
+          std::cout << "Found node in dE/dx sampling loop.\n";
           sumDensity += mat->GetDensity();
           sumA += mat->GetA();
           sumZ += mat->GetZ();
         }
-        const double density = sumDensity/nSamples/6.24e24*1e6;
+        const double density = sumDensity/nSamples/6.24e24*1e6;*/
   
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
         const double energy = edep.EnergyDeposit;
         const double length = edep.TrackLength;
-        double dEdx = 0.;
+        //double dEdx = 0.;
         //From http://pdg.lbl.gov/2011/reviews/rpp2011-rev-passage-particles-matter.pdf, the Bethe formula for dE/dx in 
         //MeV*cm^2/g goes as Z/A.  To get comparable stopping powers for all materials, try to "remove the Z/A dependence".
-        if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ; //*mat->GetA()/mat->GetZ(); 
+        //if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ;
+        double dEdx = edep.EnergyDeposit/edep.TrackLength;
 
+        std::cout << "Adding Drawable.\n";
         auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
+        std::cout << "Added Drawable.\n";
+
         row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord.fEnergy]  = energy;
         row[fEDepRecord.fdEdx]    = dEdx;
