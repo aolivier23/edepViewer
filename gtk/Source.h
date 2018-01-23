@@ -40,6 +40,9 @@ namespace src
       virtual const std::string GetFile();
       virtual const size_t Entry();
 
+      //Don't make me regret making this public
+      TTreeReader fReader;
+
     protected:
       //Resources for figuring out what file to process next
       std::vector<std::string> fFileList;
@@ -47,7 +50,6 @@ namespace src
 
       //Resources for the current file
       std::unique_ptr<TFile> fFile;
-      TTreeReader fReader;
       TGeoManager* fGeo; //fGeo is managed by fFile, so this can only be an observer pointer
       TTreeReaderValue<TG4Event> fEvent;
   };

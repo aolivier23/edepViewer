@@ -7,6 +7,7 @@
 //Plugin includes
 #include "plugins/drawing/GeoDrawer.cpp"
 #include "plugins/drawing/EventDrawer.cpp"
+#include "plugins/drawing/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
 
 //Gtkmm includes
@@ -105,7 +106,7 @@ namespace mygl
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
       std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
-
+      std::vector<std::unique_ptr<draw::ExternalDrawer>> fExtDrawers;
   };
 }
 
