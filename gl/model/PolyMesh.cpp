@@ -35,10 +35,14 @@ namespace
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
+  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): PolyMesh(model, vol->GetShape(), color)
   {
-    if(vol == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
-    const auto& buf = vol->GetShape()->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
+  }
+
+  PolyMesh::PolyMesh(const glm::mat4& model, TGeoShape* shape, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
+  {
+    if(shape == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
+    const auto& buf = shape->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
     auto points = buf.fPnts; //Points to draw?
     auto nPts = buf.NbPnts(); //Number of points to draw?
     auto segs = buf.fSegs;

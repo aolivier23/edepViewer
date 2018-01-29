@@ -18,6 +18,7 @@
 #include "gl/model/ShaderProg.h"
 
 class TGeoVolume;
+class TGeoShape;
 
 namespace mygl
 {
@@ -35,6 +36,7 @@ namespace mygl
       }
 
       PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
+      PolyMesh(const glm::mat4& model, TGeoShape* shape, const glm::vec4& color);
 
       //PolyMesh(const std::initializer_list<glm::vec3>&& list, const glm::vec3& color); //Removing support for this because of how 
                                                                                          //complicated it would become.

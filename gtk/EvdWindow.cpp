@@ -115,18 +115,16 @@ namespace mygl
   void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
     fSource.reset(source.release()); //= std::move(source);
+    //ReadGeo is called when the current file changes, so make sure external drawers are aware of the file change.
+    //TODO: I should probably relabel this FileChange() and/or make the negotiation with Source a state machine.
+    //TODO: Rethink how Source interacts with ExternalDrawers.  
+    for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
+    fSource->Next();
+    std::cout << "Called Source::Next().\n";
   }
 
   void EvdWindow::ReadGeo()
   {
-    //ReadGeo is called when the current file changes, so make sure external drawers are aware of the file change.
-    //TODO: I should probably relabel this FileChange() and/or make the negotiation with Source a state machine.
-    //TODO: Rethink how Source interacts with ExternalDrawers.  
-    auto& reader = fSource->fReader;
-    reader.Restart();
-    for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
-    reader.Next();
-    
     fNextID = mygl::VisID();
     
     //Load service information
@@ -148,10 +146,11 @@ namespace mygl
   { 
     std::cout << "Going to next event.\n";
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(fSource->Event(), fViewer, id, fServices);
+    const auto& evt = fSource->Event();
+    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(evt, fViewer, id, fServices);
     std::cout << "Done with event drawers.\n";
 
-    for(const auto& drawer: fExtDrawers) drawer->DrawEvent(fSource->Event(), fViewer, id, fServices);
+    for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fSource->Entry()));

@@ -44,10 +44,12 @@ namespace mygl
           MCHitRecord(): ColRecord()
           {
             add(fEnergy);
+            add(fTime);
             add(fParticle);
           }
   
           Gtk::TreeModelColumn<double> fEnergy; //The energy in this MCHit
+          Gtk::TreeModelColumn<double> fTime; //The time of this MCHit
           Gtk::TreeModelColumn<std::string> fParticle; //The most direct cause of this MCHit.  Could be the names of multiple particles
       };
       MCHitRecord fHitRecord;

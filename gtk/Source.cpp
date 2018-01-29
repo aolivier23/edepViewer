@@ -22,7 +22,7 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fReader.Next();
+    //fReader.Next();
   }
 
   Source::Source(const std::string& file): fFileList({file}), fFilePos(fFileList.begin()), fFile(), fReader(), 
@@ -42,7 +42,7 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fReader.Next();
+    //fReader.Next();
   }
 
   const TG4Event& Source::Event()
@@ -58,7 +58,11 @@ namespace src
   bool Source::Next()
   {
     const bool status = fReader.Next();
-    if(!status) fReader.Restart(); //Make sure the TTreeReader keeps working even if this is the end of the file.  
+    if(!status) 
+    {
+      fReader.Restart(); //Make sure the TTreeReader keeps working even if this is the end of the file.  
+      fReader.Next();
+    }
     return status;
   }
 
