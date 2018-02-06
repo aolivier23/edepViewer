@@ -147,8 +147,8 @@ namespace mygl
     }
   }
 
-  //TODO: This function destroys Drawables that might (and probably should) make opengl calls in their destructors.  
-  //      Make sure that the openGL context for this Scene is current when this is called.  
+  //This function destroys Drawables that might (and probably should) make opengl calls in their destructors.  
+  //Make sure that the openGL context for this Scene is current when this is called.  
   void Scene::RemoveAll() //Might be useful when updating event
   {
     //fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 

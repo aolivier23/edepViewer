@@ -63,6 +63,9 @@ namespace mygl
 
       //Drawing data
       mygl::Palette fPalette; //Mapping from MCHit::Energy to color
+
+      //Configuration data
+      std::string fHitName; //The name of the branch from which I will read MCHits.  
   };
 }
 

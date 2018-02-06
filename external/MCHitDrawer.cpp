@@ -19,15 +19,16 @@
 
 namespace mygl
 {
-  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(0., 1e3)
+  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(0., 1e3), fHitName("NeutronHits")
   {
-    //No configuration options for now
+    const auto hitName = config->Attribute("HitName");
+    if(hitName != nullptr) fHitName = hitName;
   }
 
   void MCHitDrawer::ConnectTree(TTreeReader& reader)
   {
     std::cout << "Connecting MCHitsDrawer to TTreeReader.\n";
-    fHits.reset(new TTreeReaderArray<pers::MCHit>(reader, "NoGridNeutronHits")); //TODO: Get name of hits to process from XML file in constructor
+    fHits.reset(new TTreeReaderArray<pers::MCHit>(reader, fHitName.c_str())); //TODO: Get name of hits to process from XML file in constructor
   }
 
   void MCHitDrawer::doRequestScenes(mygl::Viewer& viewer)
@@ -44,7 +45,7 @@ namespace mygl
 
     auto top = *(viewer.GetScenes().find("MCHits")->second.NewTopLevelNode());
     top[fHitRecord.fEnergy] = std::accumulate(fHits->begin(), fHits->end(), 0., [](double value, const auto& hit) { return value + hit.Energy; });
-    top[fHitRecord.fParticle] = "NeutronHits"; //TODO: Algorithm name
+    top[fHitRecord.fParticle] = fHitName; //Algorithm name
     top[fHitRecord.fTime] = 0.;
 
     for(const auto& hit: *fHits)

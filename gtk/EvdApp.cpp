@@ -50,7 +50,7 @@ namespace mygl
       //The rest of these must be .root files, so create a TChain to read them all.
       else if(file->get_basename().find(".root") != std::string::npos) 
       {
-        rootFiles.push_back(name);
+        rootFiles.push_back(file->get_uri()+name);
       }
       else std::cerr << "Got file " << name << " that is neither an XML configuration file nor a .root file.\n";
     }
@@ -60,6 +60,7 @@ namespace mygl
     add_window(*fWindow);
 
     fWindow->reconfigure(std::move(config));
+    std::cout << "Before constructing Source, rootFiles.size() is " << rootFiles.size() << "\n";
     fWindow->SetSource(std::unique_ptr<src::Source>(new src::Source(rootFiles)));   
 
     fWindow->present();
