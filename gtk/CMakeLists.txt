@@ -10,6 +10,13 @@ link_directories( "${EDEP_DIR}/lib" )
 add_library( GUI LegendView.cpp )
 target_link_libraries( GUI LINK_PUBLIC ${GTKMM_LIBRARIES} )
 
+#local stuff that GLDrawArea needs to know about
+include_directories( "${PROJECT_SOURCE_DIR}" )
+
+#Let source code know where this project is installed.  Needed for finding shader sources.  
+#TODO: Get shader sources from an environment variable instead.
+add_definitions(-DINSTALL_GLSL_DIR="${PROJECT_SOURCE_DIR}/gl/shaders/")
+
 #Libraries for final EDepSim visualization window
 add_library( Source Source.cpp )
 target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} edepsim )
