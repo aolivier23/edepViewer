@@ -9,6 +9,8 @@ set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
 include_directories( "${EDEP_DIR}/include/edep-sim" )
 link_directories( "${EDEP_DIR}/lib" )
 
+message( "Getting edepsim from ${EDEP_DIR}" )
+
 #gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
 link_directories( ${GTKMM_LIBRARY_DIRS} )
 include_directories( ${GTKMM_INCLUDE_DIRS} )
@@ -21,5 +23,5 @@ add_library( Drawers SHARED GeoDrawer.cpp DefaultGeo.cpp Services.cpp EventDrawe
                             LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp Guides.cpp 
                             ExternalDrawer.cpp )
 target_link_libraries( Drawers ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
-                       Factory tinyxml2 Geometry )
+                       Factory tinyxml2 Geometry edepsim )
 install( TARGETS Drawers DESTINATION lib )
