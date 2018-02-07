@@ -1,0 +1,15 @@
+<config>
+  <drawer>
+    <global>
+      <Guides/>
+      <DefaultGeo MaxDepth="7"/>
+    </global>
+    <event>
+      <LinearTraj/>
+      <EDepDEdx/> 
+    </event>
+  </drawer>
+  <services>
+    <geo fiducial="volWorld"/>
+  </services>
+</config>
