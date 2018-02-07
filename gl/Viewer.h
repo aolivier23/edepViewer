@@ -50,7 +50,7 @@ namespace mygl
       //      owns?  This will require adding entry points for basically all of the Scene public functions as well as each Scene's TreeView.
       template <class T, class ...ARGS>
       Gtk::TreeModel::Row AddDrawable(const std::string& scene, const VisID& id, const Gtk::TreeModel::Row& parent, 
-                                      const bool active = true, ARGS... args) //Add a drawable to a scene
+                                      const bool active, ARGS... args) //Add a drawable to a scene
       {
         auto scenePair = fSceneMap.find(scene);
         if(scenePair == fSceneMap.end())
@@ -65,6 +65,15 @@ namespace mygl
         fArea.throw_if_error();
         auto row = scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
         return row;
+      }
+
+      //Use overloads so that this compiles with Clang as well as gcc.  See https://stackoverflow.com/questions/34494765/interaction-between-default-arguments-and-parameter-pack-gcc-and-clang-disagree
+
+      template <class T, class ...ARGS>
+      Gtk::TreeModel::Row AddDrawable(const std::string& scene, const VisID& id, const Gtk::TreeModel::Row& parent,
+                                      ARGS... args) //Add a drawable to a scene
+      {
+        return AddDrawable(scene, id, parent, true, args...);
       }
 
       //User access to Scenes

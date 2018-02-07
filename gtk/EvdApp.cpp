@@ -50,7 +50,7 @@ namespace mygl
       //The rest of these must be .root files, so create a TChain to read them all.
       else if(file->get_basename().find(".root") != std::string::npos) 
       {
-        rootFiles.push_back(file->get_uri()+name);
+        rootFiles.push_back(file->get_uri()); //I used to use name here, but uri seems to be name with additional protocol information for xrootd
       }
       else std::cerr << "Got file " << name << " that is neither an XML configuration file nor a .root file.\n";
     }

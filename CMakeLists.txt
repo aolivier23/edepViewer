@@ -11,6 +11,8 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_Flags_For_CXX}" )
 set( CMAKE_CXX_FLAGS_DEBUG "-ggdb" )
 set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
 
+message( "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}" )
+
 #gtkmm stuff
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
