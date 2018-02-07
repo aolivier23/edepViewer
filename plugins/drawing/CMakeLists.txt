@@ -20,8 +20,7 @@ include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Add libraries of plugins
 add_library( Drawers SHARED GeoDrawer.cpp DefaultGeo.cpp Services.cpp EventDrawer.cpp
-                            LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp Guides.cpp 
-                            ExternalDrawer.cpp )
+                            LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp Guides.cpp )
 target_link_libraries( Drawers ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
                        Factory tinyxml2 Geometry edepsim )
 install( TARGETS Drawers DESTINATION lib )

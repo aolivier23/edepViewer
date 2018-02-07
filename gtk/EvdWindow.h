@@ -7,7 +7,7 @@
 //Plugin includes
 #include "plugins/drawing/GeoDrawer.cpp"
 #include "plugins/drawing/EventDrawer.cpp"
-#include "plugins/drawing/ExternalDrawer.cpp"
+#include "external/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
 
 //Gtkmm includes

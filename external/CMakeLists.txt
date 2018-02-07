@@ -44,7 +44,7 @@ if(DEFINED EDEPNEUTRONS_DIR)
 endif()
 
 #Install all of the external Drawers as one target
-add_library( external SHARED ${EXTERNAL_SOURCE} )
+add_library( external SHARED ExternalDrawer.cpp ${EXTERNAL_SOURCE} )
 target_link_libraries( external ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
                        Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} )
 install( TARGETS external DESTINATION lib )

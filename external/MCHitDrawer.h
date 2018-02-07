@@ -6,7 +6,7 @@
 #include "persistency/MCHit.h"
 
 //draw includes
-#include "plugins/drawing/ExternalDrawer.cpp"
+#include "external/ExternalDrawer.cpp"
 
 //external evd includes
 #include "util/Palette.cpp"
