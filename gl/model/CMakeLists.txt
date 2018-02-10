@@ -16,8 +16,6 @@ include(${ROOT_USE_FILE})
 
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin ) 
-
 add_library( exception GenException.cpp )
 add_library( Shader    ShaderProg.cpp )
 add_library( Drawable  Drawable.cpp )
@@ -33,3 +31,5 @@ target_link_libraries( PolyMesh Drawable ${ROOT_LIBRARIES})
 target_link_libraries( Path Drawable )
 target_link_libraries( Grid Drawable )
 target_link_libraries( Point Drawable )
+
+install(FILES GenException.h ShaderProg.h Drawable.h PolyMesh.h Path.h Grid.h Point.h DESTINATION include/gl/model )

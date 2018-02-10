@@ -38,18 +38,18 @@ list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})
 find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer EG)
 include(${ROOT_USE_FILE})
 
-#Set output directory for executables
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin )
-
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Add plugins that depend on external libraries to these variables
 set(EXTERNAL_SOURCE "")
+set(EXTERNAL_HEADERS "")
 set(EXTERNAL_LIBS "")
 
+#Adding support for external plugins that need my EdepNeutrons package.
 if(DEFINED EDEPNEUTRONS_DIR)
   list(APPEND EXTERNAL_SOURCE MCHitDrawer.cpp)
+  list(APPEND EXTERNAL_HEADERS MCHitDrawer.h)
   list(APPEND EXTERNAL_LIBS persistency)
 
   #Find EDepNeutrons directory
@@ -58,8 +58,36 @@ if(DEFINED EDEPNEUTRONS_DIR)
   link_directories( "${EDEPNEUTRONS_DIR}/lib" )
 endif()
 
+add_subdirectory(config)
 add_subdirectory(external)
 add_subdirectory(util)
 add_subdirectory(gl)
 add_subdirectory(gtk)
 add_subdirectory(plugins)
+
+#Write a bash script to make sure this package can find its' shared libraries at runtime.
+#Script to just set up this package
+file( WRITE  setup.sh "#!/usr/bin/bash\n" )
+file( APPEND setup.sh "export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:\${LD_LIBRARY_PATH}\n" )
+install( FILES setup.sh DESTINATION conf )
+
+#Script to set up this package along with edepsim (if edepsim can find Geant4 on its' own).
+file( WRITE  setup_all.sh "#!/usr/bin/bash\n" )
+file( APPEND setup_all.sh "DIR = `pwd`\n" )
+file( APPEND setup_all.sh "cd $ENV{EDEP_ROOT}\n" )
+file( APPEND setup_all.sh "source setup.sh\n" )
+file( APPEND setup_all.sh "cd \$DIR\n" )
+file( APPEND setup_all.sh "export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}\n" )
+install( FILES setup_all.sh DESTINATION conf )
+
+#Make the results of this build into a package.  Designed to be distributed as a .tar.gz
+#Learned to do this from http://agateau.com/2009/cmake-and-make-dist/
+set( CPACK_PACKAGE_VERSION_MAJOR "1" )
+set( CPACK_PACKAGE_VERSION_MINOR "2" )
+set( CPACK_PACKAGE_VERSION_PATCH "0" )
+set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}" )
+set( CPACK_SOURCE_GENERATOR "TGZ" )
+#set( CPACK_SOURCE_IGNORE_FILES 
+
+include( CPack )
+add_custom_target( dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source )

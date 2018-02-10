@@ -32,19 +32,11 @@ link_directories( "${EDEP_DIR}/lib" )
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
-if(DEFINED EDEPNEUTRONS_DIR)
-  #list(APPEND EXTERNAL_SOURCE MCHitDrawer.cpp)
-  #list(APPEND EXTERNAL_LIBS persistency)
-  
-  #Add libraries of plugins
- # add_library( NeutronDrawers SHARED MCHitDrawer.cpp )
- # target_link_libraries( NeutronDrawers ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
- #                        Factory tinyxml2 Geometry Drawers )
- # install( TARGETS NeutronDrawers DESTINATION lib )
-endif()
-
 #Install all of the external Drawers as one target
 add_library( external SHARED ExternalDrawer.cpp ${EXTERNAL_SOURCE} )
 target_link_libraries( external ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
                        Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} )
 install( TARGETS external DESTINATION lib )
+
+#install headers
+install( FILES ${EXTERNAL_HEADERS} DESTINATION include/external )

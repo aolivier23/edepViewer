@@ -55,6 +55,8 @@ namespace mygl
       else std::cerr << "Got file " << name << " that is neither an XML configuration file nor a .root file.\n";
     }
 
+    //TODO: Use default XML file if none found.
+
     //Create an EvdWindow that will be shown. 
     fWindow.reset(new EvdWindow());
     add_window(*fWindow);
@@ -70,14 +72,13 @@ namespace mygl
   void EvdApp::on_activate()
   {
     //Look for a default configuration file.
-    //TODO: Look in some specific path?
     //If an XML file was not provided, look for one in the current directory.
     //TODO: Look for a configuration file at some standard path instead?
     std::unique_ptr<tinyxml2::XMLDocument> config(new tinyxml2::XMLDocument());
-    const auto status = config->LoadFile("default.xml");
+    const auto status = config->LoadFile(INSTALL_XML_DIR "/default.xml");
     if(status != tinyxml2::XML_SUCCESS)
     {
-      throw std::runtime_error("Failed to find an XML configuration file named default.xml in the current directory.\n");
+      throw std::runtime_error("Failed to find an XML configuration file named " INSTALL_XML_DIR "/default.xml in the current directory.\n");
     }
 
     //Create an EvdWindow that will be shown. 

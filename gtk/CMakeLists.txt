@@ -15,7 +15,8 @@ include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Let source code know where this project is installed.  Needed for finding shader sources.  
 #TODO: Get shader sources from an environment variable instead.
-add_definitions(-DINSTALL_GLSL_DIR="${PROJECT_SOURCE_DIR}/gl/shaders/")
+add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
+add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
 
 #Libraries for final EDepSim visualization window
 add_library( Source Source.cpp )
@@ -35,3 +36,6 @@ message("Linking RunEvdApp against external libraries ${EXTERNAL_LIBS}")
 add_executable( RunEvdApp RunEvdApp.cpp )
 target_link_libraries( RunEvdApp EvdApp ${EXTERNAL_LIBS})
 install( TARGETS RunEvdApp DESTINATION bin )
+
+#install headers
+install( FILES Source.h EvdWindow.h EvdApp.h DESTINATION include/gtk )

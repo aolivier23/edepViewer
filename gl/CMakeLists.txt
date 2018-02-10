@@ -1,5 +1,6 @@
 add_subdirectory(model)
 add_subdirectory(camera)
+add_subdirectory(shaders)
 
 #Make sure GLFW and friends can be found
 link_directories( /usr/local/lib )
@@ -12,3 +13,5 @@ install( TARGETS Scene DESTINATION lib )
 add_library( Viewer Viewer.cpp )
 target_link_libraries( Viewer Camera Scene ${OPENGL_LIBRARIES})
 install( TARGETS Viewer DESTINATION lib )
+
+install( FILES Viewer.h VisID.h UserCut.h Scene.h DESTINATION include/gl )
