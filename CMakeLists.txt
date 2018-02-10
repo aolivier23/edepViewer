@@ -13,6 +13,13 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
 
 message( "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}" )
 
+#Force CMake to link paths "correctly".  See the discussion at https://cmake.org/pipermail/cmake/2011-June/044807.html
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 #gtkmm stuff
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
