@@ -72,21 +72,6 @@ add_subdirectory(gl)
 add_subdirectory(gtk)
 add_subdirectory(plugins)
 
-#Write a bash script to make sure this package can find its' shared libraries at runtime.
-#Script to just set up this package
-file( WRITE  setup.sh "#!/usr/bin/bash\n" )
-file( APPEND setup.sh "export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:\${LD_LIBRARY_PATH}\n" )
-install( FILES setup.sh DESTINATION conf )
-
-#Script to set up this package along with edepsim (if edepsim can find Geant4 on its' own).
-file( WRITE  setup_all.sh "#!/usr/bin/bash\n" )
-file( APPEND setup_all.sh "DIR = `pwd`\n" )
-file( APPEND setup_all.sh "cd $ENV{EDEP_ROOT}\n" )
-file( APPEND setup_all.sh "source setup.sh\n" )
-file( APPEND setup_all.sh "cd \$DIR\n" )
-file( APPEND setup_all.sh "export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}\n" )
-install( FILES setup_all.sh DESTINATION conf )
-
 #Make the results of this build into a package.  Designed to be distributed as a .tar.gz
 #Learned to do this from http://agateau.com/2009/cmake-and-make-dist/
 set( CPACK_PACKAGE_VERSION_MAJOR "1" )
