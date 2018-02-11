@@ -99,14 +99,14 @@ namespace mygl
     return false;
   }
 
-  void Camera::ConnectSignals(Gtk::GLArea& area)
+  void Camera::ConnectSignals(Gtk::Widget& widget)
   {
-    area.signal_key_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_press), false);
-    area.signal_key_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_release), false);
-    area.signal_button_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_press), false);
-    area.signal_button_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_release), false);
-    area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_motion), false);
-    area.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
+    widget.signal_key_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_press), false);
+    widget.signal_key_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_release), false);
+    widget.signal_button_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_press), false);
+    widget.signal_button_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_release), false);
+    widget.signal_motion_notify_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_motion), false);
+    widget.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
   }
 
   void Camera::UpdatePosition()

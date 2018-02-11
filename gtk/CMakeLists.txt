@@ -29,7 +29,7 @@ target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( EvdApp EvdApp.cpp )
-target_link_libraries( EvdApp LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} EvdWindow )
+target_link_libraries( EvdApp LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${PUGL_LIBRARIES} EvdWindow )
 install( TARGETS EvdApp DESTINATION lib )
 
 message("Linking RunEvdApp against external libraries ${EXTERNAL_LIBS}")

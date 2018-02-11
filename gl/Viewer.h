@@ -14,6 +14,7 @@
 #include "gl/camera/Camera.h"
 #include "gl/Scene.h"
 #include "gl/model/GenException.h"
+#include "gl/PuglArea.h"
 
 //gtk includes
 #include <gtkmm.h>
@@ -36,9 +37,8 @@ namespace mygl
       //opengl-related data members
       std::map<std::string, mygl::Scene> fSceneMap; //Map from Scene name to Scene object
 
-      //Gtk::Widgets
-      //TODO: Camera mode widget
-      Gtk::GLArea fArea; //The GLArea that will be used for drawing
+      //Drawing widget
+      PuglArea fArea; //The opengl window/context pair that will be used for drawing
 
     public:
   
@@ -62,7 +62,6 @@ namespace mygl
         }
 
         fArea.make_current(); //Make sure the resources allocated by the new Drawable go to the right Gdk::GLContext!
-        fArea.throw_if_error();
         auto row = scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
         return row;
       }
@@ -107,7 +106,7 @@ namespace mygl
       virtual void unrealize();
       virtual bool my_motion_notify_event(GdkEventMotion* /*evt*/);
 
-      virtual bool render(const Glib::RefPtr<Gdk::GLContext>& /*context*/);
+      virtual void render();
 
       //Other signals to react to 
       virtual void set_background();

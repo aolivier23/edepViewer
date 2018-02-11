@@ -28,6 +28,12 @@ pkg_check_modules(GTKMM gtkmm-3.0)
 link_directories( ${GTKMM_LIBRARY_DIRS} )
 include_directories( ${GTKMM_INCLUDE_DIRS} )
 
+#Find the pugl library using pkgconfig
+pkg_check_modules(PUGL pugl-0)
+link_directories( ${PUGL_LIBRARY_DIRS} )
+include_directories( ${PUGL_INCLUDE_DIRS} )
+message("Including pugl headers from ${PUGL_INCLUDE_DIRS}\n")
+
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 

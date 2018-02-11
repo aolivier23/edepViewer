@@ -55,7 +55,7 @@ namespace mygl
       bool on_scroll(const GdkEventScroll* evt);
 
       //utility function to connect signals to a GLArea
-      void ConnectSignals(Gtk::GLArea& area);
+      void ConnectSignals(Gtk::Widget& widget);
 
     private:
       bool fModified; //Has the Camera's state been modified since the view was last recalculated?

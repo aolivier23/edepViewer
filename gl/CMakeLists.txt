@@ -10,8 +10,9 @@ add_library( Scene VisID.cpp ColRecord.cpp UserCut.cpp Scene.cpp )
 target_link_libraries( Scene glad Drawable exception Shader )
 install( TARGETS Scene DESTINATION lib )
 
-add_library( Viewer Viewer.cpp )
-target_link_libraries( Viewer Camera Scene ${OPENGL_LIBRARIES})
+add_library( Viewer PuglArea.cpp Viewer.cpp )
+message("Linking against the following pugl libraries: ${PUGL_LIBRARIES}")
+target_link_libraries( Viewer Camera Scene ${OPENGL_LIBRARIES} ${PUGL_LIBRARIES})
 install( TARGETS Viewer DESTINATION lib )
 
-install( FILES Viewer.h VisID.h UserCut.h Scene.h DESTINATION include/gl )
+install( FILES PuglArea.h Viewer.h VisID.h UserCut.h Scene.h DESTINATION include/gl )

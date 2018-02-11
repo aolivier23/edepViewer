@@ -52,6 +52,7 @@ namespace mygl
     //Setup GLArea
     fArea.set_hexpand(true);
 
+    //TODO: fArea appears to have no size by default
     pack1(fArea, Gtk::EXPAND);        
     pack2(fNotebook, Gtk::SHRINK); 
 
@@ -62,19 +63,16 @@ namespace mygl
     fArea.set_can_focus(true); //This allows fArea to get keyboard events until another widget grabs focus
     fArea.grab_focus();
     
-    fArea.set_required_version(3, 3);
+    //fArea.set_required_version(3, 3); //TODO: Not sure how to require this.  Does Pugl just give me the highest version possible?
 
     //Looks like window layout hints (ROOT's TGLayoutHints?)
-    //TODO: Should the Window including this object call these?
-    //fArea.set_hexpand(true);
     fArea.set_vexpand(true);
-    fArea.set_auto_render(true);
+    //fArea.set_auto_render(true); //TODO: Implement this
     
     //GLArea signals
-    //TODO: Confirm that these work.  I am now overriding these methods directly for Gtk::GLArea
     fArea.signal_realize().connect(sigc::mem_fun(*this, &Viewer::area_realize), false);
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
-    fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
+    fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render)); //, false);
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
     fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
 
@@ -113,7 +111,6 @@ namespace mygl
       throw util::GenException("Duplicate Scene Name") << "In mygl::Viewer::MakeScene(), requested scene name " << name << " is already in use.\n";
     }
 
-    fArea.throw_if_error();
     fArea.make_current();
   }
 
@@ -143,13 +140,14 @@ namespace mygl
 
   void Viewer::area_realize()
   {
+    std::cout << "Calling mygl::Viewer::area_realize()\n"; //TODO: Remove me
     //Quick GUI interlude in a convenient place
     set_position(get_width()*0.8); //Set default relative size of GLArea
 
     fArea.make_current();
     try
     {
-      fArea.throw_if_error();
+      //TODO: Does pugl do this for me?
       if(!gladLoadGL())
       {
         std::cerr << "Failed to load opengl extensions with glad.\n";
@@ -160,13 +158,16 @@ namespace mygl
       //enable depth testing
       //TODO: Use depth testing with some scenes but not others (geometry).  
       //glEnable(GL_DEPTH_TEST);
+      auto version = glGetString(GL_VERSION);
+      if(version) std::cout << "Using opengl version " << version << "\n";
+      else std::cerr << "Failed to get opengl version string.\n";
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
-    catch(const Gdk::GLError& err)
+    catch(const PuglArea::exception& err)
     {
       std::cerr << "Caught exception in Viewer::realize():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
+                << err.what() << "\n";
       //TODO: Should I rethrow?
     }
   }
@@ -176,22 +177,20 @@ namespace mygl
     fArea.make_current();
     try
     {
-      fArea.throw_if_error();
     }
-    catch(const Gdk::GLError& err)
+    catch(const PuglArea::exception& err)
     {
       std::cerr << "Caught exception in Viewer::unrealize():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
+                << err.what() << "\n";
       //TODO: Should I rethrow?
     }
   }
 
-  bool Viewer::render(const Glib::RefPtr<Gdk::GLContext>& /*context*/) 
+  void Viewer::render() 
   {
     fArea.make_current();
     try
     {
-      fArea.throw_if_error();
 
       glClearColor(fBackgroundColor.get_red(), fBackgroundColor.get_green(), fBackgroundColor.get_blue(), 1.0f); //TODO: Allow user to set background color
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -208,15 +207,15 @@ namespace mygl
       glFlush();
 
       //Force continuous rendering.  
-      fArea.queue_render(); 
+      fArea.queue_render();  
 
-      return false; 
+      //return false; 
     }
-    catch(const Gdk::GLError& err)
+    catch(const PuglArea::exception& err)
     {
       std::cerr << "Caught exception in Viewer::render():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
-      return false;
+                << err.what() << "\n";
+      //return false;
     }
   }
   
@@ -257,8 +256,6 @@ namespace mygl
     fArea.make_current();
     try
     {
-      fArea.throw_if_error();
-
       glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //TODO: Make sure there is no VisID that maps to this color.  
                                               
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -277,10 +274,10 @@ namespace mygl
       }
       glFlush();
     }
-    catch(const Gdk::GLError& err)
+    catch(const PuglArea::exception& err)
     {
       std::cerr << "Caught exception in Viewer::on_click():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
+                << err.what() << "\n";
       return false;
     }
   
@@ -319,7 +316,6 @@ namespace mygl
 
   void Viewer::RemoveAll(const std::string& sceneName)
   {
-    fArea.throw_if_error();
     fArea.make_current();
 
     //TODO: Error handling when sceneName is not found?  Really, this, along with AddDrawable, reveals that my Viewer/Scene system 
