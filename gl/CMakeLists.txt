@@ -11,7 +11,12 @@ target_link_libraries( Scene glad Drawable exception Shader )
 install( TARGETS Scene DESTINATION lib )
 
 add_library( Viewer PuglArea.cpp Viewer.cpp )
-message("Linking against the following pugl libraries: ${PUGL_LIBRARIES}")
+
+#Attempt to build pugl from source tree
+add_dependencies( Viewer pugl )
+
+#message("Linking against the following pugl libraries: ${PUGL_LIBRARIES}")
+message("Including pugl headers from ${PUGL_INCLUDE_DIR}")
 target_link_libraries( Viewer Camera Scene ${OPENGL_LIBRARIES} ${PUGL_LIBRARIES})
 install( TARGETS Viewer DESTINATION lib )
 

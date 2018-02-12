@@ -74,7 +74,7 @@ namespace mygl
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
     fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render)); //, false);
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
-    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
+    //fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
 
     //Make sure this Viewer reacts to its' own selection signal.  Other viewers can also connect via the public interface.
     fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));

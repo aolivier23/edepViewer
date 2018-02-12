@@ -1,0 +1,26 @@
+# project pugl (0.2.0) configured on Sun Feb 11 19:46:38 2018 by
+# waf 1.7.14 (abi 98, python 2070cf0 on linux2)
+# using /home/aolivier/app/evd/src/pugl/waf configure
+#
+----------------------------------------
+Setting top to
+/home/aolivier/app/evd/src/pugl
+----------------------------------------
+Setting out to
+/home/aolivier/app/evd/src/pugl/build
+----------------------------------------
+Checking for 'gcc' (c compiler)
+find program=['gcc', 'cc'] paths=['/home/aolivier/app/edep-sim/edep-gcc-5.4.0-x86_64-linux-gnu/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/usr/local/root/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/home/aolivier/bin', '/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin', '/usr/games', '/usr/local/games', '/snap/bin'] var='CC' -> '/usr/bin/gcc'
+find program=['ar'] paths=['/home/aolivier/app/edep-sim/edep-gcc-5.4.0-x86_64-linux-gnu/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/usr/local/root/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/home/aolivier/bin', '/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin', '/usr/games', '/usr/local/games', '/snap/bin'] var='AR' -> '/usr/bin/ar'
+/usr/bin/gcc
+----------------------------------------
+Checking for program pkg-config
+/usr/bin/pkg-config
+find program=['pkg-config'] paths=['/home/aolivier/app/edep-sim/edep-gcc-5.4.0-x86_64-linux-gnu/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/usr/local/root/bin', '/home/aolivier/app/geant4.10.3-install/bin', '/home/aolivier/bin', '/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin', '/usr/games', '/usr/local/games', '/snap/bin'] var='PKGCONFIG' -> '/usr/bin/pkg-config'
+----------------------------------------
+Checking for 'cairo' >= 1.0.0
+['/usr/bin/pkg-config', '--atleast-version=1.0.0', 'cairo']
+['/usr/bin/pkg-config', '--cflags', '--libs', 'cairo']
+out: -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12 -lcairo
+
+yes

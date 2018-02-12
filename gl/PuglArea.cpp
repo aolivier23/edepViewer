@@ -20,8 +20,8 @@
 #endif
 
 //include opengl enums from pugl
-//#include "pugl/gl.h"
-#include "glad/include/glad/glad.h"
+#include "pugl/gl.h"
+//#include "glad/include/glad/glad.h"
 
 //c++ includes
 #include <iostream> //TODO: remove me
@@ -151,9 +151,12 @@ namespace mygl
 
   void PuglArea::do_render()
   {
-    puglEnterContext(cobj()); //Make context current
+    //TODO: I have had to enclose rendering calls with make_current() in the past.  Maybe I could remove that requirement by drawing 
+    //      through do_render()?  Perhaps a more important question is why GLArea didn't do this in the first place.  Something is 
+    //      very wrong.  
+    //puglEnterContext(cobj()); //Make context current
     fRender.emit(); //Give other widgets the chance to react to this context change
-    GLenum err;
+    /*GLenum err;
     std::string errors;
     while((err = glGetError()) != GL_NO_ERROR)
     {
@@ -165,15 +168,15 @@ namespace mygl
       else if(err == GL_OUT_OF_MEMORY) errors += "GL_OUT_OF_MEMORY\n";
       else if(err == GL_INVALID_FRAMEBUFFER_OPERATION) errors += "GL_INVALID_FRAMEBUFFER_OPERATION\n";
     }
-    if(!errors.empty()) throw exception("Opengl errors in do_render()") << "Got the following opengl errors in render: " << errors;
+    if(!errors.empty()) throw exception("Opengl errors in do_render()") << "Got the following opengl errors in render: " << errors;*/
     puglLeaveContext(cobj(), true); //Apply changes to context
   }
 
-  bool PuglArea::on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx)
+  /*bool PuglArea::on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx)
   {
     do_render();
     return false;
-  }
+  }*/
 
   //Forward events into the Gtk main loop.  Leaving this empty to try to forward events to the gtk widget instead.
   //Sounds like I want to call gtk_main_do_event() in onEvent(): https://developer.gnome.org/gtk3/stable/gtk3-General.html

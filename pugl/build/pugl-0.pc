@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Pugl
+Version: 0.2.0
+Description: Lightweight portable OpenGL API
+Libs: -L${libdir} -lpugl-0
+Cflags: -I${includedir}/pugl-0
