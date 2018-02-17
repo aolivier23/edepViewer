@@ -47,9 +47,6 @@ namespace mygl
     //Forward the drawing area's properties to pugl
     initResizable(true); //TODO: Are all Gtk::Widgets resizable?
 
-    //Make sure queue_render() sets up an eventual call to do_render().
-    fDoRender.connect(sigc::mem_fun(*this, &PuglArea::do_render));
-
     set_has_window(true);
 
     set_size_request(100, 100);
@@ -71,7 +68,7 @@ namespace mygl
   //Request that signal_render be called as soon as feasible
   void PuglArea::queue_render()
   {
-    fDoRender.emit();
+    queue_draw();
   }
 
   //TODO: This is not getting called.  
@@ -154,9 +151,9 @@ namespace mygl
     //TODO: I have had to enclose rendering calls with make_current() in the past.  Maybe I could remove that requirement by drawing 
     //      through do_render()?  Perhaps a more important question is why GLArea didn't do this in the first place.  Something is 
     //      very wrong.  
-    //puglEnterContext(cobj()); //Make context current
+    make_current();
     fRender.emit(); //Give other widgets the chance to react to this context change
-    /*GLenum err;
+    GLenum err;
     std::string errors;
     while((err = glGetError()) != GL_NO_ERROR)
     {
@@ -168,15 +165,16 @@ namespace mygl
       else if(err == GL_OUT_OF_MEMORY) errors += "GL_OUT_OF_MEMORY\n";
       else if(err == GL_INVALID_FRAMEBUFFER_OPERATION) errors += "GL_INVALID_FRAMEBUFFER_OPERATION\n";
     }
-    if(!errors.empty()) throw exception("Opengl errors in do_render()") << "Got the following opengl errors in render: " << errors;*/
+    if(!errors.empty()) throw exception("Opengl errors in do_render()") << "Got the following opengl errors in render: " << errors;
     puglLeaveContext(cobj(), true); //Apply changes to context
   }
 
-  /*bool PuglArea::on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx)
+  bool PuglArea::on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx)
   {
+    Gtk::DrawingArea::on_draw(ctx);
     do_render();
     return false;
-  }*/
+  }
 
   //Forward events into the Gtk main loop.  Leaving this empty to try to forward events to the gtk widget instead.
   //Sounds like I want to call gtk_main_do_event() in onEvent(): https://developer.gnome.org/gtk3/stable/gtk3-General.html

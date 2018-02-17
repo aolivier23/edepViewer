@@ -188,7 +188,8 @@ namespace mygl
 
   void Viewer::render() 
   {
-    fArea.make_current();
+    //TODO: PuglArea does this for me?
+    //fArea.make_current();
     try
     {
 
@@ -199,6 +200,7 @@ namespace mygl
 
       for(auto& scenePair: fSceneMap)
       {
+        std::cout << "Rendering scene " << scenePair.first << ".\n";
         const auto view = fCurrentCamera->GetView();
 
         scenePair.second.Render(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()), 
@@ -207,7 +209,7 @@ namespace mygl
       glFlush();
 
       //Force continuous rendering.  
-      fArea.queue_render();  
+      //fArea.queue_render();  
 
       //return false; 
     }

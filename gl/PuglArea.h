@@ -87,7 +87,7 @@ namespace mygl
       virtual void on_hide() override;
       virtual void on_size_allocate(Gdk::Rectangle& rect) override;*/
 
-      //virtual bool on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx) override;
+      virtual bool on_draw(const ::Cairo::RefPtr< ::Cairo::Context >& ctx) override;
 
     protected:
       //Signal that it is time to call opengl drawing functions.
