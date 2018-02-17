@@ -35,6 +35,9 @@ find_package( tinyxml2 REQUIRED )
 add_library(glad SHARED glad/src/glad.c)
 target_include_directories("glad" PRIVATE "glad/include")
 target_link_libraries("glad" ${CMAKE_DL_LIBS})
+install(TARGETS glad DESTINATION lib)
+file(GLOB GLAD_HEADERS ${PROJECT_SOURCE_DIR}/glad/include/*/*.h)
+install(FILES ${GLAD_HEADERS} DESTINATION include)
 
 #Stuff for Opengl
 find_package( OpenGL REQUIRED )
