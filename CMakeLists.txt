@@ -78,7 +78,7 @@ add_subdirectory(plugins)
 #Make the results of this build into a package.  Designed to be distributed as a .tar.gz
 #Learned to do this from http://agateau.com/2009/cmake-and-make-dist/
 set( CPACK_PACKAGE_VERSION_MAJOR "1" )
-set( CPACK_PACKAGE_VERSION_MINOR "2" )
+set( CPACK_PACKAGE_VERSION_MINOR "3" )
 set( CPACK_PACKAGE_VERSION_PATCH "0" )
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}" )
 set( CPACK_SOURCE_GENERATOR "TGZ" )
