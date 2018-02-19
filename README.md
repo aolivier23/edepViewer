@@ -1,5 +1,5 @@
 # edepViewer
-An external event viewer for edepsim.  
+An external event viewer for [edep-sim](https://github.com/ClarkMcGrew/edep-sim).
 
 Warning:
   While I am personally using the develop branch of this project in my work, the project as a whole is still 
