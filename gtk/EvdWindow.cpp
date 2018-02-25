@@ -133,11 +133,7 @@ namespace mygl
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
-    //TODO: Removing the next line seems to prevent undefined behavior.  I still get this behavior 
-    //      with a trivial implementation of DrawEvent.
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
-    //TODO: Removing DefaultGeo drawer while leaving Guides drawer in place does not have unexpected GUI behavior.  DefaultGeo may be 
-    //      the problem.
 
     std::cout << "Done drawing the geometry.\n";
   }
