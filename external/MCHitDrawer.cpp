@@ -33,7 +33,7 @@ namespace mygl
 
   void MCHitDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& hitTree = viewer.MakeScene("MCHits", fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    auto& hitTree = viewer.MakeScene(fHitName, fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
     hitTree.append_column("Energy", fHitRecord.fEnergy);
     hitTree.append_column("Time", fHitRecord.fTime);
     hitTree.append_column("Cause", fHitRecord.fParticle);
@@ -41,9 +41,9 @@ namespace mygl
 
   void MCHitDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
   {
-    viewer.RemoveAll("MCHits");
+    viewer.RemoveAll(fHitName);
 
-    auto top = *(viewer.GetScenes().find("MCHits")->second.NewTopLevelNode());
+    auto top = *(viewer.GetScenes().find(fHitName)->second.NewTopLevelNode());
     top[fHitRecord.fEnergy] = std::accumulate(fHits->begin(), fHits->end(), 0., [](double value, const auto& hit) { return value + hit.Energy; });
     top[fHitRecord.fParticle] = fHitName; //Algorithm name
     top[fHitRecord.fTime] = 0.;
@@ -54,7 +54,7 @@ namespace mygl
            
       glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(hit.Position.X(), hit.Position.Y(), hit.Position.Z()));
 
-      auto row = viewer.AddDrawable<mygl::PolyMesh>("MCHits", nextID++, top, true, pos,
+      auto row = viewer.AddDrawable<mygl::PolyMesh>(fHitName, nextID++, top, true, pos,
                                                     &box, glm::vec4(fPalette(hit.Energy), 1.0)); 
       row[fHitRecord.fEnergy] = hit.Energy;
       row[fHitRecord.fTime] = hit.Position.T();
