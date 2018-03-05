@@ -81,8 +81,25 @@ namespace mygl
       Gtk::ToolButton fPrint; 
       Gtk::ToolButton fNext;
       Gtk::ToolButton fReload;
+
+      //Entry number GUI
+      Gtk::ToolItem fEvtLabelWrap;
+      Gtk::Label fEvtLabel;
       Gtk::ToolItem fEvtNumWrap; 
       Gtk::Entry fEvtNum; 
+
+      //EventId GUI
+      Gtk::ToolItem fEvtIDLabelWrap;
+      Gtk::Label fEvtIDLabel;
+      Gtk::ToolItem fEvtIDWrap;
+      Gtk::Entry fEvtID;
+
+      //RunId GUI
+      Gtk::ToolItem fRunIDLabelWrap;
+      Gtk::Label fRunIDLabel;
+      Gtk::ToolItem fRunIDWrap;
+      Gtk::Entry fRunID;
+
       Gtk::ToolButton fFileChoose; 
       Gtk::ToolItem fFileLabelWrap;
       Gtk::Label fFileLabel; //Displays the current file name so that it shows up in printouts 
@@ -99,6 +116,8 @@ namespace mygl
       //Negotiate with the Source to find the right event 
       void goto_event();
       void next_event();
+
+      void goto_id();
 
       void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 

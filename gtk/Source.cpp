@@ -18,6 +18,9 @@ namespace src
 
     fFile.reset(TFile::Open((fFilePos)->c_str()));
     fReader.SetTree("EDepSimEvents", fFile.get());
+    //TODO: Make a copy of this tree that passes some cuts instead?  Requires that those cuts come from user input somehow.  
+    //      Should probably do this in a separate file so EvdWindow can parse the options file for cuts to apply.
+    fReader.GetTree()->BuildIndex("RunId", "EventId");
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
@@ -38,6 +41,7 @@ namespace src
 
     fFile.reset(TFile::Open((fFilePos)->c_str()));
     fReader.SetTree("EDepSimEvents", fFile.get());
+    fReader.GetTree()->BuildIndex("RunId", "EventId");
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
@@ -66,6 +70,7 @@ namespace src
     return status;
   }
 
+  //Go to event by entry number in TTree
   bool Source::GoTo(const size_t evt)
   {
     //TODO: GoTo can't search over file boundaries.  Should GoTo have an argument for the file to process?
@@ -76,6 +81,18 @@ namespace src
       fReader.Next();
     }
     return fReader.SetEntry(evt) == TTreeReader::kEntryValid;
+  }
+
+  //Go to event by RunId and EventId
+  bool Source::GoTo(const size_t run, const size_t evt)
+  {
+    if(fReader.GetEntryStatus() == TTreeReader::kEntryBeyondEnd)
+    {
+      fReader.Restart();
+      fReader.Next();
+    }
+    auto index = fReader.GetTree()->GetEntryNumberWithBestIndex(run, evt);
+    return fReader.SetEntry(index) == TTreeReader::kEntryValid;
   }
 
   const size_t Source::Entry()
@@ -102,6 +119,7 @@ namespace src
 
     fFile.reset(TFile::Open((fFilePos)->c_str()));
     fReader.SetTree("EDepSimEvents", fFile.get());
+    fReader.GetTree()->BuildIndex("RunId", "EventId");
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");

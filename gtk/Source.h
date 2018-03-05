@@ -35,6 +35,7 @@ namespace src
 
       virtual bool Next();
       virtual bool GoTo(const size_t evt);
+      virtual bool GoTo(const size_t run, const size_t evt);
       virtual bool NextFile();
 
       virtual const std::string GetFile();

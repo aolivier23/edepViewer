@@ -37,7 +37,9 @@ namespace mygl
   EvdWindow::EvdWindow(): Gtk::ApplicationWindow(),
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
-    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(),
+    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtLabelWrap(), fEvtLabel("TTree Entry"), 
+    fEvtNumWrap(), fEvtNum(), fEvtIDLabelWrap(), fEvtIDLabel("EventId"), fEvtIDWrap(), fEvtID(), 
+    fRunIDLabelWrap(), fRunIDLabel("RunId"), fRunIDWrap(), fRunID(), fFileChoose("File"), fFileLabel(),
     fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
   {
     set_title("edepsim Display Window");
@@ -154,6 +156,8 @@ namespace mygl
 
     //Last, set current event number for GUI
     fEvtNum.set_text(std::to_string(fSource->Entry()));
+    fEvtID.set_text(std::to_string(fSource->Event().EventId));
+    fRunID.set_text(std::to_string(fSource->Event().RunId));
 
     //Pop up legend of particle colors used
     std::vector<LegendView::Row> rows;
@@ -207,9 +211,23 @@ namespace mygl
     fNavBar.add(fPrint);
     fPrint.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::Print));
     
+    fEvtLabelWrap.add(fEvtLabel);
+    fNavBar.add(fEvtLabelWrap);
     fEvtNumWrap.add(fEvtNum);
     fNavBar.add(fEvtNumWrap);
     fEvtNum.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_event));
+
+    fRunIDLabelWrap.add(fRunIDLabel);
+    fNavBar.add(fRunIDLabelWrap);
+    fRunIDWrap.add(fRunID);
+    fNavBar.add(fRunIDWrap);
+    fRunID.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_id));
+
+    fEvtIDLabelWrap.add(fEvtIDLabel);
+    fNavBar.add(fEvtIDLabelWrap);
+    fEvtIDWrap.add(fEvtID);
+    fNavBar.add(fEvtIDWrap);
+    fEvtID.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_id));
 
     fNavBar.add(fNext);
     fNext.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::next_event));
@@ -257,6 +275,20 @@ namespace mygl
       ReadEvent();
     }
     else std::cerr << "Failed to get event " << newEvt << " from file " << fSource->GetFile() << "\n";
+    //TODO: Search other files and/or use TChain?
+  }
+
+  void EvdWindow::goto_id()
+  {
+    std::cout << "Calling function EvdWindow::goto_id()\n";
+    const auto newEvt = std::stoi(fEvtID.get_text());
+    const auto newRun = std::stoi(fRunID.get_text());
+    if(fSource->GoTo(newRun, newEvt))
+    {
+      ReadEvent(); //TODO: Teach Source how to handle EventId and RunId
+    }
+    else std::cerr << "Failed to get event (RunId, EventId) = (" << newRun << ", " << newEvt << ") from file " << fSource->GetFile() << "\n";
+    //TODO: Search other files and/or use TChain?
   }
 
   void EvdWindow::next_event()
