@@ -19,6 +19,7 @@ namespace mygl
           //TODO: Set fPosition here somehow.  Class friendship?  Something more devious?  
           //      Already figured out I can't create the ColumnBases myself in this class 
           //      because the user needs access to the Column<T>s themselves for Node::operator[].
+          size_t size() const;
 
         protected:
           ColumnModel() {} //Derive from this class to use it.  
@@ -37,11 +38,11 @@ namespace mygl
 
           virtual std::unique_ptr<Node::DataBase> BuildData() = 0;
 
+          void SetPosition(const size_t pos); //TODO: friend function of ColumnModel?
+
         private: 
           std::string fName; //The name of this column when a TreeModel using it is drawn.
-          //TODO: Using fPosition requires a little less memory but more moving parts.  Using a std::map for now instead so I 
-          //      can get this system working.  
-          //size_t fPosition; //The position of this ColumnBase in the column model (note the lack of capitalization)
+          size_t fPosition; //The position of this ColumnBase in the column model (note the lack of capitalization)
       };
 
       //Concrete implementation of ColumnBase. Encodes the type information for the object it refers to so that 
@@ -63,30 +64,32 @@ namespace mygl
       class Node
       {
         public:
-           Node(ColumnModel& cols);
-           virtual ~Node() = default;
+          Node(ColumnModel& cols);
+          virtual ~Node() = default;
 
-           template <class T>
-           T& operator[](Column<T>& col); 
+          //Access to Node data using Columns
+          template <class T>
+          T& operator[](Column<T>& col); 
 
-           //Access to parentage
-           //TODO: Having to dereference an iterator twice seems like an ugly interface.  
-           //      Maybe write a wrapper over vector iterators that just returns a Node& on 
-           //      dereference.
-           Node& Parent(); 
-           iterator child_begin();
-           iterator child_end();
-           const_iterator child_cbegin() const;
-           const_iterator child_cend() const;
+          //Access to Node data as strings
+          std::string operator [](const size_t index);
+ 
+          //Access to parentage
+          //TODO: Having to dereference an iterator twice seems like an ugly interface.  
+          //      Maybe write a wrapper over vector iterators that just returns a Node& on 
+          //      dereference.
+          Node& Parent(); 
+          iterator child_begin();
+          iterator child_end();
+          const_iterator child_cbegin() const;
+          const_iterator child_cend() const;
 
-           //Alter parentage
-           //iterator Child(); //Create a new child of this Node and return an iterator to the child.
-                               //Since Child() needs access to a ColumnModel, this is a function of the tree interface itself.  
-           void Remove(iterator child); //Remove a child of this Node
-           void Reparent(Node* parent); //Change the parent of this Node.  Parameter is an observer pointer.
+          //Alter parentage
+          void Remove(iterator child); //Remove a child of this Node
+          void Reparent(Node* parent); //Change the parent of this Node.  Parameter is an observer pointer.
   
         private:
-          Node* fParent; //Observer pointer to parent.  Think about what happens in parent's destructor...
+          //Node* fParent; //Observer pointer to parent.  Think about what happens in parent's destructor...
           std::vector<std::unique_ptr<Node>> fChildren; //Owning pointers to children.
           std::vector<std::unique_ptr<DataBase>> fColData; //Vector of column data
           
@@ -99,8 +102,9 @@ namespace mygl
               virtual ~DataBase() = default;
 
               virtual void* Get() = 0; //Type will be figured out by Column<T>'s T
+              virtual std::string string() = 0; //Turn whatever data is stored into a std::string
  
-              //TODO: virtual function to put DataBase() information on  the GPU?
+              //TODO: virtual function to put DataBase() information on the GPU?
           };
 
           //(I think I got this right) Store actual data as a real type so I can delete it. 
@@ -113,6 +117,9 @@ namespace mygl
  
               //Cast fData to void* so it can be cast back later.  
               virtual void* Get() override;
+              
+              //Turn data into a string.  Probably called std::to_string for built-in types.
+              virtual std::string string() = 0;
 
             protected:
               T fData; //The actual data stored in a DataBase
@@ -125,12 +132,17 @@ namespace mygl
           iterator(Base& node); //TODO: Pass parent or child Node here?
           ~iterator() = default;
 
+          //Node access
+          Node& operator *() const;
+          Node* operator ->() const;
+
           //Minimal STL-style iterator interface
           iterator& operator ++();
           iterator& operator ++(int);
-          operator (bool)();
-          iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
-          bool operator <(iterator& other); 
+          operator (bool)() const;
+          //iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
+          bool operator <(iterator& other) const; 
+          bool operator ==(iterator& other) const;
 
         private:
           typedef Base std::vector<std::unique_ptr<Node>>::iterator;
@@ -138,19 +150,45 @@ namespace mygl
           Base fParent; //Access to the parent of the Node this iterator references
       };
 
-      //TODO: const_iterator?
+      class const_iterator
+      {
+        public:
+          iterator(const Base& node); //TODO: Pass parent or child Node here?
+          ~iterator() = default;
+
+          //Node access
+          const Node& operator *() const;
+          const Node* operator ->() const;
+
+          //Minimal STL-style iterator interface
+          const_iterator& operator ++();
+          const_iterator& operator ++(int);
+          operator (bool)() const;
+          //iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
+          bool operator <(const_iterator& other) const;
+          bool operator ==(const_iterator& other) const;
+
+        private:
+          typedef Base std::vector<std::unique_ptr<Node>>::iterator;
+          Base fNode; //Access to the Node this iterator references
+          Base fParent; //Access to the parent of the Node this iterator references
+      };
 
       //Public interface of core TreeModel
       TreeModel(const ColumnModel& cols); //TODO: Can I get away with a const ColumnModel?
       virtual ~TreeModel() = default;
 
       //Operations on the Node hierarchy
-      //TODO: iterator class
       iterator NewNode(); //Create a new top-level Node
-      iterator NewChild(iterator parent); //Add a child Node to the Node "pointed" by parent
+      iterator NewNode(iterator parent); //Add a child Node to the Node "pointed" by parent
       void Remove(iterator child); //Remove child from its' parent Node and destroy child 
+      void Clear(); //Delete all of the Nodes in this TreeModel
 
-      //TODO: iterators to top-level nodes
+      //Access to top-level nodes
+      iterator begin();
+      iterator end();
+      const_iterator cbegin() const;
+      const_iterator cend() const;
 
       //Convenience functions for walking all of the Nodes in this TreeModel
       //Call a callable object on each descendant of parent
@@ -168,6 +206,7 @@ namespace mygl
         }
       }
 
+      //Call a callable object on every Node in this Tree
       template <class FUNC>
       void Walk(FUNC& func)
       {
@@ -181,7 +220,6 @@ namespace mygl
     protected:
       std::unique_ptr<ColumnModel> fColumns; //Remember the columns in this TreeModel so that someone else can draw them.
                                              //The user should still own his own copy(ies) of this ColumnModel.  
-                                             //TODO: What happens if user's ColumnModel gets out of sync with this one?  
       std::vector<std::unique_ptr<Node>> fTopNodes; //top-level nodes
   };
 } 
