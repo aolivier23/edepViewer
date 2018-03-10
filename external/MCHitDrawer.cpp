@@ -19,7 +19,7 @@
 
 namespace mygl
 {
-  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(0., 1e3), fHitName("NeutronHits")
+  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(1.5, 15.), fHitName("NeutronHits")
   {
     const auto hitName = config->Attribute("HitName");
     if(hitName != nullptr) fHitName = hitName;
