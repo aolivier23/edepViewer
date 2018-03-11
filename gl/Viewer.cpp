@@ -26,14 +26,16 @@
 
 namespace mygl
 {
-  Viewer::Viewer(std::unique_ptr<Camera>&& cam, const Gdk::RGBA& background, const float xPerPixel, const float yPerPixel, const float zPerPixel):
-                Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL), fSceneMap(), fArea(), fBackgroundColor(background), fScrolls(), 
-                fControl(Gtk::ORIENTATION_VERTICAL), fBackColorLabel("Background Color"), fCameras(), fCameraSwitch(), fCurrentCamera(cam.release()),
-                fBackgroundButton(background), fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
+  Viewer::Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel, const float yPerPixel, const float zPerPixel):
+                fSceneMap(), 
+                fCameras(), //fCameras(1, cam), fCurrentCamera(fCameras.begin()),
+                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
   {
+    fCameras.emplace_back(cam.release());
+    fCurrentCamera = fCameras.begin();
     //Setup control widgets
     //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
-    fNotebook.set_hexpand(false);
+    /*fNotebook.set_hexpand(false);
     fNotebook.set_scrollable();
     fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
     fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
@@ -76,7 +78,7 @@ namespace mygl
     fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
     fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
     fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
-    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);
+    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);*/
 
     //Make sure this Viewer reacts to its' own selection signal.  Other viewers can also connect via the public interface.
     fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
@@ -84,25 +86,34 @@ namespace mygl
     //Configure opengl
     //fArea.set_has_depth_buffer(true);
 
-    show_all_children();
-    fCameras.property_visible_child().signal_changed().connect(sigc::mem_fun(*this, &Viewer::camera_change));
+    //fCameras.property_visible_child().signal_changed().connect(sigc::mem_fun(*this, &Viewer::camera_change));
+    area_realize();
   }
 
   Viewer::~Viewer() {}
 
-  Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
+  void Viewer::Render(const int width, const int height)
   {
-    PrepareToAddScene(name);
-    return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                                    std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, cols); //lol
+    //TODO: Render() scenes
+    //TODO: Render() view controls
+    render(width, height);
   }
 
-  Gtk::TreeView& Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc, 
+  //TODO: Return some sort of TreeView configuration
+  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
+  {
+    PrepareToAddScene(name);
+    ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
+                      std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, cols); //lol
+  }
+ 
+  //TODO: Return some sort of TreeView configuration
+  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc, 
                                    const std::string& geomSrc)
   {
     PrepareToAddScene(name);
-    return ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                                    std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, cols); //lol
+    ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, cols); //lol
   }
 
   void Viewer::PrepareToAddScene(const std::string& name)
@@ -112,21 +123,16 @@ namespace mygl
     {
       throw util::GenException("Duplicate Scene Name") << "In mygl::Viewer::MakeScene(), requested scene name " << name << " is already in use.\n";
     }
-
-    fArea.throw_if_error();
-    fArea.make_current();
   }
 
-  Gtk::TreeView& Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols)
+  //TODO: Return some sort of TreeView configuration
+  void Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols)
   {
     //Now, tell this Viewer's GUI about the Scene's GUI
-    auto& treeView = scene.fTreeView;
-    treeView.set_enable_search(true);
-    //TODO: This doesn't work
-    //auto selection = treeView.get_selection();
-    //selection->signal_changed().connect([&selection, &cols, this]() { this->fSignalSelection.emit((*selection->get_selected())[cols.fVisID]); });
+    //auto& treeView = scene.fTreeView;
+    //treeView.set_enable_search(true);
 
-    fScrolls.emplace_back();
+    /*fScrolls.emplace_back();
     auto& scroll = fScrolls.back().second;
     scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
                                                                      //rows are added.
@@ -138,151 +144,80 @@ namespace mygl
     fNotebook.append_page(box, name);
     fNotebook.show_all_children();
     
-    return treeView;
+    return treeView;*/
   }
 
   void Viewer::area_realize()
   {
     //Quick GUI interlude in a convenient place
-    set_position(get_width()*0.8); //Set default relative size of GLArea
+    //set_position(get_width()*0.8); //Set default relative size of GLArea
 
-    fArea.make_current();
-    try
-    {
-      fArea.throw_if_error();
-      if(!gladLoadGL())
-      {
-        std::cerr << "Failed to load opengl extensions with glad.\n";
-      }
-
-      glViewport(0, 0, fArea.get_allocated_width(), fArea.get_allocated_height());
-
-      //enable depth testing
-      //TODO: Use depth testing with some scenes but not others (geometry).  
-      //glEnable(GL_DEPTH_TEST);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    catch(const Gdk::GLError& err)
-    {
-      std::cerr << "Caught exception in Viewer::realize():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
-      //TODO: Should I rethrow?
-    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   void Viewer::unrealize()
   {
-    fArea.make_current();
-    try
-    {
-      fArea.throw_if_error();
-    }
-    catch(const Gdk::GLError& err)
-    {
-      std::cerr << "Caught exception in Viewer::unrealize():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
-      //TODO: Should I rethrow?
-    }
   }
 
-  bool Viewer::render(const Glib::RefPtr<Gdk::GLContext>& /*context*/) 
+  void Viewer::render(const int width, const int height) 
   {
-    fArea.make_current();
-    try
+    if(*fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+
+    for(auto& scenePair: fSceneMap)
     {
-      fArea.throw_if_error();
+      const auto view = (*fCurrentCamera)->GetView();
 
-      glClearColor(fBackgroundColor.get_red(), fBackgroundColor.get_green(), fBackgroundColor.get_blue(), 1.0f); //TODO: Allow user to set background color
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
-
-      for(auto& scenePair: fSceneMap)
-      {
-        const auto view = fCurrentCamera->GetView();
-
-        scenePair.second.Render(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), fArea.get_allocated_height()), 
-                                                 glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
-      }
-      glFlush();
-
-      //Force continuous rendering.  
-      fArea.queue_render(); 
-
-      return false; 
+      scenePair.second.Render(view, glm::scale((*fCurrentCamera)->GetPerspective(width, height), 
+                                               glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
     }
-    catch(const Gdk::GLError& err)
-    {
-      std::cerr << "Caught exception in Viewer::render():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
-      return false;
-    }
-  }
-  
-  bool Viewer::my_motion_notify_event(GdkEventMotion* /*evt*/)
-  {
-    fArea.grab_focus();
-    return false;
   }
   
   void Viewer::set_background()
   {
-    fBackgroundColor = fBackgroundButton.get_rgba();
+    /*fBackgroundColor = fBackgroundButton.get_rgba();
     fBackgroundColor.set_alpha(0.0);
     //ignore alpha
-    fArea.queue_render();
+    fArea.queue_render();*/
   }
 
   void Viewer::AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera)
   {
     std::cout << "Called mygl::Viewer::AddCamera()\n";
-    fCameras.add(*(camera.release()), name, name);
+    //fCameras.add(*(camera.release()), name, name);
+    fCameras.emplace_back(camera.release());
   }
 
   void Viewer::camera_change()
   {
     std::cout << "Called mygl::Viewer::camera_change()\n";
-    fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
-    fCurrentCamera->ConnectSignals(fArea);
-    fArea.queue_render();
+    //fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
+    //fCurrentCamera->ConnectSignals(fArea);
+    //fArea.queue_render();
   }
 
-  bool Viewer::on_click(GdkEventButton* evt)
+  /*bool Viewer::on_click(GdkEventButton* evt)
   {
     if(evt->button != 1) return false; //button 1 is the left mouse button
     
     //TODO: Encapsulate "global" opengl settings into an object that can apply defaults here
     glDisable(GL_BLEND);
-    fArea.make_current();
-    try
-    {
-      fArea.throw_if_error();
-
-      glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //TODO: Make sure there is no VisID that maps to this color.  
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //TODO: Make sure there is no VisID that maps to this color.  
                                               
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
-
-      for(auto& scenePair: fSceneMap)
-      {
-        const auto view = fCurrentCamera->GetView();
-
-        //TODO: It would be great to be able to change out this selection algorithm.  
-        scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->GetPerspective(fArea.get_allocated_width(), 
-                                                          fArea.get_allocated_height()),
-                                         glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
-        //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
-      }
-      glFlush();
-    }
-    catch(const Gdk::GLError& err)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+ 
+    if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+ 
+    for(auto& scenePair: fSceneMap)
     {
-      std::cerr << "Caught exception in Viewer::on_click():\n"
-                << err.domain() << "-" << err.code() << "-" << err.what() << "\n";
-      return false;
+      const auto view = fCurrentCamera->GetView();
+ 
+      //TODO: It would be great to be able to change out this selection algorithm.  
+      scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->GetPerspective(width, height),
+                                       glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+      //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
     }
+    glFlush();
   
     //TODO: Class/struct to encapsulate an opengl drawing state
     glEnable(GL_BLEND);
@@ -300,7 +235,7 @@ namespace mygl
     fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); //, evt->x, evt->y); 
 
     return true;
-  }
+  }*/
 
   Viewer::SignalSelection Viewer::signal_selection()
   {
@@ -312,16 +247,13 @@ namespace mygl
     //Tell Scenes to select chosen object.
     for(auto& scenePair: fSceneMap) 
     {
-      if(scenePair.second.SelectID(id)) fNotebook.set_current_page(fNotebook.page_num(
-                                                                   *(scenePair.second.fTreeView.get_parent()->get_parent())));
+      if(scenePair.second.SelectID(id)); //fNotebook.set_current_page(fNotebook.page_num(
+                                        //                           *(scenePair.second.fTreeView.get_parent()->get_parent())));
     }
   }
 
   void Viewer::RemoveAll(const std::string& sceneName)
   {
-    fArea.throw_if_error();
-    fArea.make_current();
-
     //TODO: Error handling when sceneName is not found?  Really, this, along with AddDrawable, reveals that my Viewer/Scene system 
     //      would benefit from a redesign.  
     auto found = fSceneMap.find(sceneName);

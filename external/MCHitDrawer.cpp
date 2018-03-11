@@ -33,10 +33,10 @@ namespace mygl
 
   void MCHitDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& hitTree = viewer.MakeScene(fHitName, fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
-    hitTree.append_column("Energy", fHitRecord.fEnergy);
+    viewer.MakeScene(fHitName, fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    /*hitTree.append_column("Energy", fHitRecord.fEnergy);
     hitTree.append_column("Time", fHitRecord.fTime);
-    hitTree.append_column("Cause", fHitRecord.fParticle);
+    hitTree.append_column("Cause", fHitRecord.fParticle);*/
   }
 
   void MCHitDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)

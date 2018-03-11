@@ -3,6 +3,9 @@
 //       Based heavily on https://developer.gnome.org/gtkmm-tutorial/stable/sec-treeview-examples.html.en
 //Author: Andrew Olivier
 
+//The core ImGUI function definitions
+#include "imgui.h"
+
 //evd includes
 #include "EvdWindow.h"
 
@@ -34,25 +37,17 @@
 
 namespace mygl
 {
-  EvdWindow::EvdWindow(): Gtk::ApplicationWindow(),
+  EvdWindow::EvdWindow(): 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
-            Gdk::RGBA("(1.f, 1.f, 1.f)"), 10., 10., 10.),
-    fVBox(Gtk::ORIENTATION_VERTICAL), fNavBar(), fPrint("Print"), fNext("Next"), fReload("Reload"), fEvtNumWrap(), fEvtNum(), fFileChoose("File"), fFileLabel(),
-    fLegend(nullptr), fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
+            10., 10., 10.),
+    fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
   {
-    set_title("edepsim Display Window");
-    set_border_width(5);
-    set_default_size(1400, 1000);
+    //build_toolbar();
 
-    build_toolbar();
-    add(fVBox);
-
-    fVBox.pack_start(fNavBar, Gtk::PACK_SHRINK);
-    fVBox.pack_end(fViewer);
-
-    fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
-    
-    show_all_children();                                                                             //children are realize()d
+    //fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
+    //make_scenes();
+        
+    //show_all_children();                                                                             //children are realize()d
   }
 
   void EvdWindow::reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config)
@@ -129,7 +124,9 @@ namespace mygl
     
     //Load service information
     const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
+    if(!serviceConfig) std::cerr << "Couldn't find services block.\n";
     const auto geoConfig = serviceConfig->FirstChildElement("geo");
+    if(!geoConfig) std::cerr << "Couldn't find geo service.\n";
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
@@ -149,10 +146,10 @@ namespace mygl
     for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
 
     //Last, set current event number for GUI
-    fEvtNum.set_text(std::to_string(fSource->Entry()));
+    //fEvtNum.set_text(std::to_string(fSource->Entry())); //TODO: Does ImGui do this?  
 
     //Pop up legend of particle colors used
-    std::vector<LegendView::Row> rows;
+    /*std::vector<LegendView::Row> rows;
     auto db = TDatabasePDG::Instance();
     for(const auto& pdg: *(fServices.fPDGToColor))
     {
@@ -167,7 +164,7 @@ namespace mygl
     fLegend.reset(new LegendView(*this, std::move(rows)));
     //TODO: Not even close to portable
     fLegend->move(150, 150); //The fact that I specified this in pixels should indicate how frustrated I am...
-    fLegend->show();
+    fLegend->show();*/
   }
   
   void EvdWindow::make_scenes()
@@ -198,32 +195,47 @@ namespace mygl
     image->save(name.str(), type);
   }
 
-  void EvdWindow::build_toolbar()
+  void EvdWindow::Render(const int width, const int height)
   {
-    fNavBar.add(fPrint);
-    fPrint.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::Print));
-    
-    fEvtNumWrap.add(fEvtNum);
-    fNavBar.add(fEvtNumWrap);
-    fEvtNum.signal_activate().connect(sigc::mem_fun(*this, &EvdWindow::goto_event));
+    ImGui::BeginMainMenuBar();
+    ImGui::EndMainMenuBar();
+    RenderControlBar();
+    fViewer.Render(width, height);
+  }
 
-    fNavBar.add(fNext);
-    fNext.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::next_event));
+  void EvdWindow::RenderControlBar()
+  {
+    ImGui::Begin("Control Bar");
+    {
+      if(ImGui::Button("Print"))
+      {
+        //Print(); //TODO: Implement this in a non-Gtk way
+      }
 
-    fNavBar.add(fReload);
-    fReload.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::ReadEvent));
-    
-    fNavBar.add(fFileChoose);
-    fFileChoose.signal_clicked().connect(sigc::mem_fun(*this, &EvdWindow::choose_file));
-    fFileLabelWrap.add(fFileLabel);
-    fNavBar.add(fFileLabelWrap);
+      int entry;
+      if(ImGui::InputInt("TTree Entry", &entry))
+      {
+        goto_event(entry);
+      }
+
+      /*int runEvt[2] = {};
+      if(ImGui::InputInt2("(RunId, EventId)", runEvt))
+      {
+        
+      }*/ //TODO: For develop branch feature
+
+      if(ImGui::Button("Next")) next_event();
+      if(ImGui::Button("Reload")) ReadEvent();
+      if(ImGui::Button("File")); //choose_file(); //TODO: Do this in a non-Gtk way
+    }
   }
 
   void EvdWindow::choose_file()
   {
+    //TODO: File chooser that doesn't rely on gtk
     //TODO: The GUI bug where the wrong button is pressed seems to exist independently of the bug 
     //      where drawing Guides failed.  So, this function still seems to trigger undefined behavior.
-    std::cout << "Calling function EvdWindow::choose_file()\n";
+    /*std::cout << "Calling function EvdWindow::choose_file()\n";
     Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
     //TODO: configure dialog to only show .root files and directories
 
@@ -239,20 +251,19 @@ namespace mygl
       fFileLabel.set_text(name);
       ReadGeo(); //TODO: Unexpected behavior dissappears if I comment ReadGeo() here.
       ReadEvent(); //TODO: Unexpected behavior remains if I comment ReadEvent() and leave ReadGeo().
-    }
+    }*/
     //TODO: Just calling ReadGeo() and ReadEvent() without changing fSource at all causes the unexpected GUI behavior.  
     //      So, Source's destructor is not the problem.  
   }
 
-  void EvdWindow::goto_event()
+  void EvdWindow::goto_event(const int evt)
   {
     std::cout << "Calling function EvdWindow::goto_event()\n";
-    const auto newEvt = std::stoi(fEvtNum.get_text());
-    if(fSource->GoTo(newEvt)) 
+    if(fSource->GoTo(evt)) 
     {
       ReadEvent();
     }
-    else std::cerr << "Failed to get event " << newEvt << " from file " << fSource->GetFile() << "\n";
+    else std::cerr << "Failed to get event " << evt << " from file " << fSource->GetFile() << "\n";
   }
 
   void EvdWindow::next_event()

@@ -6,15 +6,19 @@
 //Acknowledgement: Huge chunks of code taken from Dear IMGUI's opengl3 example to make stuff work with glfw 
 //                 quickly.
 
+//GLAD include(s)
+#include "glad/include/glad/glad.h"
+
 //imgui includes
 //TODO: Figure out how to work with these from an external library or copy them into this application directly.
 #include "imgui.h"
-#include "imgui_impl_glfw_gl3.h"
+#include "examples/opengl3_example/imgui_impl_glfw_gl3.h"
 
 //glfw include(s)
 #include <GLFW/glfw3.h> 
 
-//TODO: GLAD include(s)
+//local include
+#include "EvdWindow.h"
 
 int main(const int argc, const char** argv)
 {
@@ -33,7 +37,7 @@ int main(const int argc, const char** argv)
   glfwSwapInterval(1); // Enable vsync
 
   //Initialize glad to get opengl extensions.  
-  gladLoadGLLoader(glfwGetProcAddress);
+  gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
   gladLoadGL();
 
   // Setup ImGui binding
@@ -55,6 +59,20 @@ int main(const int argc, const char** argv)
   //TODO: Get this from application Model.
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+  mygl::EvdWindow evd; //evd(argc, argv);
+
+  //TODO: Move this back into EvdWindow
+  std::unique_ptr<tinyxml2::XMLDocument> config(new tinyxml2::XMLDocument());
+  const auto status = config->LoadFile("default.xml");
+  if(status != tinyxml2::XML_SUCCESS)
+  {
+    throw std::runtime_error("Got error "+std::to_string(status)+" when trying to load configuration file default.xml with tinyxml2.\n");
+  }
+  evd.reconfigure(std::move(config));
+  evd.SetSource(std::unique_ptr<src::Source>(new src::Source("/home/aolivier/ND_Studies/neutrons/clusters_new.root")));
+
+  evd.make_scenes();
+
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
   while (!glfwWindowShouldClose(window))
   {
@@ -75,6 +93,7 @@ int main(const int argc, const char** argv)
 
     //TODO: Render my event display stuff here.  Application Model probably has a Render() function 
     //      that is expected to be called in rendering loop.
+    evd.Render(display_w, display_h);
 
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);

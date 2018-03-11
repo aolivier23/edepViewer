@@ -55,9 +55,10 @@ namespace mygl
       const std::string fName; //The name of this scene.  Might be useful for list tree displays
       
       //GUI components that the Viewer will arrange
-      Gtk::TreeView fTreeView; //The user is responsible for telling this TreeView about columns in cols other than the 
-                               //standard columns in evd::ColRecord.
-      mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
+      //TODO: Restore GUI components using ImGUI 
+      //Gtk::TreeView fTreeView; //The user is responsible for telling this TreeView about columns in cols other than the 
+                                 //standard columns in evd::ColRecord.
+      //mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
 
       void draw_self(const Glib::ustring& path);
       void start_filtering();
@@ -77,6 +78,8 @@ namespace mygl
                                    //a color.
 
       //GUI components
+      //The only place still allowed to have Gtkmm GUI elements for now.  
+      //TODO: Replace with mygl::TreeView
       Glib::RefPtr<Gtk::TreeStore> fModel; //The TreeModel that has each element in this Scene.  
       Glib::RefPtr<Gtk::TreeModelFilter> fFilter; //Only shows certain nodes from fModel
 

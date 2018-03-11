@@ -32,9 +32,9 @@ namespace draw
 
   void Guides::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& guideTree = viewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    guideTree.append_column("Name", fGuideRecord.fName);
-    guideTree.expand_to_path(Gtk::TreePath("0"));
+    viewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    //guideTree.append_column("Name", fGuideRecord.fName);
+    //guideTree.expand_to_path(Gtk::TreePath("0"));
   }
 
   void Guides::doDrawEvent(const TGeoManager& /*man*/, mygl::Viewer& viewer, mygl::VisID& nextID)

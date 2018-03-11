@@ -16,14 +16,14 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
                                                                                                                         fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
-                                                                                                                        fCutBar(""), fSelection()
+                                                                                                                        fSelection()
   {
     BuildGUI(cols);
   }
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                mygl::ColRecord& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
-               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fCutBar("")
+               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc)
   {
     BuildGUI(cols);
   }
@@ -35,10 +35,10 @@ namespace mygl
 
     fModel = Gtk::TreeStore::create(cols); //TODO: Should I be using fModel for updating the data to be drawn or fFilter?   
     fFilter = Gtk::TreeModelFilter::create(fModel); 
-    fTreeView.set_model(fFilter);
+    //fTreeView.set_model(fFilter);
 
     //TODO: Simplify this when I'm more comfortable with what's going on
-    const int nTypes = cols.size();
+    /*const int nTypes = cols.size();
     std::vector<std::string> types;
     for(int pos = 0; pos < nTypes; ++pos)
     {
@@ -48,21 +48,21 @@ namespace mygl
       //std::cout << typeName << "\n";
       types.push_back(typeName);
     }
-    fCutBar.SetTypes(types);
+    fCutBar.SetTypes(types);*/
 
     //Standard columns.  fVisID is also present, but it should not be visible.
-    fTreeView.append_column_editable("Draw", fSelfCol);
+    //fTreeView.append_column_editable("Draw", fSelfCol);
 
-    auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
-    renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
+    //auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
+    //renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
 
     //Configure filter
     fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
-    fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
+    //fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
 
     //Make sure that objects that are selected in this TreeView are highlighted in the GUI
     //TODO: Notify other Scenes about what VisID was selected
-    fTreeView.get_selection()->signal_changed().connect(sigc::mem_fun(*this, &Scene::on_tree_selection));
+    //fTreeView.get_selection()->signal_changed().connect(sigc::mem_fun(*this, &Scene::on_tree_selection));
   }
 
   Scene::~Scene() {}
@@ -217,7 +217,8 @@ namespace mygl
     }
     auto& row = *iter;
     //std::cout << "VisID was " << row[fIDCol] << "\n";
-    const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
+    //const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
+    const bool result = true;
     //std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
     if(result == false) 
     {
@@ -273,8 +274,9 @@ namespace mygl
     if(result)
     {
       //Highlight selected objects in the TreeView
-      fTreeView.expand_to_path(result);
-      fTreeView.set_cursor(result);
+      //TODO: Restore this functionality with ImGUI
+      //fTreeView.expand_to_path(result);
+      //fTreeView.set_cursor(result);
 
       //Generate tooltip
       /*std::stringstream ss;
@@ -289,7 +291,8 @@ namespace mygl
 
   void Scene::on_tree_selection()
   {
-    const auto found = fTreeView.get_selection()->get_selected();
+    //TODO: Restore this functionality with ImGUI
+    /*const auto found = fTreeView.get_selection()->get_selected();
 
     //Regardless of what was selected, unselect the last thing that was selected
     auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
@@ -306,6 +309,6 @@ namespace mygl
     const auto id = (*found)[fIDCol];
     auto toHighlight = fActive.find(id);
     if(toHighlight != fActive.end()) toHighlight->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
-    fSelection = id;
+    fSelection = id;*/
   }
 }

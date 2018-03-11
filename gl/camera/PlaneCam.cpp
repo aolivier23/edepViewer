@@ -47,7 +47,7 @@ namespace mygl
 
   void PlaneCam::set_move_speed()
   {
-    fPosSens = std::stof(fMoveSpeedEntry.get_text());
+    //fPosSens = std::stof(fMoveSpeedEntry.get_text());
   }
 }
 

@@ -26,15 +26,15 @@ namespace mygl
   {
     public:
       PlaneCam(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 10000., 
-               const float posStep = 50.): OrthoCamera(pos, up, farPlane), fPitch(0), fYaw(0), fPosSens(posStep), 
-               fMoveSpeedLabel("Movement Speed"), fMoveSpeedEntry() 
+               const float posStep = 50.): OrthoCamera(pos, up, farPlane), fPitch(0), fYaw(0), fPosSens(posStep)
       { 
-        fMoveSpeedEntry.set_text(std::to_string(fPosSens));
+        //TODO: Restore GUI
+        /*fMoveSpeedEntry.set_text(std::to_string(fPosSens));
         pack_start(fMoveSpeedLabel, Gtk::PACK_SHRINK);
         pack_start(fMoveSpeedEntry, Gtk::PACK_SHRINK);
 
         fMoveSpeedEntry.signal_activate().connect(sigc::mem_fun(*this, &PlaneCam::set_move_speed));
-        show_all_children();
+        show_all_children();*/
       }
 
       virtual ~PlaneCam() = default;
@@ -48,9 +48,6 @@ namespace mygl
       double fPitch;
       double fYaw;
       float fPosSens; //Sensitivity of translations in position to a single arrow key press
-
-      Gtk::Label fMoveSpeedLabel;
-      Gtk::Entry fMoveSpeedEntry;
 
       void set_move_speed();
   };

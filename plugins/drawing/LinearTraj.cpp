@@ -83,17 +83,17 @@ namespace draw
   void LinearTraj::doRequestScenes(mygl::Viewer& viewer) 
   {
     //Configure trajectory Scene
-    auto& trajTree = viewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    trajTree.append_column("Particle Type", fTrajRecord.fPartName);
+    viewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    //trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
-    trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
+    //trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
 
     //Configure Trajectory Point Scene
-    auto& ptTree = viewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
-    ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
+    viewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
+    /*ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
     ptTree.append_column("Process", fTrajPtRecord.fProcess);
     ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
-    ptTree.append_column("Time", fTrajPtRecord.fTime);
+    ptTree.append_column("Time", fTrajPtRecord.fTime);*/
   }
 
   void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 

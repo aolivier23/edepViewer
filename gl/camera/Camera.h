@@ -25,20 +25,21 @@
 
 namespace mygl
 {
-  class Camera: public Gtk::Box
+  class Camera
   {
     public:
       //Specifying fFront here might not do anything if a derived class recalculates fFront in ReCalcView().
-      Camera(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f)): Gtk::Box(Gtk::ORIENTATION_VERTICAL), 
-             fModified(true), fPosition(pos), fUp(up), fFront(0.0f, 0.0f, -1.0f), fPosEntry("Position:", fPosition), 
-             fTargetEntry("Target:", fPosition+fFront), fUpArr(keyState::up), fDwnArr(keyState::up), fLftArr(keyState::up), 
+      Camera(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f)): 
+             fModified(true), fPosition(pos), fUp(up), fFront(0.0f, 0.0f, -1.0f), 
+             fUpArr(keyState::up), fDwnArr(keyState::up), fLftArr(keyState::up), 
              fRgtArr(keyState::up), fMouse(keyState::up) 
       {
-        pack_start(fPosEntry);
-        fPosEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdatePosition));
-        pack_start(fTargetEntry);
-        fTargetEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdateTarget));
-        show_all_children();
+        //TODO: Restore Camera GUI with ImGUI
+        //pack_start(fPosEntry);
+        //fPosEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdatePosition));
+        //pack_start(fTargetEntry);
+        //fTargetEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdateTarget));
+        //show_all_children();
       }
       virtual ~Camera() = default; 
 
@@ -47,6 +48,7 @@ namespace mygl
       virtual glm::mat4 GetPerspective(const int width, const int height) = 0;
 
       //Record results of signals from user that came from GLArea.
+      //TODO: Convert from Gdk to GLFW events
       bool on_key_press(const GdkEventKey* evt);
       bool on_key_release(const GdkEventKey* evt);
       bool on_button_press(const GdkEventButton* evt);
@@ -55,7 +57,8 @@ namespace mygl
       bool on_scroll(const GdkEventScroll* evt);
 
       //utility function to connect signals to a GLArea
-      void ConnectSignals(Gtk::GLArea& area);
+      //TODO: Restore functionality with ImGUI
+      //void ConnectSignals(Gtk::GLArea& area);
 
     private:
       bool fModified; //Has the Camera's state been modified since the view was last recalculated?
@@ -79,8 +82,9 @@ namespace mygl
       glm::vec3 fFront; //Vector to the front of the camera
 
       //GUI widgets for interface to camera attributes
-      Vec3Entry fPosEntry;
-      Vec3Entry fTargetEntry;
+      //TODO: Restore entry widgets with ImGUI 
+      //Vec3Entry fPosEntry;
+      //Vec3Entry fTargetEntry;
 
       //Camera control state
       //Representations of the current Camera state

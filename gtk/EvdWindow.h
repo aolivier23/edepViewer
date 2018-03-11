@@ -11,10 +11,10 @@
 #include "plugins/drawing/Services.cpp"
 
 //Gtkmm includes
-#include <gtkmm.h>
+//#include <gtkmm.h>
 
 //custom GUI includes
-#include "gtk/LegendView.h"
+//#include "gtk/LegendView.h"
 
 //Source includes
 #include "gtk/Source.h"
@@ -51,7 +51,7 @@ namespace src
 
 namespace mygl
 {
-  class EvdWindow: public Gtk::ApplicationWindow 
+  class EvdWindow
   {
     public: 
       EvdWindow();
@@ -64,6 +64,8 @@ namespace mygl
 
       virtual void reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config);
 
+      virtual void Render(const int width, const int height); //Render this window
+
     protected:
       //Configuration file
       std::unique_ptr<tinyxml2::XMLDocument> fConfig;
@@ -74,20 +76,9 @@ namespace mygl
       //Source of events
       std::unique_ptr<src::Source> fSource;
 
-      //Toolbar for event navigation and printing
-      //TODO: event navigation
-      Gtk::Box fVBox; //Vertical Box widget for positioning tool bar above drawing area
-      Gtk::Toolbar fNavBar;
-      Gtk::ToolButton fPrint; 
-      Gtk::ToolButton fNext;
-      Gtk::ToolButton fReload;
-      Gtk::ToolItem fEvtNumWrap; 
-      Gtk::Entry fEvtNum; 
-      Gtk::ToolButton fFileChoose; 
-      Gtk::ToolItem fFileLabelWrap;
-      Gtk::Label fFileLabel; //Displays the current file name so that it shows up in printouts 
+      void RenderControlBar();
 
-      std::unique_ptr<LegendView> fLegend;
+      //std::unique_ptr<LegendView> Legend; //TODO: Restore this
 
     private:
       void ReadGeo();
@@ -97,10 +88,10 @@ namespace mygl
       draw::Services fServices;
 
       //Negotiate with the Source to find the right event 
-      void goto_event();
+      void goto_event(const int evt);
       void next_event();
 
-      void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
+      //void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
 
       //plugins

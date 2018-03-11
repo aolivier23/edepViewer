@@ -29,20 +29,16 @@ namespace mygl
 {
   struct VisID;
   
-  class Viewer: public Gtk::Paned //Instead of deriving from Gtk::GLArea, derive from Gtk::Box.  This suggestion to do this 
-                                      //that I used is at https://github.com/mschwan/glarea-animation/blob/master/glarea.cc
+  class Viewer //Instead of deriving from Gtk::GLArea, derive from Gtk::Box.  This suggestion to do this 
+               //that I used is at https://github.com/mschwan/glarea-animation/blob/master/glarea.cc
   {
     protected:
       //opengl-related data members
       std::map<std::string, mygl::Scene> fSceneMap; //Map from Scene name to Scene object
 
-      //Gtk::Widgets
-      //TODO: Camera mode widget
-      Gtk::GLArea fArea; //The GLArea that will be used for drawing
-
     public:
   
-      Viewer(std::unique_ptr<Camera>&& cam, const Gdk::RGBA& background, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
+      Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
       virtual ~Viewer();
 
       //TODO: At first, this function seems superfluous if I give the user access to the map of scenes.  However, the Gtk::GLArea::make_current() call 
@@ -61,8 +57,6 @@ namespace mygl
                                                     << "The current list of scenes is:\n" << scenes.str() << "\n";
         }
 
-        fArea.make_current(); //Make sure the resources allocated by the new Drawable go to the right Gdk::GLContext!
-        fArea.throw_if_error();
         auto row = scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
         return row;
       }
@@ -77,9 +71,9 @@ namespace mygl
       }
 
       //User access to Scenes
-      Gtk::TreeView& MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
+      void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
-      Gtk::TreeView& MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc,
+      void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc,
                                const std::string& geomSrc);
 
       //Makes sure openGL context is current before destroying Drawables.  
@@ -97,23 +91,25 @@ namespace mygl
       SignalSelection signal_selection(); //User access to this Viewer's signal that it selected an object
 
       void on_selection(const mygl::VisID id/*, const int, const int*/);
+
+      void Render(const int width, const int height); //Application/main window calls this in each frame
  
     protected:
       //Viewer parameters the user can customize
       //TODO: Allow the user to set the camera to use in the future
-      Gdk::RGBA fBackgroundColor; //The background color for the display
+      //Gdk::RGBA fBackgroundColor; //The background color for the display
   
       virtual void area_realize();
       virtual void unrealize();
-      virtual bool my_motion_notify_event(GdkEventMotion* /*evt*/);
+      //virtual bool my_motion_notify_event(GdkEventMotion* /*evt*/);
 
-      virtual bool render(const Glib::RefPtr<Gdk::GLContext>& /*context*/);
+      virtual void render(const int width, const int height);
 
       //Other signals to react to 
       virtual void set_background();
 
       //GUI elements
-      Gtk::Notebook fNotebook;
+      /*Gtk::Notebook fNotebook;
       std::vector<std::pair<Gtk::Box, Gtk::ScrolledWindow>> fScrolls; //One for each Scene
 
       //Viewer control GUI
@@ -124,8 +120,9 @@ namespace mygl
 
       //Camera selection GUI.  Camera controls provided by Camera and derived classes.
       Gtk::Stack fCameras;  //The list of cached Cameras
-      Gtk::StackSwitcher fCameraSwitch; //Controller for fCameras.  Currently viewed Camera GUI is current Camera.   
-      Camera* fCurrentCamera; //Observer pointer to fCameras' currently visible child to make code easier to understand
+      Gtk::StackSwitcher fCameraSwitch; //Controller for fCameras.  Currently viewed Camera GUI is current Camera.   */
+      std::vector<std::unique_ptr<Camera>> fCameras;
+      std::vector<std::unique_ptr<Camera>>::iterator fCurrentCamera; //Observer pointer to fCameras' currently visible child to make code easier to understand
 
       void camera_change();
 
@@ -135,7 +132,7 @@ namespace mygl
       float fZPerPixel; //z units per pixel
 
       void PrepareToAddScene(const std::string& name);
-      Gtk::TreeView& ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols);      
+      void ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols);      
 
       SignalSelection fSignalSelection; 
   };

@@ -39,6 +39,8 @@ install(TARGETS glad DESTINATION lib)
 file(GLOB GLAD_HEADERS ${PROJECT_SOURCE_DIR}/glad/include/*/*.h)
 install(FILES ${GLAD_HEADERS} DESTINATION include)
 
+add_subdirectory(imgui)
+
 #Stuff for Opengl
 find_package( OpenGL REQUIRED )
 

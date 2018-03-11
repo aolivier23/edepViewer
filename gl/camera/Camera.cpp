@@ -32,8 +32,9 @@ namespace mygl
       std::cout << "The initial fUp is (" << fUp.x << ", " << fUp.y << ", " << fUp.z << ")\n";
       std::cout << "The current up vector is (" << up.x << ", " << up.y << ", " << up.z << ")\n";*/
       fModified = false;
-      fTargetEntry.set_value(fPosition+fFront);
-      fPosEntry.set_value(fPosition);
+      //TODO: ImGUI
+      //fTargetEntry.set_value(fPosition+fFront);
+      //fPosEntry.set_value(fPosition);
     }
     return fView;
   }
@@ -51,6 +52,7 @@ namespace mygl
     return true;
   }
   
+  //TODO: Replace GDK with GLFW
   bool Camera::on_key_release(const GdkEventKey* evt)
   {
     auto key = evt->keyval;
@@ -99,7 +101,7 @@ namespace mygl
     return false;
   }
 
-  void Camera::ConnectSignals(Gtk::GLArea& area)
+  /*void Camera::ConnectSignals(Gtk::GLArea& area)
   {
     area.signal_key_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_press), false);
     area.signal_key_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_release), false);
@@ -107,11 +109,11 @@ namespace mygl
     area.signal_button_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_release), false);
     area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_motion), false);
     area.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
-  }
+  }*/
 
   void Camera::UpdatePosition()
   {
-    fPosition = fPosEntry.get_value();
+    //fPosition = fPosEntry.get_value();
     fModified = true;
   }
 
@@ -119,7 +121,7 @@ namespace mygl
   {
     //Give the illusion of setting the camera target while actually working with a front vector that is more convenient for 
     //calculations.
-    fFront = fTargetEntry.get_value()-fPosition; //target = fFront+fPosition from GetView() above
+    //fFront = fTargetEntry.get_value()-fPosition; //target = fFront+fPosition from GetView() above
     fModified = true;
   }
 }

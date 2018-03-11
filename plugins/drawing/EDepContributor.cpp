@@ -33,12 +33,12 @@ namespace draw
   void EDepContributor::doRequestScenes(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    auto& edepTree = viewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
+    viewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
-    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
+    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);*/
   }
 
   void EDepContributor::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 

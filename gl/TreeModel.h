@@ -20,10 +20,14 @@ namespace mygl
           //      Already figured out I can't create the ColumnBases myself in this class 
           //      because the user needs access to the Column<T>s themselves for Node::operator[].
           size_t size() const;
-
+        
+          std::vector<std::unique_ptr<Node::DataBase>> BuildData() const;
+   
         protected:
           ColumnModel() {} //Derive from this class to use it.  
-          std::vector<std::unique_ptr<ColumnBase>> fCols;
+
+        private:
+          std::vector<ColumnBase*> fCols;
       };
 
       //A ColumnBase provides a way to hold a collection of objects that each know something about a specific type. 
@@ -36,9 +40,10 @@ namespace mygl
           ColumnBase(const std::string& name);
           virtual ~ColumnBase() = default;
 
-          virtual std::unique_ptr<Node::DataBase> BuildData() = 0;
+          virtual std::unique_ptr<Node::DataBase> BuildData() const = 0;
 
           void SetPosition(const size_t pos); //TODO: friend function of ColumnModel?
+          size_t GetPosition() const;
 
         private: 
           std::string fName; //The name of this column when a TreeModel using it is drawn.
@@ -54,7 +59,7 @@ namespace mygl
           ColumnBase(const std::string& name);
           virtual ~ColumnBase() = default;
 
-          virtual std::unique_ptr<Node::DataBase> BuildData() override;
+          virtual std::unique_ptr<Node::DataBase> BuildData() const override;
       };
 
       //One entry in a TreeModel.  User can retrieve and set values with operator[] using the columns of this tree.  
@@ -64,7 +69,7 @@ namespace mygl
       class Node
       {
         public:
-          Node(ColumnModel& cols);
+          Node(const ColumnModel& cols);
           virtual ~Node() = default;
 
           //Access to Node data using Columns
@@ -75,10 +80,6 @@ namespace mygl
           std::string operator [](const size_t index);
  
           //Access to parentage
-          //TODO: Having to dereference an iterator twice seems like an ugly interface.  
-          //      Maybe write a wrapper over vector iterators that just returns a Node& on 
-          //      dereference.
-          Node& Parent(); 
           iterator child_begin();
           iterator child_end();
           const_iterator child_cbegin() const;
