@@ -12,11 +12,11 @@
 #include "gl/ColRecord.cpp"
 #include "gl/UserCut.h"
 
+//local includes
+#include "gl/TreeModel.h"
+
 //glm includes
 #include <glm/glm.hpp>
-
-//gtkmm includes
-#include <gtkmm.h>
 
 //c++ includes
 #include <map>
@@ -35,17 +35,17 @@ namespace mygl
   class Scene
   {
     public:
-      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols);
+      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols);
       Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-            mygl::ColRecord& cols);
+            std::shared_ptr<mygl::ColRecord>& cols);
       
       virtual ~Scene();
 
       //Warning: The following function may not do anything if Gtk::GLArea::make_current() is 
       //         not called just before.  
-      virtual Gtk::TreeModel::Row AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const Gtk::TreeModel::Row& parent, 
+      virtual TreeModel::iterator AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const TreeModel::iterator parent, 
                                               const bool active);
-      virtual Gtk::TreeModel::iterator NewTopLevelNode();
+      virtual TreeModel::iterator NewTopLevelNode();
       virtual void RemoveAll();
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
@@ -60,10 +60,10 @@ namespace mygl
                                  //standard columns in evd::ColRecord.
       //mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
 
-      void draw_self(const Glib::ustring& path);
-      void start_filtering();
-      bool filter(const Gtk::TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
-      void remove_row(const Gtk::TreeModel::Path& path);
+      //void draw_self(const Glib::ustring& path); //TODO: Restore this functionality
+      //void start_filtering();
+      bool filter(const TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
+      void remove_row(const TreeModel::iterator& path);
 
       bool SelectID(const mygl::VisID& id);
       void on_tree_selection();
@@ -79,9 +79,7 @@ namespace mygl
 
       //GUI components
       //The only place still allowed to have Gtkmm GUI elements for now.  
-      //TODO: Replace with mygl::TreeView
-      Glib::RefPtr<Gtk::TreeStore> fModel; //The TreeModel that has each element in this Scene.  
-      Glib::RefPtr<Gtk::TreeModelFilter> fFilter; //Only shows certain nodes from fModel
+      TreeModel fModel;
 
       //Data needed for highlighting
       mygl::VisID fSelection; //The currently selected VisID
@@ -90,10 +88,10 @@ namespace mygl
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
 
       //Details to save user code when working with the TreeModel
-      Gtk::TreeModelColumn<bool> fSelfCol;
-      Gtk::TreeModelColumn<VisID> fIDCol;
+      TreeModel::Column<bool> fSelfCol;
+      TreeModel::Column<VisID> fIDCol;
 
-      void BuildGUI(mygl::ColRecord& cols);
+      void BuildGUI(std::shared_ptr<mygl::ColRecord>& cols);
   };
 }
 

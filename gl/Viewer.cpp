@@ -100,20 +100,20 @@ namespace mygl
   }
 
   //TODO: Return some sort of TreeView configuration
-  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc)
+  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc)
   {
     PrepareToAddScene(name);
     ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                      std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, cols); //lol
+                      std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, *cols); //lol
   }
  
   //TODO: Return some sort of TreeView configuration
-  void Viewer::MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc, 
+  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc, 
                                    const std::string& geomSrc)
   {
     PrepareToAddScene(name);
     ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, cols); //lol
+                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, *cols); //lol
   }
 
   void Viewer::PrepareToAddScene(const std::string& name)

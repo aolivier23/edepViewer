@@ -13,28 +13,27 @@ namespace mygl
 {
   //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
   //         the proper GL context is bound for shader allocation.
-  Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols): fName(name), fActive(), fHidden(), 
+  Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols): 
+                                                                                                                        fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
                                                                                                                         fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
-                                                                                                                        fSelection()
+                                                                                                                        fSelection(), fModel(cols), 
+                                                                                                                        fSelfCol(cols->fDrawSelf),  
+                                                                                                                        fIDCol(cols->fVisID) 
   {
     BuildGUI(cols);
   }
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-               mygl::ColRecord& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
-               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc)
+               std::shared_ptr<mygl::ColRecord>& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
+               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fModel(cols), 
+               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID)
   {
     BuildGUI(cols);
   }
 
-  void Scene::BuildGUI(mygl::ColRecord& cols)
+  void Scene::BuildGUI(std::shared_ptr<mygl::ColRecord>& cols)
   {
-    fSelfCol = cols.fDrawSelf;
-    fIDCol = cols.fVisID;
-
-    fModel = Gtk::TreeStore::create(cols); //TODO: Should I be using fModel for updating the data to be drawn or fFilter?   
-    fFilter = Gtk::TreeModelFilter::create(fModel); 
     //fTreeView.set_model(fFilter);
 
     //TODO: Simplify this when I'm more comfortable with what's going on
@@ -57,7 +56,8 @@ namespace mygl
     //renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
 
     //Configure filter
-    fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
+    //TODO: Replace this functionality with mygl::TreeModel::Walk()?
+    //fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
     //fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
 
     //Make sure that objects that are selected in this TreeView are highlighted in the GUI
@@ -69,11 +69,12 @@ namespace mygl
 
   //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
   //         the proper GL context is bound for resource allocation.
-  Gtk::TreeModel::Row Scene::AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const Gtk::TreeModel::Row& parent, 
+  TreeModel::iterator Scene::AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const TreeModel::iterator parent, 
                                          const bool active)
   {
     //Create a row in the TreeView for the drawable being added 
-    auto row = *(fModel->append(parent->children()));
+    auto iter = fModel.NewNode(parent);
+    auto& row = *iter;
 
     //Make sure that a drawable with this VisID doesn't already exist
     auto exists = fActive.find(id);
@@ -103,18 +104,20 @@ namespace mygl
       row[fSelfCol] = active;
       row[fIDCol] = id;
     }
-    return row;
+    return iter;
   }
 
-  Gtk::TreeModel::iterator Scene::NewTopLevelNode()
+  TreeModel::iterator Scene::NewTopLevelNode()
   {
-    return fModel->append();
+    return fModel.NewNode();
   }
 
   //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
   //         the proper GL context is bound for rendering.
   void Scene::Render(const glm::mat4& view, const glm::mat4& persp) 
   {
+    //TODO: Draw TreeModel here
+
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
     fShader.Use();
@@ -155,15 +158,14 @@ namespace mygl
                           //      numeric values propagated between calls to RemoveAll().
     fActive.erase(fActive.begin(), fActive.end());
     fHidden.erase(fHidden.begin(), fHidden.end());
-    fFilter->clear_cache();
-    fModel->clear();
+    fModel.Clear();
     fSelection = VisID();
     //fModel->erase(fModel->get_iter("0")); //This was recommended online, but it doesn't change anything.
   }
 
-  void Scene::draw_self(const Glib::ustring& path)
+  /*void Scene::draw_self(const Glib::ustring& path)
   {
-    auto row = *(fFilter->get_iter(path));
+    auto row = *(fModel.get_iter(path));
     if(!row) return;
     const auto id = row[fIDCol];
     const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
@@ -176,7 +178,7 @@ namespace mygl
       else Transfer(fHidden, fActive, id);
     }
     //TODO: activate/deactivate children
-  }
+  }*/
 
   //All of the magic happens here.  Moving a unique_ptr from one container to another seems like a very difficult task... 
   void Scene::Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id)
@@ -200,21 +202,15 @@ namespace mygl
     to.emplace(id, std::unique_ptr<Drawable>(copyPtr)).second;
   }
 
-  //TODO: I don't need this function
-  void Scene::start_filtering()
-  {
-    fFilter->refilter();
-  }
-
   //Intercept the result of UserCut::do_filter() to disable the Drawables for filtered rows.
-  bool Scene::filter(const Gtk::TreeModel::iterator& iter)
+  bool Scene::filter(const TreeModel::iterator& iter)
   {
     //std::cout << "Entering mygl::Scene::filter()\n";
-    if(!iter) 
+    /*if(!iter) 
     {
       std::cerr << "Avoided processing a \"zombie\" row in mygl::Scene::filter().\n";
       return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.
-    }
+    }*/
     auto& row = *iter;
     //std::cout << "VisID was " << row[fIDCol] << "\n";
     //const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
@@ -248,16 +244,13 @@ namespace mygl
   bool Scene::SelectID(const mygl::VisID& id)
   {
     //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
-    //Gtk::TreeModel::foreach_iter appears to be copying my slot object.  
-    //So, I cannot return anything through the slot object's members.  
-    //...Or can I?  Lambda capture seems to work.  
-    Gtk::TreePath result;
-    fFilter->foreach_iter([&result, &id, this](const Gtk::TreeIter& pos) 
-                          {
-                            const bool found = ((mygl::VisID)((*pos)[this->fIDCol]) == id);
-                            if(found) result = Gtk::TreePath(pos);
-                            return found;
-                          });
+    TreeModel::iterator result = fModel.end();
+    fModel.Walk([&result, &id, this](const TreeModel::iterator& pos) 
+                {
+                  const bool found = ((mygl::VisID)((*pos)[this->fIDCol]) == id);
+                  if(found) result = pos;
+                  return found;
+                });
 
     //TODO: overhaul signalling between Scenes and Viewers so that this only happens in one place.
     //Regardless of what was selected, unselect the last thing that was selected
@@ -271,7 +264,7 @@ namespace mygl
       if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
     }
 
-    if(result)
+    if(result != fModel.end())
     {
       //Highlight selected objects in the TreeView
       //TODO: Restore this functionality with ImGUI

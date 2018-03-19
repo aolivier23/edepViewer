@@ -45,7 +45,7 @@ namespace mygl
       //      here is essential to properly managing the opengl resources in a Drawable.  So, maybe I should remove user access to the scenes a Viewer 
       //      owns?  This will require adding entry points for basically all of the Scene public functions as well as each Scene's TreeView.
       template <class T, class ...ARGS>
-      Gtk::TreeModel::Row AddDrawable(const std::string& scene, const VisID& id, const Gtk::TreeModel::Row& parent, 
+      TreeModel::iterator AddDrawable(const std::string& scene, const VisID& id, const TreeModel::iterator parent, 
                                       const bool active, ARGS... args) //Add a drawable to a scene
       {
         auto scenePair = fSceneMap.find(scene);
@@ -57,24 +57,23 @@ namespace mygl
                                                     << "The current list of scenes is:\n" << scenes.str() << "\n";
         }
 
-        auto row = scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
-        return row;
+        return scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
       }
 
       //Use overloads so that this compiles with Clang as well as gcc.  See https://stackoverflow.com/questions/34494765/interaction-between-default-arguments-and-parameter-pack-gcc-and-clang-disagree
 
       template <class T, class ...ARGS>
-      Gtk::TreeModel::Row AddDrawable(const std::string& scene, const VisID& id, const Gtk::TreeModel::Row& parent,
+      TreeModel::iterator AddDrawable(const std::string& scene, const VisID& id, const TreeModel::iterator parent,
                                       ARGS... args) //Add a drawable to a scene
       {
         return AddDrawable(scene, id, parent, true, args...);
       }
 
       //User access to Scenes
-      void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
+      void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
                      const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
-      void MakeScene(const std::string& name, mygl::ColRecord& cols, const std::string& fragSrc, const std::string& vertSrc,
-                               const std::string& geomSrc);
+      void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc,
+                     const std::string& geomSrc);
 
       //Makes sure openGL context is current before destroying Drawables.  
       void RemoveAll(const std::string& sceneName);
