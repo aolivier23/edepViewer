@@ -244,7 +244,7 @@ namespace mygl
   bool Scene::SelectID(const mygl::VisID& id)
   {
     //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
-    TreeModel::iterator result = fModel.end();
+    auto result = fModel.end();
     fModel.Walk([&result, &id, this](const TreeModel::iterator& pos) 
                 {
                   const bool found = ((mygl::VisID)((*pos)[this->fIDCol]) == id);
@@ -252,30 +252,36 @@ namespace mygl
                   return found;
                 });
 
-    //TODO: overhaul signalling between Scenes and Viewers so that this only happens in one place.
-    //Regardless of what was selected, unselect the last thing that was selected
-    auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
-                                                //it was selected.
-    //TODO: Make border color and width a user parameter
-    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-    else
-    {
-      prev = fHidden.find(fSelection);
-      if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-    }
-
     if(result != fModel.end())
     {
-      //Highlight selected objects in the TreeView
-      //TODO: Restore this functionality with ImGUI
-      //fTreeView.expand_to_path(result);
-      //fTreeView.set_cursor(result);
+      //Highlight graphics object that was selected
+      const auto id = (mygl::VisID)((*result)[this->fIDCol]);
+      auto found = fActive.find(id);
+      if(found != fActive.end())
+      {
+        found->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
 
-      //Generate tooltip
-      /*std::stringstream ss;
-      ss << id;
-      return ss.str();*/
-      return true;
+        //Highlight selected objects in the TreeView
+        //TODO: Restore this functionality with ImGUI
+        //fTreeView.expand_to_path(result);
+        //fTreeView.set_cursor(result);
+  
+        //TODO: overhaul signalling between Scenes and Viewers so that this only happens in one place.
+        //Regardless of what was selected, unselect the last thing that was selected
+        auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
+                                                    //it was selected.
+        //TODO: Make border color and width a user parameter
+        if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+        else
+        {
+          prev = fHidden.find(fSelection);
+          if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+        }
+
+        //Mark this object as the new selection
+        fSelection = id;
+        return true;
+      }
     }
 
     //return std::string("");

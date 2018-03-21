@@ -239,6 +239,7 @@ namespace mygl
     //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
     //      I would want a way for multiple Viewers to post events to this Selection object.  
     //fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); //, evt->x, evt->y); 
+    on_selection(mygl::VisID(color[0], color[1], color[2]));
 
     return true;
   }
