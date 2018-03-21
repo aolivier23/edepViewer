@@ -53,7 +53,6 @@ namespace draw
 
     for(auto& det: edepToDet)
     {
-      std::cout << "Detector is " << det.first << "\n";
       auto detName = det.first;
       auto detIter = viewer.GetScenes().find("EDep")->second.NewTopLevelNode();
       auto& detRow = *detIter;
@@ -62,10 +61,8 @@ namespace draw
       detRow[fEDepRecord->fPrimName] = detName;
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
-      std::cout << "About to process " << edeps.size() << " energy deposits.\n";
       for(auto& edep: edeps)
       {
-        std::cout << "Processing a new edep.\n";
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
@@ -102,10 +99,8 @@ namespace draw
         //if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ;
         double dEdx = edep.EnergyDeposit/edep.TrackLength;
 
-        std::cout << "Adding Drawable.\n";
         auto iter = viewer.AddDrawable<mygl::Path>("EDep", nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
         auto& row = *iter;
-        std::cout << "Added Drawable.\n";
 
         row[fEDepRecord->fScintE]  = edep.SecondaryDeposit;
         row[fEDepRecord->fEnergy]  = energy;

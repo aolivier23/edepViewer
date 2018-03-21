@@ -195,12 +195,12 @@ namespace mygl
     image->save(name.str(), type);
   }
 
-  void EvdWindow::Render(const int width, const int height)
+  void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)
   {
     ImGui::BeginMainMenuBar();
     ImGui::EndMainMenuBar();
     RenderControlBar();
-    fViewer.Render(width, height);
+    fViewer.Render(width, height, ioState);
   }
 
   void EvdWindow::RenderControlBar()
@@ -210,13 +210,15 @@ namespace mygl
       if(ImGui::Button("Print"))
       {
         //Print(); //TODO: Implement this in a non-Gtk way
-      }
+      } 
+      ImGui::SameLine();
 
-      int entry;
+      int entry = fSource->Entry();
       if(ImGui::InputInt("TTree Entry", &entry))
       {
         goto_event(entry);
       }
+      ImGui::SameLine();
 
       /*int runEvt[2] = {};
       if(ImGui::InputInt2("(RunId, EventId)", runEvt))
@@ -224,8 +226,10 @@ namespace mygl
         
       }*/ //TODO: For develop branch feature
 
-      if(ImGui::Button("Next")) next_event();
+      if(ImGui::Button("Next")) next_event(); 
+      ImGui::SameLine();
       if(ImGui::Button("Reload")) ReadEvent();
+      ImGui::SameLine();
       if(ImGui::Button("File")); //choose_file(); //TODO: Do this in a non-Gtk way
     }
     ImGui::End();

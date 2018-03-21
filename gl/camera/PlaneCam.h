@@ -44,6 +44,8 @@ namespace mygl
       virtual void do_motion(const std::pair<double, double>& pos) override;
       virtual void do_key_press() override;
 
+      virtual void do_render() override;
+
     private:
       double fPitch;
       double fYaw;

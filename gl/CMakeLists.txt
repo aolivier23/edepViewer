@@ -1,3 +1,7 @@
+#Include imgui
+include_directories( "${IMGUI_DIR}" )
+link_directories( "${IMGUI_DIR}" )
+
 add_subdirectory(model)
 add_subdirectory(camera)
 add_subdirectory(shaders)

@@ -42,8 +42,11 @@ int main(const int argc, const char** argv)
 
   // Setup ImGui binding
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO& io = ImGui::GetIO(); 
   ImGui_ImplGlfwGL3_Init(window, true);
+  io.NavFlags |= ImGuiNavFlags_EnableKeyboard;  // Enable Keyboard Controls
+  io.NavFlags |= ImGuiNavFlags_EnableGamepad;   // Enable Gamepad Controls
+  io.NavFlags |= ImGuiNavFlags_MoveMouse; //Enable mouse movement
 
   //TODO: Create event display "Window" object here?  Pass it command line args, or make source and configuration file 
   //      myself?  Leaning towards former option to make switching window creation libraries as easy as possible.  
@@ -57,7 +60,7 @@ int main(const int argc, const char** argv)
   
   //TODO: Can I use glm here instead?  
   //TODO: Get this from application Model.
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  ImVec4 clear_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
   mygl::EvdWindow evd; //evd(argc, argv);
 
@@ -92,7 +95,7 @@ int main(const int argc, const char** argv)
 
     //TODO: Render my event display stuff here.  Application Model probably has a Render() function 
     //      that is expected to be called in rendering loop.
-    evd.Render(display_w, display_h);
+    evd.Render(display_w, display_h, io);
 
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());

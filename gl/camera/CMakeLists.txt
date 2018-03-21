@@ -1,6 +1,10 @@
 #Make sure GLFW and friends can be found
 link_directories( /usr/local/lib )
 
+#Include imgui
+include_directories( "${IMGUI_DIR}" )
+link_directories( "${IMGUI_DIR}" )
+
 #Stuff for Opengl and GLEW
 find_package( OpenGL REQUIRED )
 

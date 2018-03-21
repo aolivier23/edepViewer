@@ -91,7 +91,7 @@ namespace mygl
 
       void on_selection(const mygl::VisID id/*, const int, const int*/);
 
-      void Render(const int width, const int height); //Application/main window calls this in each frame
+      void Render(const int width, const int height, const ImGuiIO& ioState); //Application/main window calls this in each frame
  
     protected:
       //Viewer parameters the user can customize

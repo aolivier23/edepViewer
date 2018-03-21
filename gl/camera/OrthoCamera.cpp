@@ -6,6 +6,9 @@
 //For debugging
 #include <iostream>
 
+//imgui
+#include "imgui.h"
+
 //local includes
 #include "OrthoCamera.h"
 
@@ -52,5 +55,12 @@ namespace mygl
   void OrthoCamera::set_speed()
   {
     //fScrollSpeed = std::stof(fSpeedEntry.get_text());
+  }
+
+  void OrthoCamera::do_render()
+  {
+    Camera::do_render();
+    ImGui::InputFloat("Zoom", &fZoom);
+    ImGui::InputFloat("Zoom Speed", &fScrollSpeed);
   }
 }

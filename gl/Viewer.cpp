@@ -13,8 +13,8 @@
 #include "gl/UserCut.h"
 #include "gl/camera/Camera.h"
 
-//gtk includes
-#include <gtkmm.h>
+//imgui includes
+#include "imgui.h"
 
 //c++ includes
 #include <iostream>
@@ -92,10 +92,15 @@ namespace mygl
 
   Viewer::~Viewer() {}
 
-  void Viewer::Render(const int width, const int height)
+  //TODO: Rename this and/or render() so that the differences between them are more clear. 
+  void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
+    ImGui::Begin("Viewer"); //TODO: Viewer name
+    (*fCurrentCamera)->render(ioState);
     //TODO: Render() scenes
     //TODO: Render() view controls
+    ImGui::End();    
+
     render(width, height);
   }
 

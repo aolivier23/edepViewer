@@ -45,7 +45,7 @@ namespace mygl
       //Data needed for calculating perspective matrix
       float fZoom; //Zoom of the camera
       float fFarPlane; //Farthest away that objects can be rendered
-      double fScrollSpeed; //Measure of how fast zooming is
+      float fScrollSpeed; //Measure of how fast zooming is
 
       //Frustrum parameters
       /*double fTop;
@@ -65,5 +65,7 @@ namespace mygl
     protected:
       virtual void ReCalcView() = 0;
       virtual void do_scroll(const double dir) override;
+
+      virtual void do_render() override;
   };
 }

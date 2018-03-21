@@ -64,7 +64,7 @@ namespace mygl
 
       virtual void reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config);
 
-      virtual void Render(const int width, const int height); //Render this window
+      virtual void Render(const int width, const int height, const ImGuiIO& ioState); //Render this window
 
     protected:
       //Configuration file
