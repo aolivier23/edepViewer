@@ -228,6 +228,7 @@ namespace mygl
       if(ImGui::Button("Reload")) ReadEvent();
       if(ImGui::Button("File")); //choose_file(); //TODO: Do this in a non-Gtk way
     }
+    ImGui::End();
   }
 
   void EvdWindow::choose_file()
