@@ -101,6 +101,9 @@ namespace mygl
     //TODO: Render() view controls
     ImGui::End();    
 
+    //TODO: Dont' adjust camera if handled a click here
+    if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
+
     render(width, height);
   }
 
@@ -201,9 +204,9 @@ namespace mygl
     //fArea.queue_render();
   }
 
-  /*bool Viewer::on_click(GdkEventButton* evt)
+  bool Viewer::on_click(const int button, const float x, const float y, const int width, const int height)
   {
-    if(evt->button != 1) return false; //button 1 is the left mouse button
+    if(button != 0) return false; //button 1 is the left mouse button
     
     //TODO: Encapsulate "global" opengl settings into an object that can apply defaults here
     glDisable(GL_BLEND);
@@ -211,14 +214,12 @@ namespace mygl
                                               
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  
-    if(fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
- 
     for(auto& scenePair: fSceneMap)
     {
-      const auto view = fCurrentCamera->GetView();
+      const auto view = (*fCurrentCamera)->GetView();
  
       //TODO: It would be great to be able to change out this selection algorithm.  
-      scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->GetPerspective(width, height),
+      scenePair.second.RenderSelection(view, glm::scale((*fCurrentCamera)->GetPerspective(width, height),
                                        glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
       //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
     }
@@ -231,16 +232,16 @@ namespace mygl
     glFinish(); //Wait for all drawing to finish
     glPixelStorei(GL_PACK_ALIGNMENT, 1); 
     unsigned char color[4];
-    glReadPixels(evt->x, fArea.get_allocated_height() - evt->y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
+    glReadPixels(x, height-y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color); 
 
     //React to the user's selection.  Ultimately, I want to propagate this to other Viewers, so emit a signal that Viewers 
     //and/or Scenes can react to.  
     //TODO: Selection object like Gtk::TreeView::Selection instead of emitting a signal here?  
     //      I would want a way for multiple Viewers to post events to this Selection object.  
-    fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); //, evt->x, evt->y); 
+    //fSignalSelection.emit(mygl::VisID(color[0], color[1], color[2])); //, evt->x, evt->y); 
 
     return true;
-  }*/
+  }
 
   Viewer::SignalSelection Viewer::signal_selection()
   {

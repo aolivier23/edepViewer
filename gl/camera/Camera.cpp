@@ -50,7 +50,6 @@ namespace mygl
 
   bool Camera::on_key_press(const int key)
   {
-    std::cout << "In on_key_press(), key is " << key << "\n";
     if(key == GLFW_KEY_UP) fUpArr = Camera::keyState::down;
     else if(key == GLFW_KEY_DOWN) fDwnArr = Camera::keyState::down;
     else if(key == GLFW_KEY_LEFT) fLftArr = Camera::keyState::down;

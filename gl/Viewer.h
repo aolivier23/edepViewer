@@ -83,7 +83,7 @@ namespace mygl
 
       void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera);
 
-      bool on_click(GdkEventButton* evt); //Handle user selection of drawn objects
+      bool on_click(const int button, const float x, const float y, const int width, const int height); //Handle user selection of drawn objects
 
       //Int parameters useful if I want to draw a tooltip
       typedef sigc::signal<void, const mygl::VisID/*, const int, const int*/> SignalSelection;
