@@ -22,6 +22,11 @@
 
 class TGeoManager;
 
+namespace mygl
+{
+  class TreeModel;
+}
+
 namespace draw
 {
   class Guides: public GeoDrawer
@@ -41,15 +46,15 @@ namespace draw
       class GuideRecord: public mygl::ColRecord
       {
         public:
-          GuideRecord(): ColRecord()
+          GuideRecord(): ColRecord(), fName("Name")
           {
-            add(fName);
+            Add(fName);
           }
 
-          Gtk::TreeModelColumn<std::string> fName;
+          mygl::TreeModel::Column<std::string> fName;
       };
 
-      GuideRecord fGuideRecord;
+      std::shared_ptr<GuideRecord> fGuideRecord;
   };
 }
 

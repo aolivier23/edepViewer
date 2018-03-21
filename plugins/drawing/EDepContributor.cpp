@@ -26,7 +26,8 @@
 namespace draw
 {
   EDepContributor::EDepContributor(const tinyxml2::XMLElement* config): fPDGToColor(), fPDGColor(), 
-                                                                        fLineWidth(config->FloatAttribute("LineWidth", 0.008))
+                                                                        fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
+                                                                        fEDepRecord(new EDepRecord)
   {    
   }
 
@@ -54,10 +55,11 @@ namespace draw
     {
       std::cout << "Detector is " << det.first << "\n";
       auto detName = det.first;
-      auto detRow = *(viewer.GetScenes().find("EDep")->second.NewTopLevelNode());
+      auto detIter = viewer.GetScenes().find("EDep")->second.NewTopLevelNode();
+      auto& detRow = *detIter;
       auto edeps = det.second;
 
-      detRow[fEDepRecord.fPrimName] = detName;
+      detRow[fEDepRecord->fPrimName] = detName;
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
       std::cout << "About to process " << edeps.size() << " energy deposits.\n";
@@ -101,14 +103,15 @@ namespace draw
         double dEdx = edep.EnergyDeposit/edep.TrackLength;
 
         std::cout << "Adding Drawable.\n";
-        auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
+        auto iter = viewer.AddDrawable<mygl::Path>("EDep", nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
+        auto& row = *iter;
         std::cout << "Added Drawable.\n";
 
-        row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
-        row[fEDepRecord.fEnergy]  = energy;
-        row[fEDepRecord.fdEdx]    = dEdx;
-        row[fEDepRecord.fT0]      = start.T();
-        row[fEDepRecord.fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
+        row[fEDepRecord->fScintE]  = edep.SecondaryDeposit;
+        row[fEDepRecord->fEnergy]  = energy;
+        row[fEDepRecord->fdEdx]    = dEdx;
+        row[fEDepRecord->fT0]      = start.T();
+        row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
         ++nextID;
 
         sumE += energy;

@@ -7,6 +7,7 @@
 //c++ includes
 #include <vector>
 #include <memory>
+#include <sstream>
 
 #ifndef MYGL_TREEMODEL_H
 #define MYGL_TREEMODEL_H
@@ -95,8 +96,14 @@ namespace mygl
               //Cast fData to void* so it can be cast back later.  
               virtual void* Get() override { return (void*)(&fData); }
               
-              //Turn data into a string.  Probably called std::to_string for built-in types.
-              virtual std::string string() override { return std::to_string(fData); }
+              //Turn data into a string.  Using operator << instead of std::to_string() to support
+              //VisID with minimal work.  
+              virtual std::string string() override 
+              { 
+                std::stringstream ss;
+                ss << fData;
+                return ss.str();
+              }
                                                                                                                         
             protected:
               T fData; //The actual data stored in a DataBase
@@ -115,8 +122,8 @@ namespace mygl
                                                                                                                      
           virtual std::unique_ptr<Node::DataBase> BuildData() const = 0;
                                                                                                                      
-          void SetPosition(const size_t pos); //TODO: friend function of ColumnModel?
-          size_t GetPosition() const;
+          void SetPosition(const size_t pos) { fPosition = pos; } //TODO: friend function of ColumnModel?
+          inline size_t GetPosition() const { return fPosition; }
                                                                                                                      
         private: 
           std::string fName; //The name of this column when a TreeModel using it is drawn.
@@ -129,10 +136,10 @@ namespace mygl
       class Column: public ColumnBase
       {
         public:
-          Column(const std::string& name);
+          Column(const std::string& name): ColumnBase(name) {}
           virtual ~Column() = default;
                                                                                                                      
-          virtual std::unique_ptr<Node::DataBase> BuildData() const override;
+          virtual std::unique_ptr<Node::DataBase> BuildData() const override { return std::unique_ptr<Node::DataBase>(new Node::Data<T>()); }
       };
 
       //The list of columns in a TreeModel.  Users should derive from this class to use it.  
@@ -161,7 +168,7 @@ namespace mygl
           typedef std::vector<std::unique_ptr<Node>>::iterator Base;
 
         public:
-          iterator(Base node); //TODO: Pass parent or child Node here?
+          iterator(Base node); 
           ~iterator() = default;
 
           //Node access

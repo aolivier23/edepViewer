@@ -9,9 +9,6 @@
 //ROOT includes
 #include "TDatabasePDG.h"
 
-//Gtkmm includes
-#include <gtkmm.h>
-
 //tinyxml2 include for configuration
 #include <tinyxml2.h>
 
@@ -22,6 +19,7 @@ namespace mygl
 {
   class ColRecord;
   class VisID;
+  class TreeModel;
 }
 
 class TG4Event;
@@ -47,47 +45,47 @@ namespace draw
       float fLineWidth; //Width of lines to draw
 
       //Helper functions for drawing trajectories and trajectory points
-      void AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+      void AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                             const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                            const Gtk::TreeModel::Row& ptRow, Services& services);
+                            const mygl::TreeModel::iterator ptRow, Services& services);
 
-      Gtk::TreeModel::Row AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
-                                    const TG4TrajectoryPoint& pt, const Gtk::TreeModel::Row& ptRow, const glm::vec4& color);
+      mygl::TreeModel::iterator AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
+                                    const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator ptRow, const glm::vec4& color);
 
       //Description of the data saved for a trajectory
       class TrajRecord: public mygl::ColRecord
       {
         public:
-          TrajRecord(): ColRecord()
+          TrajRecord(): ColRecord(), fPartName("Name"), fEnergy("Energy [MeV]")
           {
-            add(fPartName);
-            add(fEnergy);
+            Add(fPartName);
+            Add(fEnergy);
           }
 
-          Gtk::TreeModelColumn<std::string> fPartName;
-          Gtk::TreeModelColumn<double> fEnergy;
+          mygl::TreeModel::Column<std::string> fPartName;
+          mygl::TreeModel::Column<double> fEnergy;
       };
 
-      TrajRecord fTrajRecord;
+      std::shared_ptr<TrajRecord> fTrajRecord;
 
       //Description of the data saved for a TrajectoryPoint
       class TrajPtRecord: public mygl::ColRecord
       {
         public:
-          TrajPtRecord(): ColRecord()
+          TrajPtRecord(): ColRecord(), fMomMag("Momentum [MeV/c]"), fTime("Time [ns]"), fProcess("Process"), fParticle("Particle")
           {
-            add(fMomMag);
-            add(fTime);
-            add(fProcess);
-            add(fParticle);
+            Add(fMomMag);
+            Add(fTime);
+            Add(fProcess);
+            Add(fParticle);
           }
  
-          Gtk::TreeModelColumn<double> fMomMag;
-          Gtk::TreeModelColumn<double> fTime;
-          Gtk::TreeModelColumn<std::string> fProcess;
-          Gtk::TreeModelColumn<std::string> fParticle;
+          mygl::TreeModel::Column<double> fMomMag;
+          mygl::TreeModel::Column<double> fTime;
+          mygl::TreeModel::Column<std::string> fProcess;
+          mygl::TreeModel::Column<std::string> fParticle;
       };
-      TrajPtRecord fTrajPtRecord;
+      std::shared_ptr<TrajPtRecord> fTrajPtRecord;
   };
 }
 

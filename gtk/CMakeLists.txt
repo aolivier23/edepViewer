@@ -36,7 +36,7 @@ install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             edepsim Factory Drawers external tinyxml2 GUI Geometry Source )
+                                             edepsim Factory Drawers external tinyxml2 GUI Geometry Source TreeModel)
 install( TARGETS EvdWindow DESTINATION lib )
 
 #add_library( EvdApp EvdApp.cpp )
@@ -44,7 +44,7 @@ install( TARGETS EvdWindow DESTINATION lib )
 #install( TARGETS EvdApp DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow ${EXTERNAL_LIBS} glfw imgui imgui_glfw)
+target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow ${EXTERNAL_LIBS} glfw imgui imgui_glfw TreeModel)
 install( TARGETS GLFWApp DESTINATION bin )
 
 #message("Linking RunEvdApp against external libraries ${EXTERNAL_LIBS}")

@@ -25,6 +25,11 @@ namespace tinyxml2
   class XMLElement;
 }
 
+namespace mygl
+{
+  class TreeModel;
+}
+
 namespace draw
 {
   class EDepDEdx: public EventDrawer
@@ -45,23 +50,24 @@ namespace draw
       class EDepRecord: public mygl::ColRecord
       {
         public:
-          EDepRecord(): ColRecord()
+          EDepRecord(): ColRecord(), fPrimName("Primary"), fEnergy("Energy [MeV]"), fdEdx("dE/dx"), fT0("T0 [ns]"), 
+                        fScintE("Scintillation E [MeV]")
           {
-            add(fPrimName);
-            add(fEnergy);
-            add(fdEdx);
-            add(fT0);
-            add(fScintE);
+            Add(fPrimName);
+            Add(fEnergy);
+            Add(fdEdx);
+            Add(fT0);
+            Add(fScintE);
             //TODO: Is it fair to call energy/length dE/dx?  
           }
 
-          Gtk::TreeModelColumn<double>      fEnergy;
-          Gtk::TreeModelColumn<std::string> fPrimName;
-          Gtk::TreeModelColumn<double>      fT0;
-          Gtk::TreeModelColumn<double>      fScintE;
-          Gtk::TreeModelColumn<double>      fdEdx;
+          mygl::TreeModel::Column<double>      fEnergy;
+          mygl::TreeModel::Column<std::string> fPrimName;
+          mygl::TreeModel::Column<double>      fT0;
+          mygl::TreeModel::Column<double>      fScintE;
+          mygl::TreeModel::Column<double>      fdEdx;
       };
-      EDepRecord fEDepRecord;
+      std::shared_ptr<EDepRecord> fEDepRecord;
   };
 }
 

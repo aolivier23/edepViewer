@@ -25,7 +25,7 @@
 
 namespace draw
 {
-  Guides::Guides(const tinyxml2::XMLElement* config)
+  Guides::Guides(const tinyxml2::XMLElement* config): fGuideRecord(new GuideRecord())
   {
     fLineWidth = config->FloatAttribute("LineWidth", 0.002);
   }
@@ -33,7 +33,7 @@ namespace draw
   void Guides::doRequestScenes(mygl::Viewer& viewer)
   {
     viewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    //guideTree.append_column("Name", fGuideRecord.fName);
+    //guideTree.append_column("Name", fGuideRecord->fName);
     //guideTree.expand_to_path(Gtk::TreePath("0"));
   }
 
@@ -41,29 +41,30 @@ namespace draw
   {
     viewer.RemoveAll("Guides");
 
-    auto root = *(viewer.GetScenes().find("Guides")->second.NewTopLevelNode());
-    root[fGuideRecord.fName] = "Measurement Objects";
+    auto rootIter = viewer.GetScenes().find("Guides")->second.NewTopLevelNode();
+    auto& root = *rootIter;
+    root[fGuideRecord->fName] = "Measurement Objects";
 
     const double gridSize = 1e5;
     //A 1m grid 
-    auto row = viewer.AddDrawable<mygl::Grid>("Guides", nextID++, root, false, glm::mat4(), gridSize, 1000., gridSize, 1000.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1m Grid";
+    auto& oneMrow = *(viewer.AddDrawable<mygl::Grid>("Guides", nextID++, rootIter, false, glm::mat4(), gridSize, 1000., gridSize, 1000.,
+                                                 glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
+    oneMrow[fGuideRecord->fName] = "1m Grid";
 
     //A 1dm grid 
-    row = viewer.AddDrawable<mygl::Grid>("Guides", nextID++, root, false, glm::mat4(), gridSize, 100., gridSize, 100.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1dm Grid";
+    auto& oneDMrow = *(viewer.AddDrawable<mygl::Grid>("Guides", nextID++, rootIter, false, glm::mat4(), gridSize, 100., gridSize, 100.,
+                                           glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
+    oneDMrow[fGuideRecord->fName] = "1dm Grid";
 
     //A 1cm grid
-    row = viewer.AddDrawable<mygl::Grid>("Guides", nextID++, root, false, glm::mat4(), gridSize, 10., gridSize, 10.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1cm Grid";
+    auto& oneCMrow = *(viewer.AddDrawable<mygl::Grid>("Guides", nextID++, rootIter, false, glm::mat4(), gridSize, 10., gridSize, 10.,
+                                           glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
+    oneCMrow[fGuideRecord->fName] = "1cm Grid";
 
     //A 1mm grid
-    row = viewer.AddDrawable<mygl::Grid>("Guides", nextID++, root, false, glm::mat4(), gridSize, 1., gridSize, 1.,
-                                               glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth);
-    row[fGuideRecord.fName] = "1mm Grid";
+    auto& oneMMrow = *(viewer.AddDrawable<mygl::Grid>("Guides", nextID++, rootIter, false, glm::mat4(), gridSize, 1., gridSize, 1.,
+                                          glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
+    oneMMrow[fGuideRecord->fName] = "1mm Grid";
   }
 
   REGISTER_PLUGIN(Guides, GeoDrawer);
