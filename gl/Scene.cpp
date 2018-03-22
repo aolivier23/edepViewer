@@ -130,7 +130,7 @@ namespace mygl
     }
     ImGui::Separator();
 
-    for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter);
+    for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true);
     ImGui::Columns(1); //Leave the multi-column context?
   }
 
@@ -259,6 +259,9 @@ namespace mygl
     return result;
   }
 
+  //TODO: switch to this Scene and tell other Scenes that this VisID has been selected
+  //TODO: What happens when an object that is not visible in the 3D view is selected with the list tree? 
+  //      Seems to usually be OK for now.  
   bool Scene::SelectID(const mygl::VisID& id)
   {
     //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
@@ -329,19 +332,31 @@ namespace mygl
     fSelection = id;*/
   }
 
-  void Scene::DrawNode(const mygl::TreeModel::iterator iter)
+  //TODO: The "top" bool is a hack to prevent the user from trying to draw top-level Nodes' objects. 
+  //      So far, I have been using top-level nodes as placeholders.  
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)   
   {
     //This tree entry needs a unique ID for imgui.  Turn the 
     //VisID it includes into a string since I am not currently
     //putting the same VisID in more than one place in a given tree.
     std::stringstream ss;
-    ss << (*iter)[fIDCol];
+    const auto& id = (*iter)[fIDCol];
+    ss << id;
     const auto idBase = ss.str();
-    const bool open = ImGui::TreeNodeEx(("##Node"+idBase).c_str());
+
+    //If this Node's VisID is selected, highlight this line in the list tree
+    const bool selected = (id == fSelection);
+    ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick 
+                                  | (selected ? ImGuiTreeNodeFlags_Selected : 0);    
+    const bool open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
+
+    //If this Node was selected by a single click, select its' VisID.  
+    if(ImGui::IsItemClicked()) SelectID(id);
 
     //Draw this Node's data
     //Draw a checkbox for the first column
-    if(ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
+    ImGui::SameLine(); //Put the checkbox on the same line as the tree arrow
+    if(!top && ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
     {
       if((*iter)[fSelfCol]) Transfer(fHidden, fActive, (*iter)[fIDCol]);
       else Transfer(fActive, fHidden, (*iter)[fIDCol]);
@@ -350,7 +365,7 @@ namespace mygl
 
     for(size_t col = 2; col < fCols->size(); ++col)
     {
-      ImGui::Text(((*iter)[col]).c_str()); //ImGui::Text() is not supposed to need a unique ID since it can't be clicked
+      if(ImGui::Selectable(((*iter)[col]+"##"+idBase).c_str(), selected)) SelectID(id);
       ImGui::NextColumn();
     }
 
@@ -359,7 +374,7 @@ namespace mygl
     //Draw children of this Node
     if(open) 
     {
-      for(auto child = iter->begin(); child != iter->end(); ++child) DrawNode(child);
+      for(auto child = iter->begin(); child != iter->end(); ++child) DrawNode(child, false);
       ImGui::TreePop();
     }
   }

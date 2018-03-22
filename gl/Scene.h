@@ -86,7 +86,7 @@ namespace mygl
       mygl::VisID fSelection; //The currently selected VisID
 
       //Helper function for drawing tree
-      void DrawNode(const mygl::TreeModel::iterator iter);
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top);
 
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
