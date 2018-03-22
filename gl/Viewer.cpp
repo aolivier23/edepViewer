@@ -97,7 +97,8 @@ namespace mygl
   {
     ImGui::Begin("Viewer"); //TODO: Viewer name
     (*fCurrentCamera)->render(ioState);
-    //TODO: Render() scenes
+    //TODO: Render() current scene
+    fSceneMap.begin()->second.RenderGUI();
     //TODO: Render() view controls
     ImGui::End();    
 

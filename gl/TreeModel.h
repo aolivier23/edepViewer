@@ -124,7 +124,8 @@ namespace mygl
                                                                                                                      
           void SetPosition(const size_t pos) { fPosition = pos; } //TODO: friend function of ColumnModel?
           inline size_t GetPosition() const { return fPosition; }
-                                                                                                                     
+
+          inline std::string Name() const { return fName; }                                                                                                                     
         private: 
           std::string fName; //The name of this column when a TreeModel using it is drawn.
           size_t fPosition; //The position of this ColumnBase in the column model (note the lack of capitalization)
@@ -154,6 +155,8 @@ namespace mygl
           size_t size() const;
         
           std::vector<std::unique_ptr<Node::DataBase>> BuildData() const;
+
+          inline std::string Name(const size_t col) const { return fCols[col]->Name(); }
 
         protected:
           ColumnModel() {} //Derive from this class to use it.  

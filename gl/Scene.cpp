@@ -2,7 +2,10 @@
 //Brief: A Scene collects the resources to draw a group of related objects using opengl.   
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//view includes
+//imgui includes
+#include "imgui.h"
+
+//gl includes
 #include "gl/Scene.h"
 #include "gl/model/Drawable.h"
 
@@ -19,7 +22,8 @@ namespace mygl
                                                                                                                         fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
                                                                                                                         fSelection(), fModel(cols), 
                                                                                                                         fSelfCol(cols->fDrawSelf),  
-                                                                                                                        fIDCol(cols->fVisID) 
+                                                                                                                        fIDCol(cols->fVisID), 
+                                                                                                                        fCols(cols)
   {
     BuildGUI(cols);
   }
@@ -27,7 +31,7 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                std::shared_ptr<mygl::ColRecord>& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
                fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fModel(cols), 
-               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID)
+               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols)
   {
     BuildGUI(cols);
   }
@@ -112,12 +116,26 @@ namespace mygl
     return fModel.NewNode();
   }
 
-  //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
-  //         the proper GL context is bound for rendering.
+  //Call this before Render() to get updates from user interaction with list tree.  
+  void Scene::RenderGUI()
+  {
+    //Tree column labels
+    ImGui::Columns(fCols->size()-1);
+    ImGui::Text(fCols->Name(1).c_str());
+    ImGui::NextColumn();
+    for(size_t col = 2; col < fCols->size(); ++col) 
+    {
+      ImGui::Text(fCols->Name(col).c_str());
+      ImGui::NextColumn();
+    }
+    ImGui::Separator();
+
+    for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter);
+    ImGui::Columns(1); //Leave the multi-column context?
+  }
+
   void Scene::Render(const glm::mat4& view, const glm::mat4& persp) 
   {
-    //TODO: Draw TreeModel here
-
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
     fShader.Use();
@@ -309,5 +327,34 @@ namespace mygl
     auto toHighlight = fActive.find(id);
     if(toHighlight != fActive.end()) toHighlight->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
     fSelection = id;*/
+  }
+
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter)
+  {
+    if(ImGui::TreeNodeEx(""))
+    {
+      //Draw this Node's data
+      //Draw a checkbox for the first column
+      bool drawSelf = &((*iter)[fSelfCol]);
+      const bool clicked = ImGui::Checkbox("", &drawSelf); //TODO: Transfer object referred to by Node if drawSelf is true
+      if(clicked)
+      {
+        if(drawSelf) Transfer(fHidden, fActive, (*iter)[fIDCol]);
+        else Transfer(fActive, fHidden, (*iter)[fIDCol]);
+      }
+      ImGui::NextColumn();
+
+      for(size_t col = 2; col < fCols->size(); ++col)
+      {
+        ImGui::Text(((*iter)[col]).c_str());
+        ImGui::NextColumn();
+      }
+
+      ImGui::Separator(); //TODO: Does this make the list-tree easier to read?
+
+      //Draw children of this Node
+      for(auto child = iter->begin(); child != iter->end(); ++child) DrawNode(child);
+      ImGui::TreePop();
+    }
   }
 }

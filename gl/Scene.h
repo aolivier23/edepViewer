@@ -50,6 +50,7 @@ namespace mygl
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
       virtual void Render(const glm::mat4& view, const glm::mat4& persp);
+      virtual void RenderGUI();
       virtual void RenderSelection(const glm::mat4& view, const glm::mat4& persp);
 
       const std::string fName; //The name of this scene.  Might be useful for list tree displays
@@ -77,12 +78,15 @@ namespace mygl
                                    //uses a special (unique?) fragment shader to which it can bind a VisID as 
                                    //a color.
 
-      //GUI components
-      //The only place still allowed to have Gtkmm GUI elements for now.  
+      //Metadata model
       TreeModel fModel;
+      std::shared_ptr<mygl::TreeModel::ColumnModel> fCols;
 
       //Data needed for highlighting
       mygl::VisID fSelection; //The currently selected VisID
+
+      //Helper function for drawing tree
+      void DrawNode(const mygl::TreeModel::iterator iter);
 
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
