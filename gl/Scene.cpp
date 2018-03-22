@@ -331,28 +331,34 @@ namespace mygl
 
   void Scene::DrawNode(const mygl::TreeModel::iterator iter)
   {
-    if(ImGui::TreeNodeEx(""))
+    //This tree entry needs a unique ID for imgui.  Turn the 
+    //VisID it includes into a string since I am not currently
+    //putting the same VisID in more than one place in a given tree.
+    std::stringstream ss;
+    ss << (*iter)[fIDCol];
+    const auto idBase = ss.str();
+    const bool open = ImGui::TreeNodeEx(("##Node"+idBase).c_str());
+
+    //Draw this Node's data
+    //Draw a checkbox for the first column
+    if(ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
     {
-      //Draw this Node's data
-      //Draw a checkbox for the first column
-      bool drawSelf = &((*iter)[fSelfCol]);
-      const bool clicked = ImGui::Checkbox("", &drawSelf); //TODO: Transfer object referred to by Node if drawSelf is true
-      if(clicked)
-      {
-        if(drawSelf) Transfer(fHidden, fActive, (*iter)[fIDCol]);
-        else Transfer(fActive, fHidden, (*iter)[fIDCol]);
-      }
+      if((*iter)[fSelfCol]) Transfer(fHidden, fActive, (*iter)[fIDCol]);
+      else Transfer(fActive, fHidden, (*iter)[fIDCol]);
+    }
+    ImGui::NextColumn();
+
+    for(size_t col = 2; col < fCols->size(); ++col)
+    {
+      ImGui::Text(((*iter)[col]).c_str()); //ImGui::Text() is not supposed to need a unique ID since it can't be clicked
       ImGui::NextColumn();
+    }
 
-      for(size_t col = 2; col < fCols->size(); ++col)
-      {
-        ImGui::Text(((*iter)[col]).c_str());
-        ImGui::NextColumn();
-      }
+    ImGui::Separator(); 
 
-      ImGui::Separator(); //TODO: Does this make the list-tree easier to read?
-
-      //Draw children of this Node
+    //Draw children of this Node
+    if(open) 
+    {
       for(auto child = iter->begin(); child != iter->end(); ++child) DrawNode(child);
       ImGui::TreePop();
     }

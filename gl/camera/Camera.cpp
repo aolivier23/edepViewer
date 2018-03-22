@@ -128,7 +128,6 @@ namespace mygl
       if(ImGui::IsMouseDragging()) on_motion(io.MousePos.x, io.MousePos.y);
       if(io.MouseWheel != 0.) on_scroll(io.MouseWheel);
     }
-    else std::cout << "imgui is capturing the mouse!\n"; 
     //TODO: Remove dependence on GLFW for interpretting keys?  Probably means I'll need to make some changes to 
     //      the imgui initialization function I got for free.
     if(!io.WantCaptureKeyboard) //Make sure imgui is not handling keyboard
@@ -142,7 +141,6 @@ namespace mygl
       if(ImGui::IsKeyPressed(GLFW_KEY_DOWN)) on_key_press(GLFW_KEY_DOWN);
       else if(fDwnArr == keyState::down) on_key_release(GLFW_KEY_DOWN);
     }
-    else std::cout << "imgui is capturing the keyboard!\n";
 
     //render controls for the camera
     do_render();
