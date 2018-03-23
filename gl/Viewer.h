@@ -16,7 +16,11 @@
 #include "gl/model/GenException.h"
 
 //gtk includes
+//TODO: Can I get rid of the gtkmm include and still keep sigc++?
 #include <gtkmm.h>
+
+//glm includes
+#include <glm/glm.hpp>
 
 //c++ includes
 #include <iostream>
@@ -35,6 +39,7 @@ namespace mygl
     protected:
       //opengl-related data members
       std::map<std::string, mygl::Scene> fSceneMap; //Map from Scene name to Scene object
+      std::map<std::string, mygl::Scene>::iterator fCurrentScene; //The Scene whose list tree is currently being displayed
 
     public:
   
@@ -95,8 +100,7 @@ namespace mygl
  
     protected:
       //Viewer parameters the user can customize
-      //TODO: Allow the user to set the camera to use in the future
-      //Gdk::RGBA fBackgroundColor; //The background color for the display
+      glm::vec3 fBackgroundColor;
   
       virtual void area_realize();
       virtual void unrealize();
@@ -107,21 +111,9 @@ namespace mygl
       //Other signals to react to 
       virtual void set_background();
 
-      //GUI elements
-      /*Gtk::Notebook fNotebook;
-      std::vector<std::pair<Gtk::Box, Gtk::ScrolledWindow>> fScrolls; //One for each Scene
-
-      //Viewer control GUI
-      Gtk::Box fControl;
-      Gtk::Label fBackColorLabel;
-      Gtk::ColorButton fBackgroundButton;
-      //TODO: Line width control
-
-      //Camera selection GUI.  Camera controls provided by Camera and derived classes.
-      Gtk::Stack fCameras;  //The list of cached Cameras
-      Gtk::StackSwitcher fCameraSwitch; //Controller for fCameras.  Currently viewed Camera GUI is current Camera.   */
-      std::vector<std::unique_ptr<Camera>> fCameras;
-      std::vector<std::unique_ptr<Camera>>::iterator fCurrentCamera; //Observer pointer to fCameras' currently visible child to make code easier to understand
+      //Switched to a std::list here so that iterators are valid even after insertions and deletions
+      std::map<std::string, std::unique_ptr<Camera>> fCameras;
+      std::map<std::string, std::unique_ptr<Camera>>::iterator fCurrentCamera; //Observer pointer to fCameras' currently visible child to make code easier to understand
 
       void camera_change();
 
@@ -133,6 +125,8 @@ namespace mygl
       void PrepareToAddScene(const std::string& name);
       void ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols);      
 
+      //TODO: Decide if I still want to use a signal for this task.  It seems to map pretty well onto 
+      //      a strategy based around callbacks.  
       SignalSelection fSignalSelection; 
   };
 }

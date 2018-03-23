@@ -16,6 +16,9 @@
 //imgui includes
 #include "imgui.h"
 
+//glm includes
+#include <glm/gtc/type_ptr.hpp>
+
 //c++ includes
 #include <iostream>
 #include <sstream>
@@ -28,62 +31,16 @@ namespace mygl
 {
   Viewer::Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel, const float yPerPixel, const float zPerPixel):
                 fSceneMap(), 
-                fCameras(), //fCameras(1, cam), fCurrentCamera(fCameras.begin()),
-                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
+                fCameras(), 
+                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel), fCurrentScene(fSceneMap.end())
   {
-    fCameras.emplace_back(cam.release());
+    fCameras.emplace("Default", std::unique_ptr<Camera>(cam.release()));
     fCurrentCamera = fCameras.begin();
-    //Setup control widgets
-    //TODO: Move background color to a central location for future applications -> Viewer-independent configuration tab 
-    /*fNotebook.set_hexpand(false);
-    fNotebook.set_scrollable();
-    fControl.pack_start(fBackColorLabel, Gtk::PACK_SHRINK);
-    fControl.pack_start(fBackgroundButton, Gtk::PACK_SHRINK);
-    fBackgroundButton.signal_color_set().connect(sigc::mem_fun(*this, &Viewer::set_background));
 
-    //Setup camera selection GUI.  This really needs to be its' own tab in a Gtk::Stack
-    fCameraSwitch.set_stack(fCameras);
-    fCameras.add(*fCurrentCamera, "Default", "Default");
-    fCurrentCamera->ConnectSignals(fArea);
-
-    fControl.pack_start(fCameraSwitch, Gtk::PACK_SHRINK);
-    fControl.pack_start(fCameras, Gtk::PACK_SHRINK);
-
-    fNotebook.append_page(fControl, "Viewer");
-
-    //Setup GLArea
-    fArea.set_hexpand(true);
-
-    pack1(fArea, Gtk::EXPAND);        
-    pack2(fNotebook, Gtk::SHRINK); 
-
-    add_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK
-                     | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK | Gdk::POINTER_MOTION_MASK);
-    fArea.add_events(Gdk::SCROLL_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK 
-                     | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK | Gdk::POINTER_MOTION_MASK);
-    fArea.set_can_focus(true); //This allows fArea to get keyboard events until another widget grabs focus
-    fArea.grab_focus();
-    
-    fArea.set_required_version(3, 3);
-
-    //Looks like window layout hints (ROOT's TGLayoutHints?)
-    //TODO: Should the Window including this object call these?
-    //fArea.set_hexpand(true);
-    fArea.set_vexpand(true);
-    fArea.set_auto_render(true);
-    
-    //GLArea signals
-    //TODO: Confirm that these work.  I am now overriding these methods directly for Gtk::GLArea
-    fArea.signal_realize().connect(sigc::mem_fun(*this, &Viewer::area_realize), false);
-    fArea.signal_unrealize().connect(sigc::mem_fun(*this, &Viewer::unrealize), false);
-    fArea.signal_render().connect(sigc::mem_fun(*this, &Viewer::render), false);
-    fArea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Viewer::my_motion_notify_event));
-    fArea.signal_button_release_event().connect(sigc::mem_fun(*this, &Viewer::on_click), false);*/
-
-    //Make sure this Viewer reacts to its' own selection signal.  Other viewers can also connect via the public interface.
     fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
 
     //Configure opengl
+    //TODO: Do this in GLFW-facing backend now?
     //fArea.set_has_depth_buffer(true);
 
     //fCameras.property_visible_child().signal_changed().connect(sigc::mem_fun(*this, &Viewer::camera_change));
@@ -96,10 +53,34 @@ namespace mygl
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
     ImGui::Begin("Viewer"); //TODO: Viewer name
-    (*fCurrentCamera)->render(ioState);
-    //TODO: Render() current scene
-    fSceneMap.begin()->second.RenderGUI();
-    //TODO: Render() view controls
+    //Render selectable text for each Scene.  Basically, a poor-man's tab widget.
+    if(ImGui::Button("Viewer")) fCurrentScene = fSceneMap.end();
+    for(auto scene = fSceneMap.begin(); scene != fSceneMap.end(); ++scene) 
+    {
+      ImGui::SameLine();
+      if(ImGui::Button(scene->first.c_str())) 
+      {
+        fCurrentScene = scene;
+      }
+    }
+
+    ImGui::Separator();
+    if(fCurrentScene != fSceneMap.end()) fCurrentScene->second.RenderGUI();
+    else //Render Viewer controls
+    {
+      //A button to select the current Camera
+      ImGui::Text("Cameras");
+      for(auto cam = fCameras.begin(); cam != fCameras.end(); ++cam) if(ImGui::Button(cam->first.c_str())) fCurrentCamera = cam;
+
+      //Render camera controls
+      fCurrentCamera->second->render(ioState); 
+
+      //Render overall Viewer controls
+      ImGui::Separator();
+      ImGui::Text("Viewer Controls");
+      ImGui::ColorEdit3("Choose a Background", glm::value_ptr(fBackgroundColor));
+      //TODO: Am I missing any controls?  Please let me know if you have requests!
+    }
     ImGui::End();    
 
     //TODO: Dont' adjust camera if handled a click here
@@ -171,13 +152,16 @@ namespace mygl
 
   void Viewer::render(const int width, const int height) 
   {
-    if(*fCurrentCamera == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+    if(fCurrentCamera->second == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+
+    glClearColor(fBackgroundColor.x, fBackgroundColor.y, fBackgroundColor.z, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for(auto& scenePair: fSceneMap)
     {
-      const auto view = (*fCurrentCamera)->GetView();
+      const auto view = fCurrentCamera->second->GetView();
 
-      scenePair.second.Render(view, glm::scale((*fCurrentCamera)->GetPerspective(width, height), 
+      scenePair.second.Render(view, glm::scale(fCurrentCamera->second->GetPerspective(width, height), 
                                                glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
     }
   }
@@ -194,7 +178,7 @@ namespace mygl
   {
     std::cout << "Called mygl::Viewer::AddCamera()\n";
     //fCameras.add(*(camera.release()), name, name);
-    fCameras.emplace_back(camera.release());
+    fCameras.emplace(name, std::unique_ptr<Camera>(camera.release()));
   }
 
   void Viewer::camera_change()
@@ -217,10 +201,10 @@ namespace mygl
  
     for(auto& scenePair: fSceneMap)
     {
-      const auto view = (*fCurrentCamera)->GetView();
+      const auto view = fCurrentCamera->second->GetView();
  
       //TODO: It would be great to be able to change out this selection algorithm.  
-      scenePair.second.RenderSelection(view, glm::scale((*fCurrentCamera)->GetPerspective(width, height),
+      scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->second->GetPerspective(width, height),
                                        glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
       //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
     }

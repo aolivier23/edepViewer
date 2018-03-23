@@ -90,8 +90,9 @@ int main(const int argc, const char** argv)
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT); //TODO: Also clear depth buffer.
+    //TODO: Does this mean that Viewer needs to be rendered first?
+    /*glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT); */
 
     //TODO: Render my event display stuff here.  Application Model probably has a Render() function 
     //      that is expected to be called in rendering loop.
