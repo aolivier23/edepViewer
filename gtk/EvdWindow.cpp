@@ -22,6 +22,9 @@
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 
+//local includes
+#include "gtk/Source.h"
+
 //ROOT includes
 #include "TGeoManager.h"
 #include "TGeoNode.h"
@@ -31,6 +34,7 @@
 #include "TBuffer3D.h"
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
+#include "TSystemFile.h"
 
 //c++ includes
 #include <regex>
@@ -54,54 +58,58 @@ namespace mygl
   {
     fConfig = std::move(config); //Take ownership of config and manage its' lifetime
 
-    //Load global plugins
-    auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
-
-    const auto top = fConfig->FirstChildElement();
-    const auto drawers = top->FirstChildElement();
-    const auto globalConfig = drawers->FirstChildElement("global");
-    if(globalConfig)
+    if(fConfig)
     {
-      tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
-      while(pluginConfig != nullptr)
-      {
-        auto drawer = geoFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
-        else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
-        pluginConfig = pluginConfig->NextSibling();
-      }
-    }
-    else throw std::runtime_error("Failed to get an element named global from config.xml.\n");
+      //Load global plugins
+      auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
 
-    //Load event plugins
-    auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
-    const auto eventConfig = drawers->FirstChildElement("event"); //TODO: Use a Handle
-    if(eventConfig)
-    {
-      tinyxml2::XMLNode* pluginConfig = eventConfig->FirstChildElement();
-      while(pluginConfig != nullptr)
+      const auto top = fConfig->FirstChildElement();
+      const auto drawers = top->FirstChildElement();
+      const auto globalConfig = drawers->FirstChildElement("global");
+      if(globalConfig)
       {
-        auto drawer = evtFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
-        else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
-        pluginConfig = pluginConfig->NextSibling();
+        tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
+        while(pluginConfig != nullptr)
+        {
+          auto drawer = geoFactory.Get(pluginConfig->ToElement());
+          if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
+          else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
+          pluginConfig = pluginConfig->NextSibling();
+        }
       }
-    }
-    else throw std::runtime_error("Failed to get an element named event from config.xml.\n");
+      else throw std::runtime_error("Failed to get an element named global from config.xml.\n");
 
-    //Load external plugins
-    auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
-    const auto extConfig = drawers->FirstChildElement("external");
-    if(extConfig)
-    {
-      tinyxml2::XMLNode* pluginConfig = extConfig->FirstChildElement();
-      while(pluginConfig != nullptr)
+      //Load event plugins
+      auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
+      const auto eventConfig = drawers->FirstChildElement("event"); //TODO: Use a Handle
+      if(eventConfig)
       {
-        auto drawer = extFactory.Get(pluginConfig->ToElement());
-        if(drawer != nullptr) fExtDrawers.push_back(std::move(drawer));
-        else std::cerr << "Failed to get external plugin named " << pluginConfig->Value() << "\n";
-        pluginConfig = pluginConfig->NextSibling();
+        tinyxml2::XMLNode* pluginConfig = eventConfig->FirstChildElement();
+        while(pluginConfig != nullptr)
+        {
+          auto drawer = evtFactory.Get(pluginConfig->ToElement());
+          if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
+          else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
+          pluginConfig = pluginConfig->NextSibling();
+        }
       }
+      else throw std::runtime_error("Failed to get an element named event from config.xml.\n");
+
+      //Load external plugins
+      auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
+      const auto extConfig = drawers->FirstChildElement("external");
+      if(extConfig)
+      {
+        tinyxml2::XMLNode* pluginConfig = extConfig->FirstChildElement();
+        while(pluginConfig != nullptr)
+        {
+          auto drawer = extFactory.Get(pluginConfig->ToElement());
+          if(drawer != nullptr) fExtDrawers.push_back(std::move(drawer));
+          else std::cerr << "Failed to get external plugin named " << pluginConfig->Value() << "\n";
+          pluginConfig = pluginConfig->NextSibling();
+        }
+      }
+      make_scenes();
     }
   }
 
@@ -113,9 +121,12 @@ namespace mygl
     //ReadGeo is called when the current file changes, so make sure external drawers are aware of the file change.
     //TODO: I should probably relabel this FileChange() and/or make the negotiation with Source a state machine.
     //TODO: Rethink how Source interacts with ExternalDrawers.  
-    for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
-    fSource->Next();
-    std::cout << "Called Source::Next().\n";
+    if(fSource)
+    { 
+      for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
+      fSource->Next();
+      ReadGeo();
+    }
   }
 
   void EvdWindow::ReadGeo()
@@ -180,8 +191,8 @@ namespace mygl
     //Configure External Scenes
     for(const auto& extPtr: fExtDrawers) extPtr->RequestScenes(fViewer);
 
-    ReadGeo();
-    ReadEvent();
+    //ReadGeo();
+    //ReadEvent();
   }
   
   void EvdWindow::Print()
@@ -197,9 +208,35 @@ namespace mygl
 
   void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)
   {
+    //TODO: Make the control bar the main menu bar?
     ImGui::BeginMainMenuBar();
     ImGui::EndMainMenuBar();
-    RenderControlBar();
+
+    //Pop up file selection GUI and call reconfigure()
+    if(!fConfig) 
+    {
+      auto file = fChoose.Render(".xml");
+      if(file)
+      {
+        std::string name(file->GetTitle());
+        name += "/";
+        name += file->GetName();
+        std::unique_ptr<tinyxml2::XMLDocument> doc(new tinyxml2::XMLDocument());
+        if(doc->LoadFile(name.c_str()) == tinyxml2::XML_SUCCESS) reconfigure(std::move(doc));
+        else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
+      }
+    }
+
+    //Pop up file selection GUI and call SetSource()
+    if(!fSource)
+    {
+      choose_file();
+    }
+
+    if(fSource && fConfig)
+    {
+      RenderControlBar();
+    }
     fViewer.Render(width, height, ioState);
   }
 
@@ -226,39 +263,27 @@ namespace mygl
         
       }*/ //TODO: For develop branch feature
 
-      if(ImGui::Button("Next")) next_event(); 
+      if(ImGui::Button("Next")) next_event(); //TODO: Make goto_event() able to detect the end of a file like next_event()
       ImGui::SameLine();
       if(ImGui::Button("Reload")) ReadEvent();
       ImGui::SameLine();
-      if(ImGui::Button("File")); //choose_file(); //TODO: Do this in a non-Gtk way
+      if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
+                                                        //GUI to pop up in next loop.
     }
     ImGui::End();
   }
 
   void EvdWindow::choose_file()
   {
-    //TODO: File chooser that doesn't rely on gtk
-    //TODO: The GUI bug where the wrong button is pressed seems to exist independently of the bug 
-    //      where drawing Guides failed.  So, this function still seems to trigger undefined behavior.
-    /*std::cout << "Calling function EvdWindow::choose_file()\n";
-    Gtk::FileChooserDialog chooser(*this, "Choose an edep-sim file to view");
-    //TODO: configure dialog to only show .root files and directories
-
-    chooser.add_button("Open", Gtk::RESPONSE_OK);
-
-    const int result = chooser.run(); 
-
-    if(result == Gtk::RESPONSE_OK)
+    //Pop up file selection GUI and call SetSource()
+    auto file = fChoose.Render(".root");
+    if(file)
     {
-      const auto name = chooser.get_filename();
-      SetSource(std::unique_ptr<src::Source>(new src::Source(name))); 
-      std::cout << "Set file to " << name << "\n";
-      fFileLabel.set_text(name);
-      ReadGeo(); //TODO: Unexpected behavior dissappears if I comment ReadGeo() here.
-      ReadEvent(); //TODO: Unexpected behavior remains if I comment ReadEvent() and leave ReadGeo().
-    }*/
-    //TODO: Just calling ReadGeo() and ReadEvent() without changing fSource at all causes the unexpected GUI behavior.  
-    //      So, Source's destructor is not the problem.  
+      std::string name(file->GetTitle());
+      name += "/";
+      name += file->GetName();
+      SetSource(std::unique_ptr<src::Source>(new src::Source(name)));
+    }
   }
 
   void EvdWindow::goto_event(const int evt)

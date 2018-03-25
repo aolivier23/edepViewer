@@ -18,7 +18,7 @@ link_directories( "${EDEP_DIR}/lib" )
 #target_link_libraries(imgui_glfw imgui glfw)
 
 #Libraries for small GUIS
-add_library( GUI LegendView.cpp )
+add_library( GUI LegendView.cpp FileChoose )
 target_link_libraries( GUI LINK_PUBLIC ${GTKMM_LIBRARIES} )
 
 #local stuff that GLDrawArea needs to know about
@@ -43,8 +43,12 @@ install( TARGETS EvdWindow DESTINATION lib )
 #target_link_libraries( EvdApp LINK_PUBLIC ${GTKMM_LIBRARIES} ${ROOT_LIBRARIES} EvdWindow )
 #install( TARGETS EvdApp DESTINATION lib )
 
+add_library( CmdLine CmdLine.cpp )
+target_link_libraries( CmdLine tinyxml2 Source )
+install( TARGETS CmdLine DESTINATION lib )
+
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow ${EXTERNAL_LIBS} glfw imgui imgui_glfw TreeModel)
+target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow ${EXTERNAL_LIBS} glfw imgui imgui_glfw TreeModel CmdLine)
 install( TARGETS GLFWApp DESTINATION bin )
 
 #message("Linking RunEvdApp against external libraries ${EXTERNAL_LIBS}")

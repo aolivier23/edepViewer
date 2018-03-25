@@ -19,6 +19,7 @@
 
 //local include
 #include "EvdWindow.h"
+#include "CmdLine.cpp"
 
 int main(const int argc, const char** argv)
 {
@@ -64,17 +65,11 @@ int main(const int argc, const char** argv)
 
   mygl::EvdWindow evd; //evd(argc, argv);
 
-  //TODO: Move this back into EvdWindow
-  std::unique_ptr<tinyxml2::XMLDocument> config(new tinyxml2::XMLDocument());
-  const auto status = config->LoadFile("default.xml");
-  if(status != tinyxml2::XML_SUCCESS)
-  {
-    throw std::runtime_error("Got error "+std::to_string(status)+" when trying to load configuration file default.xml with tinyxml2.\n");
-  }
-  evd.reconfigure(std::move(config));
-  evd.SetSource(std::unique_ptr<src::Source>(new src::Source("/home/aolivier/ND_Studies/neutrons/clusters_new.root")));
+  //Parse the command line to configure evd window
+  evd.reconfigure(cmd::FindConfig(argc, argv));
+  evd.SetSource(cmd::FindSource(argc, argv));
 
-  evd.make_scenes();
+  //evd.make_scenes();
 
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
   while (!glfwWindowShouldClose(window))

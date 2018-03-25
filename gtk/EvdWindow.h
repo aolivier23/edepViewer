@@ -10,14 +10,14 @@
 #include "external/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
 
+//local includes
+#include "gtk/FileChoose.h"
+
 //Gtkmm includes
 //#include <gtkmm.h>
 
 //custom GUI includes
 //#include "gtk/LegendView.h"
-
-//Source includes
-#include "gtk/Source.h"
 
 //gl includes
 #include "gl/Viewer.h"
@@ -29,6 +29,7 @@
 #include "TTreeReader.h"
 #include "TGeoMatrix.h"
 #include "TDatabasePDG.h"
+#include "TSystemDirectory.h"
 
 //Tinyxml include
 #include <tinyxml2.h>
@@ -47,6 +48,11 @@ class TChain;
 namespace src
 {
   class Source;
+}
+
+namespace file
+{
+  class FileChoose;
 }
 
 namespace mygl
@@ -93,6 +99,8 @@ namespace mygl
 
       //void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
+      file::FileChoose fChoose;
+      std::unique_ptr<TSystemDirectory> fPwd; //Current ROOT directory used by file selector
 
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
