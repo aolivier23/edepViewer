@@ -237,10 +237,9 @@ namespace mygl
   void Viewer::on_selection(const mygl::VisID id/*, const int x, const int y*/)  
   {
     //Tell Scenes to select chosen object.
-    for(auto& scenePair: fSceneMap) 
+    for(auto scenePair = fSceneMap.begin(); scenePair != fSceneMap.end(); ++scenePair) 
     {
-      if(scenePair.second.SelectID(id)); //fNotebook.set_current_page(fNotebook.page_num(
-                                        //                           *(scenePair.second.fTreeView.get_parent()->get_parent())));
+      if(scenePair->second.SelectID(id)) fCurrentScene = scenePair; 
     }
   }
 
