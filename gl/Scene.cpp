@@ -11,6 +11,7 @@
 
 //c++ includes
 #include <sstream>
+#include <array>
 
 namespace mygl
 {
@@ -23,50 +24,17 @@ namespace mygl
                                                                                                                         fSelection(), fModel(cols), 
                                                                                                                         fSelfCol(cols->fDrawSelf),  
                                                                                                                         fIDCol(cols->fVisID), 
-                                                                                                                        fCols(cols)
+                                                                                                                        fCols(cols), 
+                                                                                                                        fCutBar(cols->size()), 
+                                                                                                                        fBuffer(fCutBar.fInput)
   {
-    BuildGUI(cols);
   }
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                std::shared_ptr<mygl::ColRecord>& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
                fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fModel(cols), 
-               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols)
+               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput)
   {
-    BuildGUI(cols);
-  }
-
-  void Scene::BuildGUI(std::shared_ptr<mygl::ColRecord>& cols)
-  {
-    //fTreeView.set_model(fFilter);
-
-    //TODO: Simplify this when I'm more comfortable with what's going on
-    /*const int nTypes = cols.size();
-    std::vector<std::string> types;
-    for(int pos = 0; pos < nTypes; ++pos)
-    {
-      auto typeChars = g_type_name((cols.types())[pos]);
-      std::string typeName(typeChars);
-      //std::cout << g_type_name((cols.types())[pos]) << "\n";
-      //std::cout << typeName << "\n";
-      types.push_back(typeName);
-    }
-    fCutBar.SetTypes(types);*/
-
-    //Standard columns.  fVisID is also present, but it should not be visible.
-    //fTreeView.append_column_editable("Draw", fSelfCol);
-
-    //auto renderer = ((Gtk::CellRendererToggle*)fTreeView.get_column_cell_renderer(0));
-    //renderer->signal_toggled().connect(sigc::mem_fun(*this, &Scene::draw_self));
-
-    //Configure filter
-    //TODO: Replace this functionality with mygl::TreeModel::Walk()?
-    //fFilter->set_visible_func(sigc::mem_fun(*this, &mygl::Scene::filter));
-    //fCutBar.signal_activate().connect(sigc::mem_fun(*this, &Scene::start_filtering));
-
-    //Make sure that objects that are selected in this TreeView are highlighted in the GUI
-    //TODO: Notify other Scenes about what VisID was selected
-    //fTreeView.get_selection()->signal_changed().connect(sigc::mem_fun(*this, &Scene::on_tree_selection));
   }
 
   Scene::~Scene() {}
@@ -119,6 +87,40 @@ namespace mygl
   //Call this before Render() to get updates from user interaction with list tree.  
   void Scene::RenderGUI()
   {
+    //Cut bar
+    ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size());
+    ImGui::SameLine();
+    if(ImGui::Button("Filter")) 
+    {
+      fCutBar.fInput = fBuffer;
+
+      //Turn off drawing for 3D objects whose metdata don't pass cut
+      //TODO: Combine metadata and object rendering to remove the need for this 
+      //      convoluted filter system.  Could probably remove fActive and fHidden as well 
+      //      and simplify Scene considerably.  This is outside the scope of what I am 
+      //      working on right now, but it is a great future project if 
+      //      imgui works out.  
+      try
+      {
+        fModel.Walk([this](const auto iter)
+                    {
+                      if(!fCutBar.do_filter(iter))
+                      {
+                        auto& visible = (*iter)[fSelfCol];
+                        if(visible)
+                        {
+                          visible = false;
+                          this->Transfer(fActive, fHidden, (*iter)[fIDCol]);
+                        }
+                      }
+                    });
+      }
+      catch(const util::GenException& e)
+      {
+        std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this Scene.\n";
+      }
+    }
+
     //Tree column labels
     ImGui::Columns(fCols->size()-1);
     ImGui::Text(fCols->Name(1).c_str());
@@ -130,7 +132,14 @@ namespace mygl
     }
     ImGui::Separator();
 
-    for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true);
+    try
+    {
+      for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true);
+    }
+    catch(const util::GenException& e)
+    {
+      std::cerr << "Caught std::exception " << e.what() << " when parsing formula.  Ignoring filter expression.\n";
+    }
     ImGui::Columns(1); //Leave the multi-column context?
   }
 
@@ -172,31 +181,11 @@ namespace mygl
   //Make sure that the openGL context for this Scene is current when this is called.  
   void Scene::RemoveAll() //Might be useful when updating event
   {
-    //fCutBar.set_text(""); //TODO: Fix bug in CutBar so that it doesn't crash with cuts on 
-                          //      numeric values propagated between calls to RemoveAll().
     fActive.erase(fActive.begin(), fActive.end());
     fHidden.erase(fHidden.begin(), fHidden.end());
     fModel.Clear();
     fSelection = VisID();
-    //fModel->erase(fModel->get_iter("0")); //This was recommended online, but it doesn't change anything.
   }
-
-  /*void Scene::draw_self(const Glib::ustring& path)
-  {
-    auto row = *(fModel.get_iter(path));
-    if(!row) return;
-    const auto id = row[fIDCol];
-    const bool status = !row[fSelfCol]; //At the point that signal_toggled() is emitted, this entry has already been toggled to the 
-                                        //opposite of what it was when the user selected it.
-
-    //Do not attempt to show/hide top nodes
-    if(row.parent())
-    {
-      if(status) Transfer(fActive, fHidden, id);
-      else Transfer(fHidden, fActive, id);
-    }
-    //TODO: activate/deactivate children
-  }*/
 
   //All of the magic happens here.  Moving a unique_ptr from one container to another seems like a very difficult task... 
   void Scene::Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id)
@@ -218,45 +207,6 @@ namespace mygl
     auto copyPtr = found->second.release(); //Aha!
     from.erase(found);
     to.emplace(id, std::unique_ptr<Drawable>(copyPtr)).second;
-  }
-
-  //Intercept the result of UserCut::do_filter() to disable the Drawables for filtered rows.
-  bool Scene::filter(const TreeModel::iterator& iter)
-  {
-    //std::cout << "Entering mygl::Scene::filter()\n";
-    /*if(!iter) 
-    {
-      std::cerr << "Avoided processing a \"zombie\" row in mygl::Scene::filter().\n";
-      return true; //TODO: I suspect that I am getting "Zombie" iterators in this function when I get many particles with 0 energy.
-    }*/
-    auto& row = *iter;
-    //std::cout << "VisID was " << row[fIDCol] << "\n";
-    //const bool result = fCutBar.do_filter(iter); //TODO: Even commenting this doesn't seem to solve my problem with the GUI not redrawing.
-    const bool result = true;
-    //std::cout << "Result from UserCut::do_filter() was " << std::boolalpha << (result?"true":"false") << "\n";
-    if(result == false) 
-    {
-      //std::cout << "Cutting this row in mygl::Scene::filter().\n";
-      //row[fSelfCol] = false; //TODO: This line causes a segmentation fault
-                               //TODO: Adding seemingly unrelated code causes segmentation faults with otherwise-working configurations 
-                               //      of the source code.  This sounds like a misuse of memory somewhere.  
-                               //TODO: With new code in EvdWindow, I got an error about invalid iterators before a segmentation fault.  
-                               //      This sounds like fFilter is getting corrupted somewhere
-      //row.set_value(1, false); //This also causes a segmentation fault
-      try
-      {
-        Transfer(fActive, fHidden, row[fIDCol]);
-        row[fSelfCol] = false;
-      }
-      catch(const util::GenException& e)
-      {
-        //TODO: I am getting this exception often, even for things that shouldn't be filtered!  
-        std::cerr << "Caught exception \n" << e.what() << "\n when trying to filter rows of TreeModel.  "
-                  << "Ignoring this request to filter object.\n";
-      }
-    }
-    //std::cout << "VisID is now " << row[fIDCol] << "\n";
-    return result;
   }
 
   //TODO: switch to this Scene and tell other Scenes that this VisID has been selected
@@ -336,6 +286,8 @@ namespace mygl
   //      So far, I have been using top-level nodes as placeholders.  
   void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)   
   {
+    if(!top && !fCutBar.do_filter(iter)) return;
+
     //This tree entry needs a unique ID for imgui.  Turn the 
     //VisID it includes into a string since I am not currently
     //putting the same VisID in more than one place in a given tree.
@@ -356,10 +308,14 @@ namespace mygl
     //Draw this Node's data
     //Draw a checkbox for the first column
     ImGui::SameLine(); //Put the checkbox on the same line as the tree arrow
-    if(!top && ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
+    if(!top)
     {
-      if((*iter)[fSelfCol]) Transfer(fHidden, fActive, (*iter)[fIDCol]);
-      else Transfer(fActive, fHidden, (*iter)[fIDCol]);
+      //std::cout << "Drawing checkbox.\n";
+      if(ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
+      {
+        if((*iter)[fSelfCol]) Transfer(fHidden, fActive, (*iter)[fIDCol]);
+        else Transfer(fActive, fHidden, (*iter)[fIDCol]);
+      }
     }
     ImGui::NextColumn();
 

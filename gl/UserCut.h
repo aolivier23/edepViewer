@@ -25,33 +25,35 @@
 //       first && second || third: True if first and second are true OR third is true
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//gtkmm include
-#include <gtkmm.h>
+//gl includes
+#include "TreeModel.h"
+
+//c++ includes
+#include <string>
+#include <array>
 
 #ifndef MYGL_USERCUT_H
 #define MYGL_USERCUT_H
 
 namespace mygl
 {
-  class UserCut: public Gtk::Entry
+  class UserCut
   {
     public:
-      UserCut(const std::string& initial = "true");
+      UserCut(const size_t nCols);
       virtual ~UserCut() = default;
 
-      bool do_filter(const Gtk::TreeModel::const_iterator& iter);
-      void SetTypes(std::vector<std::string> types);
+      bool do_filter(const TreeModel::iterator& iter);
+
+      std::array<char, 256> fInput; //User-supplied text to cut based on
     
     protected:
-      std::vector<std::string> fTypes; 
-
       bool ev(std::string expr);
       std::string subexpr(std::string expr);
       std::string strip_spaces(std::string expr);
-      
 
-    private:
-      std::string get_col_value(const int col, const Gtk::TreeRow& row);
+      //Data accumulated by UserCut
+      size_t fNCols; //Number of columns to process
   };
 }
 

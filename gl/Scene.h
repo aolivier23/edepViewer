@@ -56,14 +56,8 @@ namespace mygl
       const std::string fName; //The name of this scene.  Might be useful for list tree displays
       
       //GUI components that the Viewer will arrange
-      //TODO: Restore GUI components using ImGUI 
-      //Gtk::TreeView fTreeView; //The user is responsible for telling this TreeView about columns in cols other than the 
-                                 //standard columns in evd::ColRecord.
-      //mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
+      mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
 
-      //void draw_self(const Glib::ustring& path); //TODO: Restore this functionality
-      //void start_filtering();
-      bool filter(const TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
       void remove_row(const TreeModel::iterator& path);
 
       bool SelectID(const mygl::VisID& id);
@@ -88,14 +82,15 @@ namespace mygl
       //Helper function for drawing tree
       void DrawNode(const mygl::TreeModel::iterator iter, const bool top);
 
+      //Cut bar buffer
+      std::array<char, 256> fBuffer;
+
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
 
       //Details to save user code when working with the TreeModel
       TreeModel::Column<bool> fSelfCol;
       TreeModel::Column<VisID> fIDCol;
-
-      void BuildGUI(std::shared_ptr<mygl::ColRecord>& cols);
   };
 }
 
