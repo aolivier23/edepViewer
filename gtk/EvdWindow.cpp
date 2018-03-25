@@ -126,6 +126,7 @@ namespace mygl
       for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
       fSource->Next();
       ReadGeo();
+      ReadEvent();
     }
   }
 
