@@ -209,10 +209,6 @@ namespace mygl
 
   void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)
   {
-    //TODO: Make the control bar the main menu bar?
-    ImGui::BeginMainMenuBar();
-    ImGui::EndMainMenuBar();
-
     //Pop up file selection GUI and call reconfigure()
     if(!fConfig) 
     {
@@ -243,7 +239,8 @@ namespace mygl
 
   void EvdWindow::RenderControlBar()
   {
-    ImGui::Begin("Control Bar");
+    //ImGui::Begin("Control Bar");
+    ImGui::BeginMainMenuBar();
     {
       if(ImGui::Button("Print"))
       {
@@ -271,7 +268,8 @@ namespace mygl
       if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
                                                         //GUI to pop up in next loop.
     }
-    ImGui::End();
+    ImGui::EndMainMenuBar();
+    //ImGui::End();
   }
 
   void EvdWindow::choose_file()
