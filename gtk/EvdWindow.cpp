@@ -160,7 +160,6 @@ namespace mygl
     //Last, set current event number for GUI
     //fEvtNum.set_text(std::to_string(fSource->Entry())); //TODO: Does ImGui do this?  
 
-    //Pop up legend of particle colors used
     /*std::vector<LegendView::Row> rows;
     auto db = TDatabasePDG::Instance();
     for(const auto& pdg: *(fServices.fPDGToColor))
@@ -232,6 +231,21 @@ namespace mygl
 
     if(fSource && fConfig)
     {
+      //Pop up legend of particle colors used
+      auto db = TDatabasePDG::Instance();
+      ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
+      ImGui::Begin("Legend");
+      for(auto& pdg: *(fServices.fPDGToColor))
+      {
+        const auto particle = db->GetParticle(pdg.first);
+        std::string name;
+        if(particle) name = particle->GetName();
+        else name = std::to_string(pdg.first);
+        
+        ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pdg.second), ImGuiColorEditFlags_NoInputs);
+      }
+      ImGui::End();
+
       RenderControlBar();
     }
     fViewer.Render(width, height, ioState);

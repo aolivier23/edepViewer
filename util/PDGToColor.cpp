@@ -26,14 +26,14 @@ namespace mygl
     return fPDGToColor[pdg];
   }
 
-  std::map<int, glm::vec3>::const_iterator PDGToColor::begin()
+  std::map<int, glm::vec3>::iterator PDGToColor::begin()
   {
-    return fPDGToColor.cbegin();
+    return fPDGToColor.begin();
   }
 
-  std::map<int, glm::vec3>::const_iterator PDGToColor::end()
+  std::map<int, glm::vec3>::iterator PDGToColor::end()
   {
-    return fPDGToColor.cend();
+    return fPDGToColor.end();
   }
 }
 
