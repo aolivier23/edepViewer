@@ -7,9 +7,6 @@
 //       If additional properties are added to a Camera, those properties should be given GUI manifestations.
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//local includes
-#include "gl/camera/Vec3Entry.h"
-
 //c++ includes
 #include <utility>
 
@@ -80,11 +77,6 @@ namespace mygl
       glm::vec3 fPosition; //Vector to the position of this camera
       const glm::vec3 fUp; //The initial up direction for this camera
       glm::vec3 fFront; //Vector to the front of the camera
-
-      //GUI widgets for interface to camera attributes
-      //TODO: Restore entry widgets with ImGUI 
-      //Vec3Entry fPosEntry;
-      //Vec3Entry fTargetEntry;
 
       //Camera control state
       //Representations of the current Camera state

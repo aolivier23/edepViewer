@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Header
-#include "gtk/Source.h"
+#include "app/Source.h"
 
 namespace src
 {

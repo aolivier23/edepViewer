@@ -7,7 +7,7 @@
 #include <tinyxml2.h>
 
 //local includes
-#include "gtk/Source.h"
+#include "app/Source.h"
 
 namespace cmd
 {

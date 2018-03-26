@@ -23,7 +23,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //local includes
-#include "gtk/Source.h"
+#include "app/Source.h"
 
 //ROOT includes
 #include "TGeoManager.h"
@@ -197,13 +197,10 @@ namespace mygl
   
   void EvdWindow::Print()
   {
-    auto window = Gdk::Window::get_default_root_window(); //get_window() //TODO: Why does the main window crash this function?   
-    const auto image = Gdk::Pixbuf::create(window, 0, 0, window->get_width(), window->get_height());
-    const std::string type = "png"; //TODO: Let the user choose this
-    std::stringstream name;
-    auto strippedName = fSource->GetFile().substr(0, fSource->GetFile().find_first_of('.')); 
-    name << "evd_" << strippedName.substr(strippedName.find_last_of("/")+1, std::string::npos) << "_event_" << fSource->Entry() << "." << type;
-    image->save(name.str(), type);
+    //TODO: Create a framebuffer
+    //TODO: Render to framebuffer
+    //TODO: Read framebuffer back as bitmap
+    //TODO: Write bitmap to a PNG.  Maybe use TASImage for now?
   }
 
   void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)

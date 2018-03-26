@@ -17,9 +17,6 @@
 #include "gl/ColRecord.cpp"
 #include "gl/model/Grid.h"
 
-//gtkmm includes
-#include <gtkmm.h>
-
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 

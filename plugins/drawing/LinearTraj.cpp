@@ -204,8 +204,6 @@ namespace draw
                                                                        //photons because of floating point precision behavior.  Never trust a computer to 
                                                                        //calculate 0...
     row[fTrajRecord->fEnergy] = p.E()-invariantMass; //Kinetic energy
-    Gdk::RGBA gdkColor;
-    gdkColor.set_rgba(color.r, color.g, color.b, 1.0);
     ++nextID;
 
     //TODO: Append children based on what points they start at

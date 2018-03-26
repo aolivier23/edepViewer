@@ -7,17 +7,12 @@
 
 //c++ includes
 #include <memory> //for std::unique_ptr
-#include <giomm/resource.h> //for Glib::RefPointer?
 #include <type_traits> //for std::true_type and std::false_type
 
 //local includes
 #include "gl/camera/Camera.h"
 #include "gl/Scene.h"
 #include "gl/model/GenException.h"
-
-//gtk includes
-//TODO: Can I get rid of the gtkmm include and still keep sigc++?
-#include <gtkmm.h>
 
 //glm includes
 #include <glm/glm.hpp>
@@ -91,8 +86,8 @@ namespace mygl
       bool on_click(const int button, const float x, const float y, const int width, const int height); //Handle user selection of drawn objects
 
       //Int parameters useful if I want to draw a tooltip
-      typedef sigc::signal<void, const mygl::VisID/*, const int, const int*/> SignalSelection;
-      SignalSelection signal_selection(); //User access to this Viewer's signal that it selected an object
+      //typedef sigc::signal<void, const mygl::VisID/*, const int, const int*/> SignalSelection;
+      //SignalSelection signal_selection(); //User access to this Viewer's signal that it selected an object
 
       void on_selection(const mygl::VisID id/*, const int, const int*/);
 
@@ -127,7 +122,7 @@ namespace mygl
 
       //TODO: Decide if I still want to use a signal for this task.  It seems to map pretty well onto 
       //      a strategy based around callbacks.  
-      SignalSelection fSignalSelection; 
+      //SignalSelection fSignalSelection; 
   };
 }
 #endif //End ifndef MYGL_VIEWER_H

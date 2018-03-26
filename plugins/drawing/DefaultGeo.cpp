@@ -20,9 +20,6 @@
 #include "TGeoNode.h"
 #include "TGeoMatrix.h"
 
-//gtkmm includes
-#include <gtkmm.h>
-
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 

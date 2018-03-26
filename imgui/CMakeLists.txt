@@ -26,4 +26,4 @@ target_link_libraries(imgui_glfw imgui glfw)
 #install( TARGETS RunEvdApp DESTINATION bin )
 
 #install headers
-install( FILES imgui_impl_glfw_gl3.h DESTINATION include/gtk )
+install( FILES imgui_impl_glfw_gl3.h DESTINATION include/imgui )

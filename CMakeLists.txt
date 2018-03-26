@@ -20,14 +20,6 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-#gtkmm stuff
-find_package(PkgConfig)
-pkg_check_modules(GTKMM gtkmm-3.0)
-
-#gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
-link_directories( ${GTKMM_LIBRARY_DIRS} )
-include_directories( ${GTKMM_INCLUDE_DIRS} )
-
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 
@@ -74,7 +66,7 @@ add_subdirectory(config)
 add_subdirectory(external)
 add_subdirectory(util)
 add_subdirectory(gl)
-add_subdirectory(gtk)
+add_subdirectory(app)
 add_subdirectory(plugins)
 
 #Make the results of this build into a package.  Designed to be distributed as a .tar.gz

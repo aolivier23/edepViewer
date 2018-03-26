@@ -5,7 +5,6 @@
 
 //c++ includes
 #include <memory> //for std::unique_ptr
-#include <giomm/resource.h> //for Glib::RefPointer?
 #include <type_traits> //for std::true_type and std::false_type
 
 //local includes
@@ -37,7 +36,7 @@ namespace mygl
     fCameras.emplace("Default", std::unique_ptr<Camera>(cam.release()));
     fCurrentCamera = fCameras.begin();
 
-    fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
+    //fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
 
     //Configure opengl
     //TODO: Do this in GLFW-facing backend now?
@@ -229,10 +228,10 @@ namespace mygl
     return true;
   }
 
-  Viewer::SignalSelection Viewer::signal_selection()
+  /*Viewer::SignalSelection Viewer::signal_selection()
   {
     return fSignalSelection;
-  }
+  }*/
 
   void Viewer::on_selection(const mygl::VisID id/*, const int x, const int y*/)  
   {

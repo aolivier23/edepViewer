@@ -11,13 +11,7 @@
 #include "plugins/drawing/Services.cpp"
 
 //local includes
-#include "gtk/FileChoose.h"
-
-//Gtkmm includes
-//#include <gtkmm.h>
-
-//custom GUI includes
-//#include "gtk/LegendView.h"
+#include "app/FileChoose.h"
 
 //gl includes
 #include "gl/Viewer.h"
