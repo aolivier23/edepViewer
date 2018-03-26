@@ -56,8 +56,11 @@ namespace mygl
       //TODO: Restore functionality with ImGUI
       //void ConnectSignals(Gtk::GLArea& area);
 
-      //Dispatch ImGui events and draw the camera state controls
-      void render(const ImGuiIO& ioState);
+      //Draw the camera state controls
+      virtual void render();
+      
+      //Dispatch mouse and keyboard events
+      void update(const ImGuiIO& ioState); 
 
     private:
       bool fModified; //Has the Camera's state been modified since the view was last recalculated?

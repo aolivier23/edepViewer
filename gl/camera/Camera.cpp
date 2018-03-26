@@ -117,7 +117,7 @@ namespace mygl
     area.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
   }*/
 
-  void Camera::render(const ImGuiIO& io)
+  void Camera::update(const ImGuiIO& io)
   {
     //Adjust camera state based on user input
     if(!io.WantCaptureMouse) //Make sure imgui is not handling mouse
@@ -141,8 +141,11 @@ namespace mygl
       if(ImGui::IsKeyPressed(GLFW_KEY_DOWN)) on_key_press(GLFW_KEY_DOWN);
       else if(fDwnArr == keyState::down) on_key_release(GLFW_KEY_DOWN);
     }
+  }
 
-    //render controls for the camera
+  //TODO: Keeping this for backwards compatibility for now
+  void Camera::render()
+  {
     do_render();
   }
 

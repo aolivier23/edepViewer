@@ -52,16 +52,23 @@ namespace mygl
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
     ImGui::Begin("Viewer"); //TODO: Viewer name
+    ImGui::Columns(fSceneMap.size()+1);
     //Render selectable text for each Scene.  Basically, a poor-man's tab widget.
-    if(ImGui::Button("Viewer")) fCurrentScene = fSceneMap.end();
+    bool selected = (fCurrentScene == fSceneMap.end());
+    ImGui::Selectable("Viewer", &selected);
+    ImGui::NextColumn();
+    if(selected) fCurrentScene = fSceneMap.end();
     for(auto scene = fSceneMap.begin(); scene != fSceneMap.end(); ++scene) 
     {
-      ImGui::SameLine();
-      if(ImGui::Button(scene->first.c_str())) 
+      selected = (fCurrentScene == scene);
+      ImGui::Selectable(scene->first.c_str(), &selected);
+      if(selected) 
       {
         fCurrentScene = scene;
       }
+      ImGui::NextColumn();
     }
+    ImGui::Columns(1);
 
     ImGui::Separator();
     if(fCurrentScene != fSceneMap.end()) fCurrentScene->second.RenderGUI();
@@ -72,7 +79,7 @@ namespace mygl
       for(auto cam = fCameras.begin(); cam != fCameras.end(); ++cam) if(ImGui::Button(cam->first.c_str())) fCurrentCamera = cam;
 
       //Render camera controls
-      fCurrentCamera->second->render(ioState); 
+      fCurrentCamera->second->render(); 
 
       //Render overall Viewer controls
       ImGui::Separator();
@@ -82,8 +89,12 @@ namespace mygl
     }
     ImGui::End();    
 
+    //Send mouse and keyboard events to the current Camera
+    fCurrentCamera->second->update(ioState);
+
     //TODO: Dont' adjust camera if handled a click here
     if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
+    else if(ioState.WantCaptureMouse) std::cout << "ImGui is capturing the mouse.\n";
 
     render(width, height);
   }

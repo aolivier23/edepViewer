@@ -298,8 +298,7 @@ namespace mygl
 
     //If this Node's VisID is selected, highlight this line in the list tree
     const bool selected = (id == fSelection);
-    ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick 
-                                  | (selected ? ImGuiTreeNodeFlags_Selected : 0);    
+    ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
     const bool open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
 
     //If this Node was selected by a single click, select its' VisID.  
