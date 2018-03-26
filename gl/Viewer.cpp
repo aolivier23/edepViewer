@@ -51,7 +51,9 @@ namespace mygl
   //TODO: Rename this and/or render() so that the differences between them are more clear. 
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
-    ImGui::Begin("Viewer"); //TODO: Viewer name
+    ImGui::SetNextWindowPos(ImVec2(ioState.DisplaySize.x, 35.f), ImGuiCond_Always, ImVec2(1.0f, 0.f));
+    ImGui::SetNextWindowSize(ImVec2(ioState.DisplaySize.x/5., ioState.DisplaySize.y-35.f), ImGuiCond_Appearing);
+    ImGui::Begin("Viewer", nullptr, ImGuiWindowFlags_ResizeFromAnySide); //TODO: Viewer name
     ImGui::Columns(fSceneMap.size()+1);
     //Render selectable text for each Scene.  Basically, a poor-man's tab widget.
     bool selected = (fCurrentScene == fSceneMap.end());
@@ -94,7 +96,6 @@ namespace mygl
 
     //TODO: Dont' adjust camera if handled a click here
     if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
-    else if(ioState.WantCaptureMouse) std::cout << "ImGui is capturing the mouse.\n";
 
     render(width, height);
   }

@@ -250,8 +250,9 @@ namespace mygl
 
   void EvdWindow::RenderControlBar()
   {
-    //ImGui::Begin("Control Bar");
-    ImGui::BeginMainMenuBar();
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x, 0.f), ImGuiCond_Always, ImVec2(1.0f, 1.0));
+    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 20.f));
+    ImGui::Begin("Control Bar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     {
       if(ImGui::Button("Print"))
       {
@@ -279,8 +280,7 @@ namespace mygl
       if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
                                                         //GUI to pop up in next loop.
     }
-    ImGui::EndMainMenuBar();
-    //ImGui::End();
+    ImGui::End();
   }
 
   void EvdWindow::choose_file()
