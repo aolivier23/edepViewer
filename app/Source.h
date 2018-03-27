@@ -35,10 +35,13 @@ namespace src
 
       virtual bool Next();
       virtual bool GoTo(const size_t evt);
+      virtual bool GoTo(const size_t run, const size_t evt);
       virtual bool NextFile();
 
       virtual const std::string GetFile();
       virtual const size_t Entry();
+      virtual const size_t EventID();
+      virtual const size_t RunID();
 
       //Don't make me regret making this public
       TTreeReader fReader;

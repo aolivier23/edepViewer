@@ -46,12 +46,6 @@ namespace mygl
             10., 10., 10.),
     fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
   {
-    //build_toolbar();
-
-    //fViewer.signal_map().connect(sigc::mem_fun(*this, &EvdWindow::make_scenes)); //Because signal_realize is apparently emitted before this object's 
-    //make_scenes();
-        
-    //show_all_children();                                                                             //children are realize()d
   }
 
   void EvdWindow::reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config)
@@ -260,18 +254,17 @@ namespace mygl
       } 
       ImGui::SameLine();
 
-      int entry = fSource->Entry();
+      /*int entry = fSource->Entry();
       if(ImGui::InputInt("TTree Entry", &entry))
       {
         goto_event(entry);
+      }*/
+      int ids[] = {fSource->RunID(), fSource->EventID()};
+      if(ImGui::InputInt2("(Run, Event)", ids))
+      {
+        goto_id(ids[0], ids[1]);
       }
       ImGui::SameLine();
-
-      /*int runEvt[2] = {};
-      if(ImGui::InputInt2("(RunId, EventId)", runEvt))
-      {
-        
-      }*/ //TODO: For develop branch feature
 
       if(ImGui::Button("Next")) next_event(); //TODO: Make goto_event() able to detect the end of a file like next_event()
       ImGui::SameLine();
@@ -300,6 +293,15 @@ namespace mygl
   {
     std::cout << "Calling function EvdWindow::goto_event()\n";
     if(fSource->GoTo(evt)) 
+    {
+      ReadEvent();
+    }
+    else std::cerr << "Failed to get event " << evt << " from file " << fSource->GetFile() << "\n";
+  }
+
+  void EvdWindow::goto_id(const int run, const int evt)
+  {
+    if(fSource->GoTo(evt))
     {
       ReadEvent();
     }

@@ -130,22 +130,6 @@ namespace mygl
   void Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols)
   {
     //Now, tell this Viewer's GUI about the Scene's GUI
-    //auto& treeView = scene.fTreeView;
-    //treeView.set_enable_search(true);
-
-    /*fScrolls.emplace_back();
-    auto& scroll = fScrolls.back().second;
-    scroll.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC); //Make sure to expand scrollable area when more 
-                                                                     //rows are added.
-    scroll.add(treeView);
-    auto& box = fScrolls.back().first;
-    box = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
-    box.pack_start(scene.fCutBar, Gtk::PACK_SHRINK);
-    box.pack_end(scroll);
-    fNotebook.append_page(box, name);
-    fNotebook.show_all_children();
-    
-    return treeView;*/
   }
 
   void Viewer::area_realize()

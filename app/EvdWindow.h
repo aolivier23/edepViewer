@@ -78,8 +78,6 @@ namespace mygl
 
       void RenderControlBar();
 
-      //std::unique_ptr<LegendView> Legend; //TODO: Restore this
-
     private:
       void ReadGeo();
       void ReadEvent();
@@ -91,7 +89,8 @@ namespace mygl
       void goto_event(const int evt);
       void next_event();
 
-      //void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
+      void goto_id(const int run, const int evt);
+
       void choose_file(); 
       file::FileChoose fChoose;
       std::unique_ptr<TSystemDirectory> fPwd; //Current ROOT directory used by file selector

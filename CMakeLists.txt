@@ -52,8 +52,8 @@ set(EXTERNAL_LIBS "")
 
 #Adding support for external plugins that need my EdepNeutrons package.
 if(DEFINED EDEPNEUTRONS_DIR)
-  list(APPEND EXTERNAL_SOURCE MCHitDrawer.cpp)
-  list(APPEND EXTERNAL_HEADERS MCHitDrawer.h)
+  list(APPEND EXTERNAL_SOURCE MCHitDrawer.cpp MCClusterDrawer.cpp)
+  list(APPEND EXTERNAL_HEADERS MCHitDrawer.h MCClusterDrawer.h)
   list(APPEND EXTERNAL_LIBS persistency)
 
   #Find EDepNeutrons directory
