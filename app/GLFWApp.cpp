@@ -45,9 +45,9 @@ int main(const int argc, const char** argv)
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); 
   ImGui_ImplGlfwGL3_Init(window, true);
-  io.NavFlags |= ImGuiNavFlags_EnableKeyboard;  // Enable Keyboard Controls
-  io.NavFlags |= ImGuiNavFlags_EnableGamepad;   // Enable Gamepad Controls
-  io.NavFlags |= ImGuiNavFlags_MoveMouse; //Enable mouse movement
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+  //io.ConfigFlags |= ImGuiConfigFlags_MoveMouse; //Enable mouse movement
 
   //TODO: Create event display "Window" object here?  Pass it command line args, or make source and configuration file 
   //      myself?  Leaning towards former option to make switching window creation libraries as easy as possible.  
