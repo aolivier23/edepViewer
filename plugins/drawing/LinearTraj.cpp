@@ -89,7 +89,7 @@ namespace draw
     //trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
 
     //Configure Trajectory Point Scene
-    viewer.MakeScene("TrajPts", fTrajPtRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/widePoint.geom");
+    viewer.MakeScene("TrajPts", fTrajPtRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/widePoint.geom");
     /*ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
     ptTree.append_column("Process", fTrajPtRecord.fProcess);
     ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);

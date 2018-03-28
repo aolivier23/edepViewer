@@ -20,7 +20,7 @@ namespace mygl
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols): 
                                                                                                                         fName(name), fActive(), fHidden(), 
                                                                                                                         fShader(fragSrc, vertSrc), 
-                                                                                                                        fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc),
+                                                                                                                        fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc),
                                                                                                                         fSelection(), fModel(cols), 
                                                                                                                         fSelfCol(cols->fDrawSelf),  
                                                                                                                         fIDCol(cols->fVisID), 
@@ -32,7 +32,7 @@ namespace mygl
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                std::shared_ptr<mygl::ColRecord>& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
-               fSelectionShader("/home/aolivier/app/evd/src/gl/shaders/selection.frag", vertSrc, geomSrc), fModel(cols), 
+               fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc), fModel(cols), 
                fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput)
   {
   }

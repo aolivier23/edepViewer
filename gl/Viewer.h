@@ -70,8 +70,8 @@ namespace mygl
       }
 
       //User access to Scenes
-      void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc = "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", 
-                     const std::string& vertSrc = "/home/aolivier/app/evd/src/gl/shaders/camera.vert");
+      void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc = INSTALL_GLSL_DIR "/userColor.frag", 
+                     const std::string& vertSrc = INSTALL_GLSL_DIR "/camera.vert");
       void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc,
                      const std::string& geomSrc);
 
