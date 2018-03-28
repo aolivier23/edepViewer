@@ -84,7 +84,8 @@ namespace mygl
           //Node* fParent; //Observer pointer to parent.  Think about what happens in parent's destructor...
           std::vector<std::unique_ptr<Node>> fChildren; //Owning pointers to children.
           std::vector<std::unique_ptr<DataBase>> fColData; //Vector of column data
-          
+         
+        public: 
           //(I think I got this right) Store actual data as a real type so I can delete it. 
           //Cast it to a void* and then back so that I can actually write a sane user interface.    
           template <class T>
