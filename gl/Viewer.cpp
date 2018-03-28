@@ -31,7 +31,8 @@ namespace mygl
   Viewer::Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel, const float yPerPixel, const float zPerPixel):
                 fSceneMap(), 
                 fCameras(), 
-                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel), fCurrentScene(fSceneMap.end())
+                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel), fCurrentScene(fSceneMap.end()), 
+                fBackgroundColor(0., 0., 0.)
   {
     fCameras.emplace("Default", std::unique_ptr<Camera>(cam.release()));
     fCurrentCamera = fCameras.begin();
