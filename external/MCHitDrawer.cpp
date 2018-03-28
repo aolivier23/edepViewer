@@ -19,7 +19,8 @@
 
 namespace mygl
 {
-  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(1.5, 15.), fHitName("NeutronHits")
+  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(0., 1e3), fHitName("NeutronHits"), 
+                                                                fHitRecord(new MCHitRecord())                                                 
   {
     const auto hitName = config->Attribute("HitName");
     if(hitName != nullptr) fHitName = hitName;
@@ -33,20 +34,21 @@ namespace mygl
 
   void MCHitDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& hitTree = viewer.MakeScene(fHitName, fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
-    hitTree.append_column("Energy", fHitRecord.fEnergy);
-    hitTree.append_column("Time", fHitRecord.fTime);
-    hitTree.append_column("Cause", fHitRecord.fParticle);
+    viewer.MakeScene(fHitName, fHitRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/triangleBorder.geom");
+    /*hitTree.append_column("Energy", fHitRecord->fEnergy);
+    hitTree.append_column("Time", fHitRecord->fTime);
+    hitTree.append_column("Cause", fHitRecord->fParticle);*/
   }
 
   void MCHitDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
   {
     viewer.RemoveAll(fHitName);
 
-    auto top = *(viewer.GetScenes().find(fHitName)->second.NewTopLevelNode());
-    top[fHitRecord.fEnergy] = std::accumulate(fHits->begin(), fHits->end(), 0., [](double value, const auto& hit) { return value + hit.Energy; });
-    top[fHitRecord.fParticle] = fHitName; //Algorithm name
-    top[fHitRecord.fTime] = 0.;
+    auto topIter = viewer.GetScenes().find(fHitName)->second.NewTopLevelNode();
+    auto& top = *topIter;
+    top[fHitRecord->fEnergy] = std::accumulate(fHits->begin(), fHits->end(), 0., [](double value, const auto& hit) { return value + hit.Energy; });
+    top[fHitRecord->fParticle] = fHitName; //Algorithm name
+    top[fHitRecord->fTime] = 0.;
 
     for(const auto& hit: *fHits)
     {
@@ -54,11 +56,11 @@ namespace mygl
            
       glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(hit.Position.X(), hit.Position.Y(), hit.Position.Z()));
 
-      auto row = viewer.AddDrawable<mygl::PolyMesh>(fHitName, nextID++, top, true, pos,
-                                                    &box, glm::vec4(fPalette(hit.Energy), 1.0)); 
-      row[fHitRecord.fEnergy] = hit.Energy;
-      row[fHitRecord.fTime] = hit.Position.T();
-      row[fHitRecord.fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 
+      auto& row = *(viewer.AddDrawable<mygl::PolyMesh>(fHitName, nextID++, topIter, true, pos,
+                                                       &box, glm::vec4(fPalette(hit.Energy), 1.0))); 
+      row[fHitRecord->fEnergy] = hit.Energy;
+      row[fHitRecord->fTime] = hit.Position.T();
+      row[fHitRecord->fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 
                                                   [&event](std::string& names, const int id)
                                                   {
                                                     return names+" "+event.Trajectories[id].Name;

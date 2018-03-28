@@ -6,6 +6,9 @@
 //For debugging
 #include <iostream>
 
+//imgui
+#include "imgui.h"
+
 //glm includes
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,7 +28,7 @@ namespace mygl
   }
 
   void PlaneCam::do_key_press()
-  {    
+  {
     //Move the camera position
     const auto right = glm::normalize(glm::cross(fFront, fUp));
     const auto top = glm::normalize(glm::cross(right, fFront));
@@ -47,7 +50,13 @@ namespace mygl
 
   void PlaneCam::set_move_speed()
   {
-    fPosSens = std::stof(fMoveSpeedEntry.get_text());
+    //fPosSens = std::stof(fMoveSpeedEntry.get_text());
+  }
+  
+  void PlaneCam::do_render()
+  {
+    OrthoCamera::do_render();
+    ImGui::InputFloat("Movement Speed", &fPosSens);
   }
 }
 

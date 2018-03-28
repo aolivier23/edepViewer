@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Header
-#include "gtk/Source.h"
+#include "app/Source.h"
 
 namespace src
 {
@@ -84,7 +84,7 @@ namespace src
   }
 
   //Go to event by RunId and EventId
-  bool Source::GoTo(const size_t run, const size_t evt)
+  bool Source::GoTo(const int run, const int evt)
   {
     if(fReader.GetEntryStatus() == TTreeReader::kEntryBeyondEnd)
     {
@@ -98,6 +98,16 @@ namespace src
   const size_t Source::Entry()
   {
     return fReader.GetCurrentEntry();
+  }
+
+  const int Source::RunID()
+  {
+    return fEvent->RunId;
+  }
+  
+  const int Source::EventID()
+  {
+    return fEvent->EventId;
   }
 
   const std::string Source::GetFile()

@@ -105,6 +105,9 @@ CMAKE_INSTALL_PREFIX     Set the /path/for/installation/.  Default seems to be /
 CMAKE_BUILD_TYPE         Could be Debug to install with symbols for a debugger like gdb or Build for slightly 
                          more optimization.  
 
+IMGUI_DIR                The location of the Dear IMGUI source code.  Might just embed Dear IMGUI in the future, so 
+                         this option may go away.  
+
 This package also supports CPack, so you can "make package" if you need a tarball.  
 
 ## Dependencies:
@@ -112,11 +115,11 @@ This package also supports CPack, so you can "make package" if you need a tarbal
 
 [edep-sim](https://github.com/ClarkMcGrew/edep-sim)            The package that produces the files that edepViewer reads.  
                                                                Defines the objects that edepViewer knows how to read.
-  
-[gtkmm 3.22.0](https://www.gtkmm.org/en/documentation.html)    Graphical User Interface used for information and control 
-                                                               widgets.  Also provides some details for opengl rendering
-                                                               at the moment, but that might need to change in the near 
-                                                               future to support OS X.  
+
+[Dear IMGUI](https://github.com/ocornut/imgui)                 Pure-OpenGL Graphical User Interface used for information 
+                                                               and control widgets.  Should be completely OS-independent.
+                                                               The GLFW OpenGL3 example from Dear IMGUI is embedded in 
+                                                               this project.
 
 [ROOT 6](https://root.cern.ch/)                                Also a dependency of edep-sim, but I use it for file IO
                                                                and a few other odd utilities that help me deal with 
@@ -133,10 +136,20 @@ This package also supports CPack, so you can "make package" if you need a tarbal
                                                                glad tool.  glad handles some details of working with 
                                                                opengl on multiple plateforms.
 
+[GLFW3](https://github.com/glfw/glfw)                          Currently the only implemented window system.  Should be 
+                                                               OS-independent, but only time and rigorous testing will 
+                                                               tell.  If you want to use a different window system, write 
+                                                               your own version of GLFWApp that interfaces with IMGUI using 
+                                                               your window system of choice.  The tools in the app directory 
+                                                               will help you parse the command line to set up an EvdWindow.
+                                                               Any window system that supports Dear IMGUI supports edepViewer. 
+                                                               The examples in the Dear IMGUI source code should help you learn 
+                                                               to integrate other OpenGL window libraries with edepViewer.
 
 ## Acknowledgements:
   I learned a lot about CMake and deploying an object from the source code of [edep-sim](https://github.com/ClarkMcGrew/edep-sim).  
 Several of the [ROOT website's](https://root.cern.ch/) examples helped me to learn to use TTreeReader, and the documentation of 
 ROOT classes has been extremely useful when developing this project.  I used the 
 [gtkmm tutorial](https://developer.gnome.org/gtkmm-tutorial/stable/) to get started with writing the interface for this application.  
-I learned nearly everything I know about opengl from [learnopengl.com](https://learnopengl.com/).  
+[Dear IMGUI](https://github.com/ocornut/imgui)'s examples helped me migrate from gtkmm to Dear IMGUI to make edepViewer 
+platform-independent.  I learned nearly everything I know about opengl from [learnopengl.com](https://learnopengl.com/).  

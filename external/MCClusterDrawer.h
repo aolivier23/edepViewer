@@ -42,18 +42,18 @@ namespace mygl
       class MCClusterRecord: public ColRecord
       {
         public:
-          MCClusterRecord(): ColRecord()
+          MCClusterRecord(): ColRecord(), fEnergy("Energy [MeV]"), fTime("Time [ns]"), fParticle("Cause")
           {
-            add(fEnergy);
-            add(fTime);
-            add(fParticle);
+            Add(fEnergy);
+            Add(fTime);
+            Add(fParticle);
           }
   
-          Gtk::TreeModelColumn<double> fEnergy; //The energy in this MCCluster
-          Gtk::TreeModelColumn<double> fTime; //The energy-weighted average time of this MCCluster
-          Gtk::TreeModelColumn<std::string> fParticle; //The most direct cause of this MCCluster.  Could be the names of multiple particles
+          TreeModel::Column<double> fEnergy; //The energy in this MCCluster
+          TreeModel::Column<double> fTime; //The energy-weighted average time of this MCCluster
+          TreeModel::Column<std::string> fParticle; //The most direct cause of this MCCluster.  Could be the names of multiple particles
       };
-      MCClusterRecord fClusterRecord;
+      std::shared_ptr<MCClusterRecord> fClusterRecord;
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;

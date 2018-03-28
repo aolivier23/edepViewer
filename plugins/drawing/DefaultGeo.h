@@ -35,8 +35,8 @@ namespace draw
 
       //Helper functions for drawing geometry volumes
       virtual void AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
-                              const Gtk::TreeModel::Row& parent, size_t depth);
-      virtual void AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+                              const mygl::TreeModel::iterator parent, size_t depth);
+      virtual void AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                   TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
 
       //Data needed when appending geometry nodes
@@ -47,17 +47,17 @@ namespace draw
       class GeoRecord: public mygl::ColRecord
       {
         public:
-          GeoRecord(): ColRecord()
+          GeoRecord(): ColRecord(), fName("Name"), fMaterial("Material")
           {
-            add(fName);
-            add(fMaterial);
+            Add(fName);
+            Add(fMaterial);
           }
 
-          Gtk::TreeModelColumn<std::string> fName;
-          Gtk::TreeModelColumn<std::string> fMaterial;
+          mygl::TreeModel::Column<std::string> fName;
+          mygl::TreeModel::Column<std::string> fMaterial;
       };
 
-      GeoRecord fGeoRecord;
+      std::shared_ptr<GeoRecord> fGeoRecord;
   };
 }
 

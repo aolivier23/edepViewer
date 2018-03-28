@@ -5,6 +5,15 @@
 //For debugging
 #include <iostream>
 
+//imgui includes
+#include "imgui.h"
+
+//glfw includes
+#include <GLFW/glfw3.h>
+
+//glm includes
+#include <glm/gtc/type_ptr.hpp>
+
 //local includes
 #include "Camera.h"
 
@@ -32,74 +41,73 @@ namespace mygl
       std::cout << "The initial fUp is (" << fUp.x << ", " << fUp.y << ", " << fUp.z << ")\n";
       std::cout << "The current up vector is (" << up.x << ", " << up.y << ", " << up.z << ")\n";*/
       fModified = false;
-      fTargetEntry.set_value(fPosition+fFront);
-      fPosEntry.set_value(fPosition);
+      //TODO: ImGUI
+      //fTargetEntry.set_value(fPosition+fFront);
+      //fPosEntry.set_value(fPosition);
     }
     return fView;
   }
 
-  bool Camera::on_key_press(const GdkEventKey* evt)
+  bool Camera::on_key_press(const int key)
   {
-    auto key = evt->keyval;
-    if(key == GDK_KEY_Up) fUpArr = Camera::keyState::down;
-    else if(key == GDK_KEY_Down) fDwnArr = Camera::keyState::down;
-    else if(key == GDK_KEY_Left) fLftArr = Camera::keyState::down;
-    else if(key == GDK_KEY_Right) fRgtArr = Camera::keyState::down;
+    if(key == GLFW_KEY_UP) fUpArr = Camera::keyState::down;
+    else if(key == GLFW_KEY_DOWN) fDwnArr = Camera::keyState::down;
+    else if(key == GLFW_KEY_LEFT) fLftArr = Camera::keyState::down;
+    else if(key == GLFW_KEY_RIGHT) fRgtArr = Camera::keyState::down;
     else return false;
     do_key_press();
     fModified = true;
     return true;
   }
   
-  bool Camera::on_key_release(const GdkEventKey* evt)
+  //TODO: Replace GDK with GLFW
+  bool Camera::on_key_release(const int key)
   {
-    auto key = evt->keyval;
-    if(key == GDK_KEY_Up) fUpArr = Camera::keyState::up;
-    else if(key == GDK_KEY_Down) fDwnArr = Camera::keyState::up;
-    else if(key == GDK_KEY_Left) fLftArr = Camera::keyState::up;
-    else if(key == GDK_KEY_Right) fRgtArr = Camera::keyState::up;
+    if(key == GLFW_KEY_UP) fUpArr = Camera::keyState::up;
+    else if(key == GLFW_KEY_DOWN) fDwnArr = Camera::keyState::up;
+    else if(key == GLFW_KEY_LEFT) fLftArr = Camera::keyState::up;
+    else if(key == GLFW_KEY_RIGHT) fRgtArr = Camera::keyState::up;
     else return false;
     fModified = true;
     return true;
   }
 
-  bool Camera::on_button_press(const GdkEventButton* evt)
+  bool Camera::on_button_press(const int button, const float x, const float y)
   {
-    if(evt->button != 1) return false; //1 is normally the left mouse button
+    if(button != 0) return false; //1 is normally the left mouse button
     fMouse = Camera::keyState::down;
-    fPrevMousePos = std::make_pair(evt->x, evt->y);
+    fPrevMousePos = std::make_pair(x, y);
     fModified = true;
     return false;
   }
 
-  bool Camera::on_button_release(const GdkEventButton* evt)
+  bool Camera::on_button_release(const int button)
   {
-    if(evt->button != 1) return false;
+    if(button != 0) return false;
     fMouse = Camera::keyState::up;
     fModified = true;
     return false;
   }
 
-  bool Camera::on_motion(const GdkEventMotion* evt)
+  bool Camera::on_motion(const float x, const float y)
   {
     if(fMouse != Camera::keyState::down) return false;
-    auto pos = std::make_pair(evt->x, evt->y);
+    auto pos = std::make_pair(x, y);
     do_motion(pos);
     fPrevMousePos = pos;
     fModified = true;
     return false;
   }
 
-  bool Camera::on_scroll(const GdkEventScroll* evt)
+  bool Camera::on_scroll(const float dist)
   {
-    const auto dir = evt->direction;
-    const auto scrollSign = (dir==GDK_SCROLL_UP)?1.0:-1.0; //TODO: Are there other options for scroll sign?
+    const auto scrollSign = (dist > 0)?1.0:-1.0; //TODO: Are there other options for scroll sign?
     do_scroll(scrollSign);
     fModified = true;
     return false;
   }
 
-  void Camera::ConnectSignals(Gtk::GLArea& area)
+  /*void Camera::ConnectSignals(Gtk::GLArea& area)
   {
     area.signal_key_press_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_press), false);
     area.signal_key_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_key_release), false);
@@ -107,19 +115,50 @@ namespace mygl
     area.signal_button_release_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_button_release), false);
     area.signal_motion_notify_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_motion), false);
     area.signal_scroll_event().connect(sigc::mem_fun(*this, &mygl::Camera::on_scroll), false);
+  }*/
+
+  void Camera::update(const ImGuiIO& io)
+  {
+    //Adjust camera state based on user input
+    if(!io.WantCaptureMouse) //Make sure imgui is not handling mouse
+    {
+      //TODO: If I want other buttons, handle them here
+      if(ImGui::IsMouseClicked(0)) on_button_press(0, io.MousePos.x, io.MousePos.y);
+      else if(ImGui::IsMouseReleased(0)) on_button_release(0);
+      if(ImGui::IsMouseDragging()) on_motion(io.MousePos.x, io.MousePos.y);
+      if(io.MouseWheel != 0.) on_scroll(io.MouseWheel);
+    }
+    //TODO: Remove dependence on GLFW for interpretting keys?  Probably means I'll need to make some changes to 
+    //      the imgui initialization function I got for free.
+    if(!io.WantCaptureKeyboard) //Make sure imgui is not handling keyboard
+    {
+      if(ImGui::IsKeyPressed(GLFW_KEY_RIGHT)) on_key_press(GLFW_KEY_RIGHT);
+      else if(fRgtArr == keyState::down) on_key_release(GLFW_KEY_RIGHT);
+      if(ImGui::IsKeyPressed(GLFW_KEY_LEFT)) on_key_press(GLFW_KEY_LEFT);
+      else if(fLftArr == keyState::down) on_key_release(GLFW_KEY_LEFT);
+      if(ImGui::IsKeyPressed(GLFW_KEY_UP)) on_key_press(GLFW_KEY_UP);
+      else if(fUpArr == keyState::down) on_key_release(GLFW_KEY_UP);
+      if(ImGui::IsKeyPressed(GLFW_KEY_DOWN)) on_key_press(GLFW_KEY_DOWN);
+      else if(fDwnArr == keyState::down) on_key_release(GLFW_KEY_DOWN);
+    }
   }
 
-  void Camera::UpdatePosition()
+  //TODO: Keeping this for backwards compatibility for now
+  void Camera::render()
   {
-    fPosition = fPosEntry.get_value();
-    fModified = true;
+    do_render();
   }
 
-  void Camera::UpdateTarget()
+  void Camera::do_render()
   {
-    //Give the illusion of setting the camera target while actually working with a front vector that is more convenient for 
-    //calculations.
-    fFront = fTargetEntry.get_value()-fPosition; //target = fFront+fPosition from GetView() above
-    fModified = true;
+    //Call imgui functions so the user can reconfigure the camera.  The current camera draws imgui widgets in whatever window 
+    //is currently available.  Currently, the Viewer provides that window
+    //Render and configure the camera's current target
+    auto target = fFront+fPosition;
+    if(ImGui::InputFloat3("Target", glm::value_ptr(target))) fFront = target-fPosition;
+
+    //Render and configure position
+    ImGui::InputFloat3("Position", glm::value_ptr(fPosition));
   }
+
 }

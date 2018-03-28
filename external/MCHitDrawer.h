@@ -26,6 +26,7 @@
 namespace mygl
 {
   class ColRecord;
+  class TreeModel;
 }
 
 namespace mygl
@@ -41,18 +42,18 @@ namespace mygl
       class MCHitRecord: public ColRecord
       {
         public:
-          MCHitRecord(): ColRecord()
+          MCHitRecord(): ColRecord(), fEnergy("Energy [MeV]"), fTime("Time [ns]"), fParticle("Particle")
           {
-            add(fEnergy);
-            add(fTime);
-            add(fParticle);
+            Add(fEnergy);
+            Add(fTime);
+            Add(fParticle);
           }
   
-          Gtk::TreeModelColumn<double> fEnergy; //The energy in this MCHit
-          Gtk::TreeModelColumn<double> fTime; //The time of this MCHit
-          Gtk::TreeModelColumn<std::string> fParticle; //The most direct cause of this MCHit.  Could be the names of multiple particles
+          mygl::TreeModel::Column<double> fEnergy; //The energy in this MCHit
+          mygl::TreeModel::Column<double> fTime; //The time of this MCHit
+          mygl::TreeModel::Column<std::string> fParticle; //The most direct cause of this MCHit.  Could be the names of multiple particles
       };
-      MCHitRecord fHitRecord;
+      std::shared_ptr<MCHitRecord> fHitRecord;
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;

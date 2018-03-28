@@ -20,13 +20,10 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-#gtkmm stuff
-find_package(PkgConfig)
-pkg_check_modules(GTKMM gtkmm-3.0)
-
-#gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
-link_directories( ${GTKMM_LIBRARY_DIRS} )
-include_directories( ${GTKMM_INCLUDE_DIRS} )
+#Let source code know where this project is installed.  Needed for finding shader sources.  
+#TODO: Get shader sources from an environment variable instead.
+add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
+add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
 
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
@@ -38,6 +35,8 @@ target_link_libraries("glad" ${CMAKE_DL_LIBS})
 install(TARGETS glad DESTINATION lib)
 file(GLOB GLAD_HEADERS ${PROJECT_SOURCE_DIR}/glad/include/*/*.h)
 install(FILES ${GLAD_HEADERS} DESTINATION include)
+
+add_subdirectory(imgui)
 
 #Stuff for Opengl
 find_package( OpenGL REQUIRED )
@@ -72,7 +71,7 @@ add_subdirectory(config)
 add_subdirectory(external)
 add_subdirectory(util)
 add_subdirectory(gl)
-add_subdirectory(gtk)
+add_subdirectory(app)
 add_subdirectory(plugins)
 
 #Make the results of this build into a package.  Designed to be distributed as a .tar.gz

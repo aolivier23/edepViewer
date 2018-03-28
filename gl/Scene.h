@@ -12,11 +12,11 @@
 #include "gl/ColRecord.cpp"
 #include "gl/UserCut.h"
 
+//local includes
+#include "gl/TreeModel.h"
+
 //glm includes
 #include <glm/glm.hpp>
-
-//gtkmm includes
-#include <gtkmm.h>
 
 //c++ includes
 #include <map>
@@ -35,34 +35,30 @@ namespace mygl
   class Scene
   {
     public:
-      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, mygl::ColRecord& cols);
+      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols);
       Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-            mygl::ColRecord& cols);
+            std::shared_ptr<mygl::ColRecord>& cols);
       
       virtual ~Scene();
 
       //Warning: The following function may not do anything if Gtk::GLArea::make_current() is 
       //         not called just before.  
-      virtual Gtk::TreeModel::Row AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const Gtk::TreeModel::Row& parent, 
+      virtual TreeModel::iterator AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const TreeModel::iterator parent, 
                                               const bool active);
-      virtual Gtk::TreeModel::iterator NewTopLevelNode();
+      virtual TreeModel::iterator NewTopLevelNode();
       virtual void RemoveAll();
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
       virtual void Render(const glm::mat4& view, const glm::mat4& persp);
+      virtual void RenderGUI();
       virtual void RenderSelection(const glm::mat4& view, const glm::mat4& persp);
 
       const std::string fName; //The name of this scene.  Might be useful for list tree displays
       
       //GUI components that the Viewer will arrange
-      Gtk::TreeView fTreeView; //The user is responsible for telling this TreeView about columns in cols other than the 
-                               //standard columns in evd::ColRecord.
       mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
 
-      void draw_self(const Glib::ustring& path);
-      void start_filtering();
-      bool filter(const Gtk::TreeModel::iterator& iter);  //I need to wrap over UserCut's function to disable rows that are hidden
-      void remove_row(const Gtk::TreeModel::Path& path);
+      void remove_row(const TreeModel::iterator& path);
 
       bool SelectID(const mygl::VisID& id);
       void on_tree_selection();
@@ -76,21 +72,25 @@ namespace mygl
                                    //uses a special (unique?) fragment shader to which it can bind a VisID as 
                                    //a color.
 
-      //GUI components
-      Glib::RefPtr<Gtk::TreeStore> fModel; //The TreeModel that has each element in this Scene.  
-      Glib::RefPtr<Gtk::TreeModelFilter> fFilter; //Only shows certain nodes from fModel
+      //Metadata model
+      TreeModel fModel;
+      std::shared_ptr<mygl::TreeModel::ColumnModel> fCols;
 
       //Data needed for highlighting
       mygl::VisID fSelection; //The currently selected VisID
+
+      //Helper function for drawing tree
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top);
+
+      //Cut bar buffer
+      std::array<char, 256> fBuffer;
 
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      
 
       //Details to save user code when working with the TreeModel
-      Gtk::TreeModelColumn<bool> fSelfCol;
-      Gtk::TreeModelColumn<VisID> fIDCol;
-
-      void BuildGUI(mygl::ColRecord& cols);
+      TreeModel::Column<bool> fSelfCol;
+      TreeModel::Column<VisID> fIDCol;
   };
 }
 

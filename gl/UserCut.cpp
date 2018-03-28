@@ -12,78 +12,24 @@
 #include <iostream>
 #include <regex>
 
-namespace
-{
-  template <class T>
-  std::string get_from_col(const int col, const Gtk::TreeRow& row)
-  {
-    T value;
-    row.get_value(col, value);
-    return std::to_string(value); 
-  }
-
-  template <>
-  std::string get_from_col<gchararray>(const int col, const Gtk::TreeRow& row)
-  {
-    //gchararray chars;
-    std::string chars;
-    row.get_value(col, chars);
-
-    /*if(chars != nullptr)
-    {
-      //Find out why I am getting empty strings
-      char current = chars[0];
-      size_t pos = 0;
-      for(pos = 0; current != '\0'; ++pos)
-      {
-        current = chars[pos];
-        std::cout << current << "\n";
-      }
-      std::cout << "\n";
-      if(chars[0] == '\0') 
-      {
-        std::cout << "Got null character at position " << pos << "\n";
-      }
-      
-      return std::string(chars);
-    }
-    else 
-    {
-      std::cerr << "Got a nullptr when trying to read characters for column " << col << "\n";
-      return std::string("@"+std::to_string(col));
-    }*/
-    return chars;
-  }
-}
-
 namespace mygl
 {
-  UserCut::UserCut(const std::string& formula)
-  {
-    set_text(formula);
+  UserCut::UserCut(const size_t nCols): fNCols(nCols), fInput({'t', 'r', 'u', 'e'})
+  {   
   }
 
-  void UserCut::SetTypes(std::vector<std::string> types)
+  bool UserCut::do_filter(const TreeModel::iterator& iter) 
   {
-    fTypes = types;
-  }
-
-  bool UserCut::do_filter(const Gtk::TreeModel::iterator& iter) 
-  {
-    std::string copy = get_text();
+    std::string copy(fInput.data());
     auto& row = *iter;
 
-    //Do not cut out "root" nodes.  Could add some flag for "organization" nodes later, but having a heterogeneous 
-    //set of objects in a Scene already seems to violate the model in which do_filter() makes sense.  
-    if(!(row.parent())) return true;
-
     //First, substitute in variables
-    for(size_t pos = 2; pos < fTypes.size(); ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
+    for(size_t pos = 2; pos < fNCols; ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
                                                     //object is visible.
     {
       if(copy.find("@"+std::to_string(pos)) != std::string::npos)
       {
-        const auto val = get_col_value(pos, row);
+        const auto val = row[pos];
         //std::cout << "substituting @" << pos << " with " << val << "\n";
         //TODO: Replace std::regex so I don't have to recompile it each time do_filter is called
         std::regex replace("(@"+std::to_string(pos)+")"); 
@@ -92,63 +38,19 @@ namespace mygl
     }
     //std::cout << "Expression after parameter substitution is:\n" << copy << "\n";
 
-    try
+    //Next, evaluate expressions in parentheses
+    size_t firstLeft = copy.find_first_of("(");
+    while(firstLeft != std::string::npos)
     {
-      //Next, evaluate expressions in parentheses
-      size_t firstLeft = copy.find_first_of("(");
-      while(firstLeft != std::string::npos)
-      {
-        //std::cout << "Back to main loop with expression " << copy << "\n";
-        std::string suffix = copy.substr(firstLeft, std::string::npos);
-        suffix = subexpr(suffix);
-        copy.replace(firstLeft, std::string::npos, suffix);
-        firstLeft = copy.find_first_of("(");
-      }
-
-      //Finally, evaluate the remaining expression of tokens
-      return ev(copy);
+      //std::cout << "Back to main loop with expression " << copy << "\n";
+      std::string suffix = copy.substr(firstLeft, std::string::npos);
+      suffix = subexpr(suffix);
+      copy.replace(firstLeft, std::string::npos, suffix);
+      firstLeft = copy.find_first_of("(");
     }
-    catch(const util::GenException& e)
-    {
-      std::cerr << "Caught exception when processing formula " << get_text() << " in UserCut::do_filter(), so not doing anything.\n"
-                << e.what() << "\n";
-    }
-    return true;
-  }
 
-  //TODO: This is horrible!  Is there a better semi-typesafe way to do this?  
-  std::string UserCut::get_col_value(const int col, const Gtk::TreeRow& row)
-  {
-    //std::cout << "Entering get_col_value() for column " << col << "\n";
-    //GType colType = fTypes[col];
-    //auto typeChars = g_type_name(colType);
-    std::string typeName = fTypes[col];
-    /*if(typeChars != nullptr) typeName = std::string(typeChars); //VERY bad example
-    else 
-    {
-      //throw util::GenException("Bad Type") << "Got nullptr for type name for column " << col << ".\n";
-      std::cerr << "Got nullptr for type name for column " << col << ".\n";
-      return "@"+std::to_string(col);
-    }*/
-    //std::cout << "Trying to read an object with GType " << typeName << "\n";
-    //Dispatch to proper function if type is know.  If not, throw an exception. 
-    //TODO: I could priobably write some TMP trickery to hide even this dispatch function...
-    if(typeName == "gchararray") return get_from_col<gchararray>(col, row);
-    if(typeName == "gdouble") return get_from_col<double>(col, row);
-    if(typeName == "gboolean") return get_from_col<bool>(col, row);
-    //TODO: The documentation at https://developer.gnome.org/glib/stable/glib-Basic-Types.html claims these exist...
-    if(typeName == "gint") return get_from_col<gint>(col, row);
-    if(typeName == "guint") return get_from_col<guint>(col, row);
-    if(typeName == "gshort") return get_from_col<gshort>(col, row);
-    if(typeName == "gushort") return get_from_col<gushort>(col, row);
-    if(typeName == "gfloat") return get_from_col<gfloat>(col, row);
-    /*throw util::GenException("Unrecognized Type") << "In mygl::UserCut::get_col_value(), got column of type " 
-                                                  << typeName << " that is not currently handled.  If you feel very "
-                                                  << "strongly about using this type, update this function.\n";*/
-    std::cerr << "In mygl::UserCut::get_col_value(), got column of type " 
-              << typeName << " that is not currently handled.  If you feel very "
-              << "strongly about using this type, update this function.\n";
-    return "@"+std::to_string(col);
+    //Finally, evaluate the remaining expression of tokens
+    return ev(copy);
   }
 
   std::string UserCut::subexpr(std::string expr)
@@ -225,7 +127,7 @@ namespace mygl
     //std::cout << "Going into operator table, lhs is " << lhs << ", rhs is " << rhs << ", and op is " << op << "\n";
   
     //TODO: Apparently, the empty string ("") is a number...
-    const std::string numbers = "0123456789.";
+    const std::string numbers = "0123456789.-e"; //"e" for scientific notation
     const bool lhsIsNum = (lhs.find_first_not_of(numbers) == std::string::npos);
     //if(!lhsIsNum) std::cout << "lhs is not a number.\n";
     const bool rhsIsNum = (rhs.find_first_not_of(numbers) == std::string::npos);
@@ -234,7 +136,7 @@ namespace mygl
     //Validate input
     if(lhsIsNum != rhsIsNum) 
     {
-      throw util::GenException("User Cut") << "Cannot compare a number to a word.\n";
+      throw util::GenException("User Cut") << "Cannot compare a number to a word.  lhs is " << lhs << ", and rhs is " << rhs << ".\n";
     }
     
     if(!lhsIsNum && op.find_first_of("<>") != std::string::npos)
@@ -283,7 +185,7 @@ namespace mygl
     else if(lhs == "false") lhsBool = false;
     else 
     {
-      throw util::GenException("User Cut") << "Cannot convert lhs string " << lhs 
+      throw util::GenException("User Cut") << "/annot convert lhs string " << lhs 
                                            << " to a boolean, and boolean operators can only be used with boolean values.\n";
     }
     bool rhsBool;

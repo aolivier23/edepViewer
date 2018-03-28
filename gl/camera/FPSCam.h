@@ -15,9 +15,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-//gtkmm includes
-#include <gtkmm.h>
-
 #ifndef MYGL_FPSCAM_H
 #define MYGL_FPSCAM_H
 

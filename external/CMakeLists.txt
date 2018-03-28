@@ -1,11 +1,3 @@
-#gtkmm stuff
-find_package(PkgConfig)
-pkg_check_modules(GTKMM gtkmm-3.0)
-
-#gtkmm stuff from https://wiki.gnome.org/Projects/gtkmm/UsingCMake
-link_directories( ${GTKMM_LIBRARY_DIRS} )
-include_directories( ${GTKMM_INCLUDE_DIRS} )
-
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 
@@ -34,8 +26,8 @@ include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Install all of the external Drawers as one target
 add_library( external SHARED ExternalDrawer.cpp ${EXTERNAL_SOURCE} )
-target_link_libraries( external ${GTKMM_LIBRARIES} Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
-                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} )
+target_link_libraries( external Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
+                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} imgui )
 install( TARGETS external DESTINATION lib )
 
 #install headers

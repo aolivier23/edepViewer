@@ -5,29 +5,27 @@
 
 //gl includes
 #include "gl/VisID.h"
-
-//gtkmm includes
-#include <gtkmm.h>
+#include "gl/TreeModel.h"
 
 #ifndef MYGL_COLRECORD_H
 #define MYGL_COLRECORD_H
 
 namespace mygl
 {
-  class ColRecord: public Gtk::TreeModel::ColumnRecord
+  class ColRecord: public TreeModel::ColumnModel
   {
     public:
-      ColRecord()
+      ColRecord(): fDrawSelf("Draw Self"), fVisID("Vis ID")
       {
-        add(fVisID);
-        add(fDrawSelf);
+        Add(fVisID);
+        Add(fDrawSelf);
       }
 
       //Visible columns
-      Gtk::TreeModelColumn<bool> fDrawSelf;
+      TreeModel::Column<bool> fDrawSelf;
 
       //Hidden columns
-      Gtk::TreeModelColumn<mygl::VisID> fVisID;
+      TreeModel::Column<mygl::VisID> fVisID;
   };
 }
 

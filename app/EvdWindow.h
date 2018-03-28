@@ -10,14 +10,8 @@
 #include "external/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
 
-//Gtkmm includes
-#include <gtkmm.h>
-
-//custom GUI includes
-#include "gtk/LegendView.h"
-
-//Source includes
-#include "gtk/Source.h"
+//local includes
+#include "app/FileChoose.h"
 
 //gl includes
 #include "gl/Viewer.h"
@@ -29,6 +23,7 @@
 #include "TTreeReader.h"
 #include "TGeoMatrix.h"
 #include "TDatabasePDG.h"
+#include "TSystemDirectory.h"
 
 //Tinyxml include
 #include <tinyxml2.h>
@@ -49,9 +44,14 @@ namespace src
   class Source;
 }
 
+namespace file
+{
+  class FileChoose;
+}
+
 namespace mygl
 {
-  class EvdWindow: public Gtk::ApplicationWindow 
+  class EvdWindow
   {
     public: 
       EvdWindow();
@@ -64,6 +64,8 @@ namespace mygl
 
       virtual void reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config);
 
+      virtual void Render(const int width, const int height, const ImGuiIO& ioState); //Render this window
+
     protected:
       //Configuration file
       std::unique_ptr<tinyxml2::XMLDocument> fConfig;
@@ -74,37 +76,7 @@ namespace mygl
       //Source of events
       std::unique_ptr<src::Source> fSource;
 
-      //Toolbar for event navigation and printing
-      //TODO: event navigation
-      Gtk::Box fVBox; //Vertical Box widget for positioning tool bar above drawing area
-      Gtk::Toolbar fNavBar;
-      Gtk::ToolButton fPrint; 
-      Gtk::ToolButton fNext;
-      Gtk::ToolButton fReload;
-
-      //Entry number GUI
-      Gtk::ToolItem fEvtLabelWrap;
-      Gtk::Label fEvtLabel;
-      Gtk::ToolItem fEvtNumWrap; 
-      Gtk::Entry fEvtNum; 
-
-      //EventId GUI
-      Gtk::ToolItem fEvtIDLabelWrap;
-      Gtk::Label fEvtIDLabel;
-      Gtk::ToolItem fEvtIDWrap;
-      Gtk::Entry fEvtID;
-
-      //RunId GUI
-      Gtk::ToolItem fRunIDLabelWrap;
-      Gtk::Label fRunIDLabel;
-      Gtk::ToolItem fRunIDWrap;
-      Gtk::Entry fRunID;
-
-      Gtk::ToolButton fFileChoose; 
-      Gtk::ToolItem fFileLabelWrap;
-      Gtk::Label fFileLabel; //Displays the current file name so that it shows up in printouts 
-
-      std::unique_ptr<LegendView> fLegend;
+      void RenderControlBar();
 
     private:
       void ReadGeo();
@@ -114,13 +86,14 @@ namespace mygl
       draw::Services fServices;
 
       //Negotiate with the Source to find the right event 
-      void goto_event();
+      void goto_event(const int evt);
       void next_event();
 
-      void goto_id();
+      void goto_id(const int run, const int evt);
 
-      void build_toolbar(); //TODO: Write a custom Toolbar class that does this buidling
       void choose_file(); 
+      file::FileChoose fChoose;
+      std::unique_ptr<TSystemDirectory> fPwd; //Current ROOT directory used by file selector
 
       //plugins
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;

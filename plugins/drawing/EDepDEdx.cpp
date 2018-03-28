@@ -27,19 +27,20 @@ namespace draw
 {
   EDepDEdx::EDepDEdx(const tinyxml2::XMLElement* config): fPalette(config->FloatAttribute("dEdxMin", 0.), 
                                                                    config->FloatAttribute("dEdxMax", 8.)), 
-                                                          fLineWidth(config->FloatAttribute("LineWidth", 0.008))
+                                                          fLineWidth(config->FloatAttribute("LineWidth", 0.008)), fEDepRecord(new EDepRecord())
   {    
   }
 
   void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    auto& edepTree = viewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
+    viewer.MakeScene("EDep", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                     INSTALL_GLSL_DIR "/wideLine.geom");
+    /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
-    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
+    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);*/
   }
 
   void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
@@ -53,10 +54,11 @@ namespace draw
     for(auto& det: edepToDet)
     {
       auto detName = det.first;
-      auto detRow = *(viewer.GetScenes().find("EDep")->second.NewTopLevelNode());
+      auto detIter = viewer.GetScenes().find("EDep")->second.NewTopLevelNode();
+      auto& detRow = *detIter;
       auto edeps = det.second;
 
-      detRow[fEDepRecord.fPrimName] = detName;
+      detRow[fEDepRecord->fPrimName] = detName;
       //TODO: Map sensitive volume name to detector name and use same VisID?  This would seem to require infrastructure that 
       //      I don't yet have both in terms of Scenes communicating when an object is toggled (not too hard) and ROOT not 
       //      knowing about sensitive detector auxiliary tags (potentially very hard).  
@@ -125,16 +127,17 @@ namespace draw
         if(alpha > 1.) alpha = 1.;
         if(alpha < 0.) alpha = 0.;*/
         
-        auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
+        auto iter = viewer.AddDrawable<mygl::Path>("EDep", nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
+        auto& row = *iter;
         //fPalette(dEdx), 1.0));
         //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));
         //palette(std::log10(dEdx)), 1.0));
         //fPalette(std::log10(energy)), 1.0));
-        row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
-        row[fEDepRecord.fEnergy]  = energy;
-        row[fEDepRecord.fdEdx]    = dEdx;
-        row[fEDepRecord.fT0]      = start.T();
-        row[fEDepRecord.fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
+        row[fEDepRecord->fScintE]  = edep.SecondaryDeposit;
+        row[fEDepRecord->fEnergy]  = energy;
+        row[fEDepRecord->fdEdx]    = dEdx;
+        row[fEDepRecord->fT0]      = start.T();
+        row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
         ++nextID;
 
         sumE += energy;

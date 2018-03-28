@@ -20,9 +20,6 @@
 #include "TGeoNode.h"
 #include "TGeoMatrix.h"
 
-//gtkmm includes
-#include <gtkmm.h>
-
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 
@@ -31,12 +28,12 @@
 
 namespace draw
 {
-  DefaultGeo::DefaultGeo(const tinyxml2::XMLElement* config): fColor(new mygl::ColorIter())
+  DefaultGeo::DefaultGeo(const tinyxml2::XMLElement* config): fColor(new mygl::ColorIter()), fGeoRecord(new GeoRecord())
   {
     fMaxDepth = config->IntAttribute("MaxDepth", 7);
   }
 
-  void DefaultGeo::AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const Gtk::TreeModel::Row& parent, 
+  void DefaultGeo::AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                  TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
   {
     auto children = parentNode->GetNodes();
@@ -45,7 +42,7 @@ namespace draw
   }
 
   void DefaultGeo::AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, 
-                                             TGeoMatrix& mat, const Gtk::TreeModel::Row& parent, size_t depth)
+                                             TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
@@ -53,13 +50,14 @@ namespace draw
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
-    auto row = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
-                                       node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
+    auto iter = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
+                                                   node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
+    auto& row = *iter;
 
-    row[fGeoRecord.fName] = node->GetName();
-    row[fGeoRecord.fMaterial] = node->GetVolume()->GetMaterial()->GetName();
+    row[fGeoRecord->fName] = node->GetName();
+    row[fGeoRecord->fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++(*fColor);
-    AppendChildren(viewer, nextID, row, node, local, depth);
+    AppendChildren(viewer, nextID, iter, node, local, depth);
 
     //return row;
   }
@@ -73,17 +71,20 @@ namespace draw
                                   //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 
                                   //I have yet to find a way to unregister a TGeoMatrix.  So, it appears that there is no such 
                                   //thing as a temporary TGeoIdentity.  Good job ROOT... :(
-    auto top = *(viewer.GetScenes().find("Geometry")->second.NewTopLevelNode());
-    top[fGeoRecord.fName] = data.GetTitle();
-    top[fGeoRecord.fMaterial] = "FIXME";
-    AppendNode(viewer, nextID, data.GetTopNode(), *id, top, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
+    auto topIter = viewer.GetScenes().find("Geometry")->second.NewTopLevelNode();
+    auto& top = *topIter;
+    top[fGeoRecord->fName] = data.GetTitle();
+    top[fGeoRecord->fMaterial] = "FIXME";
+    AppendNode(viewer, nextID, data.GetTopNode(), *id, topIter, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
   }
 
   void DefaultGeo::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& geoTree = viewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
-    geoTree.append_column("Volume Name", fGeoRecord.fName);
-    geoTree.append_column("Material", fGeoRecord.fMaterial);
+    //auto& geoTree = viewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    //geoTree.append_column("Volume Name", fGeoRecord.fName);
+    //geoTree.append_column("Material", fGeoRecord.fMaterial);
+    viewer.MakeScene("Geometry", fGeoRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                     INSTALL_GLSL_DIR "/triangleBorder.geom");
   }
 
   REGISTER_PLUGIN(DefaultGeo, GeoDrawer);

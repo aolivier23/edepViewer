@@ -26,19 +26,21 @@
 namespace draw
 {
   EDepContributor::EDepContributor(const tinyxml2::XMLElement* config): fPDGToColor(), fPDGColor(), 
-                                                                        fLineWidth(config->FloatAttribute("LineWidth", 0.008))
+                                                                        fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
+                                                                        fEDepRecord(new EDepRecord)
   {    
   }
 
   void EDepContributor::doRequestScenes(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    auto& edepTree = viewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
-    edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
+    viewer.MakeScene("EDep", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                     INSTALL_GLSL_DIR "/wideLine.geom");
+    /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
     edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
-    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);
+    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);*/
   }
 
   void EDepContributor::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
@@ -52,18 +54,16 @@ namespace draw
 
     for(auto& det: edepToDet)
     {
-      std::cout << "Detector is " << det.first << "\n";
       auto detName = det.first;
-      auto detRow = *(viewer.GetScenes().find("EDep")->second.NewTopLevelNode());
+      auto detIter = viewer.GetScenes().find("EDep")->second.NewTopLevelNode();
+      auto& detRow = *detIter;
       auto edeps = det.second;
 
-      detRow[fEDepRecord.fPrimName] = detName;
+      detRow[fEDepRecord->fPrimName] = detName;
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
-      std::cout << "About to process " << edeps.size() << " energy deposits.\n";
       for(auto& edep: edeps)
       {
-        std::cout << "Processing a new edep.\n";
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
@@ -100,15 +100,14 @@ namespace draw
         //if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ;
         double dEdx = edep.EnergyDeposit/edep.TrackLength;
 
-        std::cout << "Adding Drawable.\n";
-        auto row = viewer.AddDrawable<mygl::Path>("EDep", nextID, detRow, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
-        std::cout << "Added Drawable.\n";
+        auto iter = viewer.AddDrawable<mygl::Path>("EDep", nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
+        auto& row = *iter;
 
-        row[fEDepRecord.fScintE]  = edep.SecondaryDeposit;
-        row[fEDepRecord.fEnergy]  = energy;
-        row[fEDepRecord.fdEdx]    = dEdx;
-        row[fEDepRecord.fT0]      = start.T();
-        row[fEDepRecord.fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
+        row[fEDepRecord->fScintE]  = edep.SecondaryDeposit;
+        row[fEDepRecord->fEnergy]  = energy;
+        row[fEDepRecord->fdEdx]    = dEdx;
+        row[fEDepRecord->fT0]      = start.T();
+        row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
         ++nextID;
 
         sumE += energy;

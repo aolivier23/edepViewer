@@ -21,7 +21,8 @@
 
 namespace mygl
 {
-  MCClusterDrawer::MCClusterDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fClusters(nullptr), fClusterName("MergedClusters")
+  MCClusterDrawer::MCClusterDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fClusters(nullptr), fClusterName("MergedClusters"), 
+                                                                        fClusterRecord(new MCClusterRecord())
   {
     const auto clustName = config->Attribute("ClusterName");
     if(clustName != nullptr) fClusterName = clustName;
@@ -35,10 +36,7 @@ namespace mygl
 
   void MCClusterDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    auto& clustTree = viewer.MakeScene(fClusterName, fClusterRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
-    clustTree.append_column("Energy", fClusterRecord.fEnergy);
-    clustTree.append_column("Time", fClusterRecord.fTime);
-    clustTree.append_column("Cause", fClusterRecord.fParticle);
+    viewer.MakeScene(fClusterName, fClusterRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/triangleBorder.geom");
   }
 
   void MCClusterDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
@@ -47,10 +45,11 @@ namespace mygl
 
     viewer.RemoveAll(fClusterName);
 
-    auto top = *(viewer.GetScenes().find(fClusterName)->second.NewTopLevelNode());
-    top[fClusterRecord.fEnergy] = std::accumulate(fClusters->begin(), fClusters->end(), 0., [](double value, const auto& clust) { return value + clust.Energy; });
-    top[fClusterRecord.fParticle] = fClusterName; //Algorithm name
-    top[fClusterRecord.fTime] = 0.;
+    auto topIter = viewer.GetScenes().find(fClusterName)->second.NewTopLevelNode();
+    auto& top = *topIter;
+    top[fClusterRecord->fEnergy] = std::accumulate(fClusters->begin(), fClusters->end(), 0., [](double value, const auto& clust) { return value + clust.Energy; });
+    top[fClusterRecord->fParticle] = fClusterName; //Algorithm name
+    top[fClusterRecord->fTime] = 0.;
 
     for(const auto& clust: *fClusters)
     {
@@ -86,17 +85,17 @@ namespace mygl
              
         glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(clust.Position.X(), clust.Position.Y(), clust.Position.Z()));
 
-        auto row = viewer.AddDrawable<mygl::PolyMesh>(fClusterName, nextID++, top, true, pos,
-                                                      &shape, glm::vec4((glm::vec3)color, 0.3)); 
+        auto& row = *(viewer.AddDrawable<mygl::PolyMesh>(fClusterName, nextID++, topIter, true, pos,
+                                                         &shape, glm::vec4((glm::vec3)color, 0.3))); 
 
         ++color;
-        row[fClusterRecord.fEnergy] = clust.Energy;
-        row[fClusterRecord.fTime] = clust.Position.T();
-        row[fClusterRecord.fParticle] = std::accumulate(clust.TrackIDs.begin(), clust.TrackIDs.end(), std::string(""),
-                                                    [&event](std::string& names, const int id)
-                                                    {
-                                                      return names+" "+event.Trajectories[id].Name;
-                                                    });
+        row[fClusterRecord->fEnergy] = clust.Energy;
+        row[fClusterRecord->fTime] = clust.Position.T();
+        row[fClusterRecord->fParticle] = std::accumulate(clust.TrackIDs.begin(), clust.TrackIDs.end(), std::string(""),
+                                                         [&event](std::string& names, const int id)
+                                                         {
+                                                           return names+" "+event.Trajectories[id].Name;
+                                                         });
       /*}
       else std::cerr << "No hits in this cluster!\n";*/
     }
