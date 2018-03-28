@@ -18,7 +18,7 @@
 #include "TGeoManager.h"
 
 //edepsim includes
-#include "TG4Event.h"
+#include "EDepSim/TG4Event.h"
 
 //tinyxml2 include for configuration
 #include <tinyxml2.h>

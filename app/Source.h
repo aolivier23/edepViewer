@@ -10,7 +10,7 @@
 #include "TTree.h"
 
 //edepsim includes
-#include "TG4Event.h"
+#include "EDepSim/TG4Event.h"
 
 //c++ includes
 #include <memory>

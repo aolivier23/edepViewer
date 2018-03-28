@@ -16,7 +16,7 @@
 #include "TDatabasePDG.h"
 
 //edepsim includes
-#include "TG4Event.h" 
+#include "EDepSim/TG4Event.h" 
 
 //tinyxml2 include for configuration
 #include <tinyxml2.h>
@@ -125,7 +125,11 @@ namespace draw
       const std::string nu = TDatabasePDG::Instance()->GetParticle(std::stoi(match[1].str()))->GetName();
       //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
 
-      const std::string nucleon = TDatabasePDG::Instance()->GetParticle(std::stoi(match[3].str()))->GetName(); 
+      /*const auto particle = TDatabasePDG::Instance()->GetParticle(std::stoi(match[3].str()));
+      if(particle)
+      {
+        const std::string nucleon = particle->GetName(); 
+      }*/
       row[fTrajRecord->fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord->fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
 

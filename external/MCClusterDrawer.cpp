@@ -6,7 +6,7 @@
 #include "plugins/Factory.cpp"
 
 //edepsim includes
-#include "TG4Event.h"
+#include "EDepSim/TG4Event.h"
 
 //local includes
 #include "external/MCClusterDrawer.h"

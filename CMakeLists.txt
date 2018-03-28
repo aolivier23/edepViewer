@@ -25,6 +25,11 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
 add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
 
+#Find the EDepSim library that this package is designed to work with
+find_package(EDepSim REQUIRED)
+include_directories("${EDepSim_DIR}/include") #TODO: Should I have to do this?  
+message("EDepSim_DIR is " ${EDepSim_DIR} )
+
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 

@@ -17,9 +17,9 @@ link_directories( /usr/local/lib )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin )
 
 #Set up edep-sim
-set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-include_directories( "${EDEP_DIR}/include/edep-sim" )
-link_directories( "${EDEP_DIR}/lib" )
+#set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
+#include_directories( "${EDEP_DIR}/include/edep-sim" )
+#link_directories( "${EDEP_DIR}/lib" )
 
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )

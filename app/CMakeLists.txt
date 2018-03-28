@@ -6,9 +6,9 @@ include_directories( "${IMGUI_DIR}" )
 link_directories( "${IMGUI_DIR}" )
 
 #Set up edep-sim
-set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-include_directories( "${EDEP_DIR}/include/edep-sim" )
-link_directories( "${EDEP_DIR}/lib" )
+#set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
+#include_directories( "${EDEP_DIR}/include/edep-sim" )
+#link_directories( "${EDEP_DIR}/lib" )
 
 #Grab imgui from wherever it is and build it here.  Distributes a version of imgui with this project
 #add_library(imgui ${IMGUI_DIR}/imgui.cpp)
@@ -26,12 +26,12 @@ target_link_libraries( GUI imgui )
 install( TARGETS GUI DESTINATION lib )
 
 add_library( Source Source.cpp )
-target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} edepsim )
+target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} EDepSim::edepsim_io )
 install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             edepsim Factory Drawers external tinyxml2 GUI Geometry Source TreeModel)
+                                             EDepSim::edepsim_io Factory Drawers external tinyxml2 GUI Geometry Source TreeModel)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine CmdLine.cpp )
