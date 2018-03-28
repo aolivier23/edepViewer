@@ -20,11 +20,6 @@ link_directories( "${EDEP_DIR}/lib" )
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
-#Let source code know where this project is installed.  Needed for finding shader sources.  
-#TODO: Get shader sources from an environment variable instead.
-add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
-add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
-
 #Libraries for final EDepSim visualization window
 add_library( GUI FileChoose.cpp )
 target_link_libraries( GUI imgui )

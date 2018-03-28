@@ -36,7 +36,7 @@ namespace mygl
 
   void MCClusterDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    viewer.MakeScene(fClusterName, fClusterRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    viewer.MakeScene(fClusterName, fClusterRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/triangleBorder.geom");
   }
 
   void MCClusterDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)

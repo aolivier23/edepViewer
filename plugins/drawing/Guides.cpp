@@ -29,7 +29,7 @@ namespace draw
 
   void Guides::doRequestScenes(mygl::Viewer& viewer)
   {
-    viewer.MakeScene("Guides", fGuideRecord, "/home/aolivier/app/evd/src/gl/shaders/userColor.frag", "/home/aolivier/app/evd/src/gl/shaders/HUD.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    viewer.MakeScene("Guides", fGuideRecord, INSTALL_GLSL_DIR "/userColor.frag", INSTALL_GLSL_DIR "/HUD.vert", INSTALL_GLSL_DIR "/wideLine.geom");
     //guideTree.append_column("Name", fGuideRecord->fName);
     //guideTree.expand_to_path(Gtk::TreePath("0"));
   }

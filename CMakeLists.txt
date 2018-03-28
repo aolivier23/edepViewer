@@ -20,6 +20,11 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+#Let source code know where this project is installed.  Needed for finding shader sources.  
+#TODO: Get shader sources from an environment variable instead.
+add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
+add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
+
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 

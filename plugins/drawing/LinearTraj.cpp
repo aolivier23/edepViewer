@@ -83,7 +83,7 @@ namespace draw
   void LinearTraj::doRequestScenes(mygl::Viewer& viewer) 
   {
     //Configure trajectory Scene
-    viewer.MakeScene("Trajectories", fTrajRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    viewer.MakeScene("Trajectories", fTrajRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/wideLine.geom");
     //trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);

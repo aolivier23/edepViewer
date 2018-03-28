@@ -83,7 +83,8 @@ namespace draw
     //auto& geoTree = viewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
     //geoTree.append_column("Volume Name", fGeoRecord.fName);
     //geoTree.append_column("Material", fGeoRecord.fMaterial);
-    viewer.MakeScene("Geometry", fGeoRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    viewer.MakeScene("Geometry", fGeoRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                     INSTALL_GLSL_DIR "/triangleBorder.geom");
   }
 
   REGISTER_PLUGIN(DefaultGeo, GeoDrawer);

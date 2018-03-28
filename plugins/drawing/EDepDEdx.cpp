@@ -34,7 +34,8 @@ namespace draw
   void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    viewer.MakeScene("EDep", fEDepRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/wideLine.geom");
+    viewer.MakeScene("EDep", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                     INSTALL_GLSL_DIR "/wideLine.geom");
     /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
     edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);

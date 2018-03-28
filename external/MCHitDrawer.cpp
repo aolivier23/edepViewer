@@ -34,7 +34,7 @@ namespace mygl
 
   void MCHitDrawer::doRequestScenes(mygl::Viewer& viewer)
   {
-    viewer.MakeScene(fHitName, fHitRecord, "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.frag", "/home/aolivier/app/evd/src/gl/shaders/colorPerVertex.vert", "/home/aolivier/app/evd/src/gl/shaders/triangleBorder.geom");
+    viewer.MakeScene(fHitName, fHitRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/triangleBorder.geom");
     /*hitTree.append_column("Energy", fHitRecord->fEnergy);
     hitTree.append_column("Time", fHitRecord->fTime);
     hitTree.append_column("Cause", fHitRecord->fParticle);*/
