@@ -52,15 +52,19 @@ namespace mygl
   //TODO: Rename this and/or render() so that the differences between them are more clear. 
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
+    std::cout << "Starting mygl::Viewer::Render()\n";
     ImGui::SetNextWindowPos(ImVec2(ioState.DisplaySize.x, 35.f), ImGuiCond_Always, ImVec2(1.0f, 0.f));
     ImGui::SetNextWindowSize(ImVec2(ioState.DisplaySize.x/5., ioState.DisplaySize.y-35.f), ImGuiCond_Appearing);
     ImGui::Begin("Viewer", nullptr, ImGuiWindowFlags_ResizeFromAnySide); //TODO: Viewer name
+    std::cout << "Made it into this Viewer's window.\n";
     ImGui::Columns(fSceneMap.size()+1);
+
     //Render selectable text for each Scene.  Basically, a poor-man's tab widget.
     bool selected = (fCurrentScene == fSceneMap.end());
     ImGui::Selectable("Viewer", &selected);
     ImGui::NextColumn();
     if(selected) fCurrentScene = fSceneMap.end();
+    std::cout << "Drew button for the Viewer controls.\n";
     for(auto scene = fSceneMap.begin(); scene != fSceneMap.end(); ++scene) 
     {
       selected = (fCurrentScene == scene);
@@ -72,6 +76,7 @@ namespace mygl
       ImGui::NextColumn();
     }
     ImGui::Columns(1);
+    std::cout << "Survived loop over Scenes.\n";
 
     ImGui::Separator();
     if(fCurrentScene != fSceneMap.end()) fCurrentScene->second.RenderGUI();
@@ -91,14 +96,18 @@ namespace mygl
       //TODO: Am I missing any controls?  Please let me know if you have requests!
     }
     ImGui::End();    
+    std::cout << "Survived Viewer window drawing.  Still more to do...\n";
 
     //Send mouse and keyboard events to the current Camera
     fCurrentCamera->second->update(ioState);
+    std::cout << "Updated the current Camera.\n";
 
     //TODO: Dont' adjust camera if handled a click here
     if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
+    std::cout << "Survived user click.\n";
 
     render(width, height);
+    std::cout << "Survived rendering all Scenes and got to the end of Render()\n";
   }
 
   //TODO: Return some sort of TreeView configuration
