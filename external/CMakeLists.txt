@@ -27,7 +27,7 @@ include_directories( "${PROJECT_SOURCE_DIR}" )
 #Install all of the external Drawers as one target
 add_library( external SHARED ExternalDrawer.cpp ${EXTERNAL_SOURCE} )
 target_link_libraries( external Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
-                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} )
+                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} imgui )
 install( TARGETS external DESTINATION lib )
 
 #install headers
