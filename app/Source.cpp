@@ -84,7 +84,7 @@ namespace src
   }
 
   //Go to event by RunId and EventId
-  bool Source::GoTo(const size_t run, const size_t evt)
+  bool Source::GoTo(const int run, const int evt)
   {
     if(fReader.GetEntryStatus() == TTreeReader::kEntryBeyondEnd)
     {
@@ -100,12 +100,12 @@ namespace src
     return fReader.GetCurrentEntry();
   }
 
-  const size_t Source::RunID()
+  const int Source::RunID()
   {
     return fEvent->RunId;
   }
   
-  const size_t Source::EventID()
+  const int Source::EventID()
   {
     return fEvent->EventId;
   }
