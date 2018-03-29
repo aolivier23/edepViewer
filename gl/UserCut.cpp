@@ -127,10 +127,12 @@ namespace mygl
     //std::cout << "Going into operator table, lhs is " << lhs << ", rhs is " << rhs << ", and op is " << op << "\n";
   
     //TODO: Apparently, the empty string ("") is a number...
-    const std::string numbers = "0123456789.-e"; //"e" for scientific notation
-    const bool lhsIsNum = (lhs.find_first_not_of(numbers) == std::string::npos);
+    //TODO: e- is not a number!
+    const std::string numbers = "0123456789"; //"e" for scientific notation
+    const std::string symbols = ".-e";
+    const bool lhsIsNum = (lhs.find_first_not_of(numbers+symbols) == std::string::npos) && (lhs.find_first_of(numbers) != std::string::npos);
     //if(!lhsIsNum) std::cout << "lhs is not a number.\n";
-    const bool rhsIsNum = (rhs.find_first_not_of(numbers) == std::string::npos);
+    const bool rhsIsNum = (rhs.find_first_not_of(numbers+symbols) == std::string::npos) && (rhs.find_first_of(numbers) != std::string::npos);
     //if(!rhsIsNum) std::cout << "rhs is not a number.\n";
   
     //Validate input
