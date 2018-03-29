@@ -155,10 +155,10 @@ namespace mygl
     //is currently available.  Currently, the Viewer provides that window
     //Render and configure the camera's current target
     auto target = fFront+fPosition;
-    if(ImGui::InputFloat3("Target", glm::value_ptr(target))) fFront = target-fPosition;
+    if(ImGui::InputFloat3("Target [mm]", glm::value_ptr(target))) fFront = target-fPosition;
 
     //Render and configure position
-    ImGui::InputFloat3("Position", glm::value_ptr(fPosition));
+    ImGui::InputFloat3("Position [mm]", glm::value_ptr(fPosition));
   }
 
 }
