@@ -81,7 +81,11 @@ namespace mygl
       //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
 
-      void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera);
+      //Interface for interacting with the list of Cameras from plugins.  
+      void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera); //Add a new Camera to the list of Cameras managed by this Viewer
+      Camera& GetCamera(const std::string& name); //Get a Camera by name
+      void RemoveCamera(const std::string& name); //Remove a Camera by name.  Resets to the Default Camera if the current Camera is removed, and 
+                                                  //refuses to remove the last Camera.
 
       bool on_click(const int button, const float x, const float y, const int width, const int height); //Handle user selection of drawn objects
 

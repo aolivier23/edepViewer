@@ -52,11 +52,9 @@ namespace mygl
   //TODO: Rename this and/or render() so that the differences between them are more clear. 
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
-    std::cout << "Starting mygl::Viewer::Render()\n";
     ImGui::SetNextWindowPos(ImVec2(ioState.DisplaySize.x, 35.f), ImGuiCond_Always, ImVec2(1.0f, 0.f));
     ImGui::SetNextWindowSize(ImVec2(ioState.DisplaySize.x/5., ioState.DisplaySize.y-35.f), ImGuiCond_Appearing);
     ImGui::Begin("Viewer", nullptr, ImGuiWindowFlags_ResizeFromAnySide); //TODO: Viewer name
-    std::cout << "Made it into this Viewer's window.\n";
     ImGui::Columns(fSceneMap.size()+1);
 
     //Render selectable text for each Scene.  Basically, a poor-man's tab widget.
@@ -64,7 +62,6 @@ namespace mygl
     ImGui::Selectable("Viewer", &selected);
     ImGui::NextColumn();
     if(selected) fCurrentScene = fSceneMap.end();
-    std::cout << "Drew button for the Viewer controls.\n";
     for(auto scene = fSceneMap.begin(); scene != fSceneMap.end(); ++scene) 
     {
       selected = (fCurrentScene == scene);
@@ -76,7 +73,6 @@ namespace mygl
       ImGui::NextColumn();
     }
     ImGui::Columns(1);
-    std::cout << "Survived loop over Scenes.\n";
 
     ImGui::Separator();
     if(fCurrentScene != fSceneMap.end()) fCurrentScene->second.RenderGUI();
@@ -96,18 +92,14 @@ namespace mygl
       //TODO: Am I missing any controls?  Please let me know if you have requests!
     }
     ImGui::End();    
-    std::cout << "Survived Viewer window drawing.  Still more to do...\n";
 
     //Send mouse and keyboard events to the current Camera
     fCurrentCamera->second->update(ioState);
-    std::cout << "Updated the current Camera.\n";
 
     //TODO: Dont' adjust camera if handled a click here
     if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
-    std::cout << "Survived user click.\n";
 
     render(width, height);
-    std::cout << "Survived rendering all Scenes and got to the end of Render()\n";
   }
 
   //TODO: Return some sort of TreeView configuration
@@ -179,16 +171,42 @@ namespace mygl
     fArea.queue_render();*/
   }
 
+  //TODO: This Camera interface, especially RemoveCamera, seems very clunky.  I don't want to give the user an iterator to a camera because 
+  //      multiple plugins could be adding and/or removing Cameras.  
   void Viewer::AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera)
   {
-    std::cout << "Called mygl::Viewer::AddCamera()\n";
     //fCameras.add(*(camera.release()), name, name);
     fCameras.emplace(name, std::unique_ptr<Camera>(camera.release()));
+    //TODO: Set current Camera to added camera?
   }
+
+  Camera& Viewer::GetCamera(const std::string& name)
+  {
+    auto found = fCameras.find(name);
+    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::GetCamera() does not exist.\n";
+    return *(found->second);
+  }
+
+  void Viewer::RemoveCamera(const std::string& name)
+  {
+    if(fCameras.size() == 1) throw util::GenException("Removing Last Camera") << "Trying to remove the last Camera named " << name << ".  This will cause chaos.\n";
+    auto found = fCameras.find(name);
+    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::RemoveCamera() does not exist.\n";
+    if(found == fCurrentCamera)
+    {
+      auto foundDefault = fCameras.find("Default");
+      if(foundDefault == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named Default requested in Viewer::RemoveCamera() does not exist.\n";
+      fCurrentCamera = foundDefault;
+    }
+    fCameras.erase(found);
+  }
+
+  //TODO: ClearCameras() that removes all Cameras except Default?  Maybe I want CameraSets instead that can each be managed by a plugin?  This all 
+  //      seems far too complicated for what I want to accomplish, but might be the best approach if I ever move to giving EventDrawers a Scene instead 
+  //      of a Viewer.
 
   void Viewer::camera_change()
   {
-    std::cout << "Called mygl::Viewer::camera_change()\n";
     //fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
     //fCurrentCamera->ConnectSignals(fArea);
     //fArea.queue_render();

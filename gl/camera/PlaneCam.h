@@ -22,8 +22,8 @@ namespace mygl
   class PlaneCam: public OrthoCamera
   {
     public:
-      PlaneCam(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 10000., 
-               const float posStep = 50.): OrthoCamera(pos, up, farPlane), fPitch(0), fYaw(0), fPosSens(posStep)
+      PlaneCam(const glm::vec3& pos, const glm::vec3& front = glm::vec3(0.f, 0.f, -1.f), const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 10000., 
+               const float posStep = 50.): OrthoCamera(pos, front, up, farPlane), fPitch(0), fYaw(0), fPosSens(posStep)
       { 
       }
 

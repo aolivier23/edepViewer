@@ -23,8 +23,8 @@ namespace mygl
   class FPSCam: public OrthoCamera
   {
     public:
-      FPSCam(const glm::vec3& pos, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 10000., 
-             float posStep = 50.): OrthoCamera(pos, up, farPlane), fPosSens(posStep) { }
+      FPSCam(const glm::vec3& pos, const glm::vec3& front, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 10000., 
+             float posStep = 50.): OrthoCamera(pos, front, up, farPlane), fPosSens(posStep) { }
       virtual ~FPSCam() = default;
 
     protected:
