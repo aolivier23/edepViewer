@@ -53,6 +53,7 @@ namespace draw
 
     //Center the default camera on average position of interaction vertices in each event
     viewer.AddCamera("Interaction", std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(pos, glm::normalize(dir), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)));
+    viewer.MakeCameraCurrent("Interaction");
   }
 
   REGISTER_PLUGIN(VertexCamera, EventDrawer);

@@ -83,6 +83,7 @@ namespace mygl
 
       //Interface for interacting with the list of Cameras from plugins.  
       void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera); //Add a new Camera to the list of Cameras managed by this Viewer
+      void MakeCameraCurrent(const std::string& name); //Make the named Camera current
       Camera& GetCamera(const std::string& name); //Get a Camera by name
       void RemoveCamera(const std::string& name); //Remove a Camera by name.  Resets to the Default Camera if the current Camera is removed, and 
                                                   //refuses to remove the last Camera.

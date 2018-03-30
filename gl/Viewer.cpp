@@ -180,6 +180,13 @@ namespace mygl
     //TODO: Set current Camera to added camera?
   }
 
+  void Viewer::MakeCameraCurrent(const std::string& name)
+  {
+    auto found = fCameras.find(name);
+    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::MakeCameraCurrent() does not exist.\n";
+    fCurrentCamera = found;
+  }
+
   Camera& Viewer::GetCamera(const std::string& name)
   {
     auto found = fCameras.find(name);
