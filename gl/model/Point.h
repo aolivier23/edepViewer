@@ -7,7 +7,7 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
 
 //c++ includes
 #include <vector>
@@ -21,7 +21,7 @@ namespace mygl
   {
     public:
       Point(const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
-      virtual ~Point() = default;
+      virtual ~Point();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 

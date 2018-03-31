@@ -4,7 +4,6 @@
 
 //local includes
 #include "gl/model/PolyMesh.h"
-#include "gl/model/ShaderProg.h"
 
 //ROOT includes
 #include "TGeoVolume.h"

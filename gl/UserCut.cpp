@@ -5,7 +5,7 @@
 
 //gl includes
 #include "gl/UserCut.h"
-#include "gl/model/GenException.h"
+#include "util/GenException.h"
 
 //c++ includes
 #include <string>

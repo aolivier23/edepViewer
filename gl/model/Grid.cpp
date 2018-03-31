@@ -7,7 +7,6 @@
 
 //model includes
 #include "gl/model/Grid.h"
-#include "gl/model/ShaderProg.h"
 
 namespace mygl
 {
@@ -59,12 +58,16 @@ namespace mygl
     shader.SetUniform("width", fLineWidth);
 
     //Draw horizontal lines
+    glBindVertexArray(fHorizVAO);
     for(double ypos = -fHeight/2.; ypos < fHeight/2.; ypos += fVertSpace) DrawHorizLine(shader, ypos);    
     DrawHorizLine(shader, fHeight/2.);
+    glBindVertexArray(0); //Unbind data after done drawing
 
     //Draw vertical lines
+    glBindVertexArray(fVertVAO);
     for(double xpos = -fWidth/2.; xpos < fWidth/2.; xpos += fHorizSpace) DrawVertLine(shader, xpos);
     DrawVertLine(shader, fWidth/2.);
+    glBindVertexArray(0); //Unbind data after done drawing
   }
 
   void Grid::DrawVertLine(ShaderProg& shader, const double xpos)
@@ -72,14 +75,19 @@ namespace mygl
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(xpos, 0.f, 0.f)));
     glBindVertexArray(fVertVAO);
     glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
-    glBindVertexArray(0); //Unbind data after done drawing
   }
 
   void Grid::DrawHorizLine(ShaderProg& shader, const double ypos)
   {
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(0.f, ypos, 0.f)));
-    glBindVertexArray(fHorizVAO);
     glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
-    glBindVertexArray(0); //Unbind data after done drawing
+  }
+
+  Grid::~Grid()
+  {
+    glDeleteVertexArrays(1, &fHorizVAO);
+    glDeleteVertexArrays(1, &fVertVAO);
+    glDeleteBuffers(1, &fHorizVBO);
+    glDeleteBuffers(1, &fVertVBO);
   }
 }

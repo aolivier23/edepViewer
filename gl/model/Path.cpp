@@ -7,7 +7,6 @@
 
 //model includes
 #include "gl/model/Path.h"
-#include "gl/model/ShaderProg.h"
 
 //c++ includes
 #include <iostream>
@@ -65,5 +64,13 @@ namespace mygl
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)sizeof(glm::vec3));
+
+    glBindVertexArray(0); //Unbind data after done drawing
+  }
+
+  Path::~Path()
+  {
+    glDeleteVertexArrays(1, &fVAO);
+    glDeleteBuffers(1, &fVBO);
   }
 }

@@ -6,7 +6,7 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
 
 #ifndef MYGL_GRID_H
 #define MYGL_GRID_H
@@ -18,7 +18,7 @@ namespace mygl
     public:
       Grid(const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
            const glm::vec4& color, const float lineWidth);
-      virtual ~Grid() = default;
+      virtual ~Grid();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 

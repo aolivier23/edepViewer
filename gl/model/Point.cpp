@@ -8,7 +8,6 @@
 
 //model includes
 #include "gl/model/Point.h"
-#include "gl/model/ShaderProg.h"
 
 //c++ includes
 #include <iostream>
@@ -40,6 +39,8 @@ namespace mygl
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)sizeof(glm::vec3));
+
+    glBindVertexArray(0); //Unbind to prevent mistakes writing to the wrong buffer
   }
 
   void Point::DoDraw(ShaderProg& shader)
@@ -50,5 +51,11 @@ namespace mygl
     glDrawArrays(GL_POINTS, 0, fNVertices);
 
     glBindVertexArray(0); //Unbind data after done drawing
+  }
+
+  Point::~Point()
+  {
+    glDeleteVertexArrays(1, &fVAO);
+    glDeleteBuffers(1, &fVBO);
   }
 }

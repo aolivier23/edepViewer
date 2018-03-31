@@ -8,7 +8,7 @@
 
 //local includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
 
 namespace mygl
 {

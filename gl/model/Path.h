@@ -9,7 +9,7 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
 
 //c++ includes
 #include <vector>
@@ -24,7 +24,7 @@ namespace mygl
     public:
       Path(const glm::mat4& model, const std::vector<Vertex>& points, const float width);
       Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, const float width);
-      virtual ~Path() = default;
+      virtual ~Path();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 

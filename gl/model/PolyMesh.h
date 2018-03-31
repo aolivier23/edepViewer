@@ -15,7 +15,7 @@
 
 //gl includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
 
 class TGeoVolume;
 class TGeoShape;
@@ -98,7 +98,7 @@ namespace mygl
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(glm::vec3)));
 
-        //glBindVertexArray(0); //TODO: This freezes the TreeView.  Is there a memory leak here?
+        glBindVertexArray(0); 
       }
   };
 }
