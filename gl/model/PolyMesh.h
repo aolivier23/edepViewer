@@ -76,6 +76,7 @@ namespace mygl
         }
 
         fOffset = vao.Register(vertexData, flatIndices); 
+        for(auto& offset: fIndexOffsets) offset += fOffset;
       }
   };
 }

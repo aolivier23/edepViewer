@@ -15,7 +15,7 @@
 namespace mygl
 {
   //Get handles to OpenGL resources that I will upload later.
-  VAO::VAO()
+  VAO::VAO(): fUploadData(true)
   {
     glGenVertexArrays(1, &fVAO);
     glBindVertexArray(fVAO);
@@ -54,10 +54,11 @@ namespace mygl
 
   unsigned int VAO::Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices)
   {
-    const auto result = fIndices.size();
+    const auto vertOffset = fVertices.size();
+    const auto indOffset = fIndices.size();
     fVertices.insert(fVertices.end(), vertices.begin(), vertices.end());
-    fIndices.insert(fIndices.end(), indices.begin(), indices.end());
-    return result;
+    for(const auto& index: indices) fIndices.push_back(index + vertOffset);
+    return indOffset;
   }
 
   void VAO::Use()
@@ -78,7 +79,7 @@ namespace mygl
 
     //Send indices to the GPU
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndices.size()*sizeof(GLuint), &fIndices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndices.size()*sizeof(unsigned int), &fIndices[0], GL_STATIC_DRAW);
 
     //Send vertices to the GPU
     glBindBuffer(GL_ARRAY_BUFFER, fVBO);

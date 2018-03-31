@@ -16,7 +16,7 @@
 namespace mygl
 {
   Point::Point(VAO& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius): Drawable(model), fNVertices(1), 
-                                                                                                            fRadius(radius)
+                                                                                                                      fRadius(radius)
   {
     Vertex vert;
     vert.position = point;
