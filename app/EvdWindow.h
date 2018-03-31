@@ -58,7 +58,7 @@ namespace mygl
       virtual ~EvdWindow();
 
       void SetSource(std::unique_ptr<src::Source>&& source);
-      void Print(); //Print the current window to a file
+      void Print(const int width, const int height); //Print the current window to a file
 
       virtual void make_scenes();
 
@@ -76,7 +76,7 @@ namespace mygl
       //Source of events
       std::unique_ptr<src::Source> fSource;
 
-      void RenderControlBar();
+      void RenderControlBar(const int width, const int height);
 
     private:
       void ReadGeo();
@@ -99,6 +99,10 @@ namespace mygl
       std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
       std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
       std::vector<std::unique_ptr<draw::ExternalDrawer>> fExtDrawers;
+
+      //OpenGL data for printing 
+      //mygl::Framebuffer fPrintBuffer; //The framebuffer I will render to for printing
+      //std::unique_ptr<mygl::Texture2D> fPrintTexture; //The texture I will print to
   };
 }
 

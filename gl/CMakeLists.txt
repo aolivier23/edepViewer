@@ -5,6 +5,7 @@ link_directories( "${IMGUI_DIR}" )
 add_subdirectory(model)
 add_subdirectory(camera)
 add_subdirectory(shaders)
+add_subdirectory(objects)
 
 #Make sure GLFW and friends can be found
 link_directories( /usr/local/lib )
@@ -15,7 +16,7 @@ target_link_libraries( TreeModel )
 install( TARGETS TreeModel DESTINATION lib )
 
 add_library( Scene VisID.cpp ColRecord.cpp UserCut.cpp Scene.cpp )
-target_link_libraries( Scene glad Drawable exception Shader TreeModel)
+target_link_libraries( Scene glad Drawable exception GLObjects TreeModel)
 install( TARGETS Scene DESTINATION lib )
 
 add_library( Viewer Viewer.cpp )

@@ -80,7 +80,12 @@ namespace mygl
     {
       //A button to select the current Camera
       ImGui::Text("Cameras");
-      for(auto cam = fCameras.begin(); cam != fCameras.end(); ++cam) if(ImGui::Button(cam->first.c_str())) fCurrentCamera = cam;
+      for(auto cam = fCameras.begin(); cam != fCameras.end(); ++cam) 
+      {
+        selected = (fCurrentCamera == cam);
+        ImGui::Selectable(cam->first.c_str(), &selected);
+        if(selected) fCurrentCamera = cam;
+      }
 
       //Render camera controls
       fCurrentCamera->second->render(); 

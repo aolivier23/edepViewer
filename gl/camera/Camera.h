@@ -30,12 +30,6 @@ namespace mygl
              fUpArr(keyState::up), fDwnArr(keyState::up), fLftArr(keyState::up), 
              fRgtArr(keyState::up), fMouse(keyState::up) 
       {
-        //TODO: Restore Camera GUI with ImGUI
-        //pack_start(fPosEntry);
-        //fPosEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdatePosition));
-        //pack_start(fTargetEntry);
-        //fTargetEntry.signal_activate().connect(sigc::mem_fun(*this, &Camera::UpdateTarget));
-        //show_all_children();
       }
       virtual ~Camera() = default; 
 
@@ -44,17 +38,12 @@ namespace mygl
       virtual glm::mat4 GetPerspective(const int width, const int height) = 0;
 
       //Record results of signals from user that came from GLArea.
-      //TODO: Convert from Gdk to GLFW events
       bool on_key_press(const int key);
       bool on_key_release(const int key);
       bool on_button_press(const int button, const float x, const float y);
       bool on_button_release(const int button);
       bool on_motion(const float x, const float y);
       bool on_scroll(const float dist);
-
-      //utility function to connect signals to a GLArea
-      //TODO: Restore functionality with ImGUI
-      //void ConnectSignals(Gtk::GLArea& area);
 
       //Draw the camera state controls
       virtual void render();

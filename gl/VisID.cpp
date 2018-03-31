@@ -4,7 +4,7 @@
 
 //gl includes
 #include "gl/VisID.h"
-#include "gl/model/GenException.h"
+#include "util/GenException.h"
 
 namespace mygl
 {

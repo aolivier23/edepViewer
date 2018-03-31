@@ -6,8 +6,8 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //model includes
-#include "gl/model/GenException.h"
-#include "gl/model/ShaderProg.h"
+#include "util/GenException.h"
+#include "gl/objects/ShaderProg.h"
 #include "gl/VisID.h"
 #include "gl/ColRecord.cpp"
 #include "gl/UserCut.h"

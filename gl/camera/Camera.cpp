@@ -160,5 +160,4 @@ namespace mygl
     //Render and configure position
     ImGui::InputFloat3("Position [mm]", glm::value_ptr(fPosition));
   }
-
 }

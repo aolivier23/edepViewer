@@ -12,7 +12,7 @@
 //local includes
 #include "gl/camera/Camera.h"
 #include "gl/Scene.h"
-#include "gl/model/GenException.h"
+#include "util/GenException.h"
 
 //glm includes
 #include <glm/glm.hpp>

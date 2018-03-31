@@ -10,11 +10,8 @@
 #include "EvdWindow.h"
 
 //gl includes
-#include "gl/model/PolyMesh.h"
-#include "gl/model/Path.h"
-#include "gl/model/Grid.h"
-#include "gl/model/Point.h"
 #include "gl/camera/PlaneCam.h"
+#include "gl/objects/Texture2D.cpp"
 
 //Load plugins for drawing from Factory
 #include "plugins/Factory.cpp"
@@ -34,7 +31,7 @@
 #include "TBuffer3D.h"
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
-#include "TSystemFile.h"
+#include "TASImage.h" //For writing images to a file
 
 //c++ includes
 #include <regex>
@@ -44,7 +41,7 @@ namespace mygl
   EvdWindow::EvdWindow(): 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()
+    fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()//, fPrintTexture(nullptr)
   {
   }
 
@@ -189,12 +186,28 @@ namespace mygl
     //ReadEvent();
   }
   
-  void EvdWindow::Print()
+  void EvdWindow::Print(const int width, const int height)
   {
-    //TODO: Create a framebuffer
-    //TODO: Render to framebuffer
-    //TODO: Read framebuffer back as bitmap
-    //TODO: Write bitmap to a PNG.  Maybe use TASImage for now?
+    //I learned to do this from the SOIL library:
+    //https://github.com/kbranigan/Simple-OpenGL-Image-Library/blob/master/src/SOIL.c
+    auto data = new unsigned char[4*width*height];
+    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, data); //For some reason, I need to use BGR instead of RGB.  
+                                                                        //Maybe PNG-specific: https://stackoverflow.com/questions/5123387/loading-a-bmp-into-an-opengl-textures-switches-the-red-and-blue-colors-c-win
+
+    //Use ROOT's interface to AfterImage for now to keep dependencies down.  
+    //Maybe write optional plugins for other libraries in the future?  Maybe libpng which is supposed to 
+    //have Emscripten support?
+    TASImage screenshot;
+    screenshot.FromGLBuffer(data, width, height);
+    const auto file = fSource->GetFile();
+    const std::string fileBase = file.substr(file.find_last_of("/")+1, file.find_first_of(".")-1);
+    screenshot.WriteImage((fileBase+"_run"+std::to_string(fSource->RunID())+"_evt"+std::to_string(fSource->EventID())+".png").c_str()); 
+    //TODO: Let user pick name and image type
+
+    delete[] data; //Free image data now that I am done with it
+
+    //fPrintTexture.reset(new mygl::Texture2D(, , nullptr));
+    //TODO: Render to a 3D texture (have to sample each z "layer" individually), and write that to a u3d file?
   }
 
   void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)
@@ -237,12 +250,12 @@ namespace mygl
       }
       ImGui::End();
 
-      RenderControlBar();
+      RenderControlBar(width, height);
     }
     fViewer.Render(width, height, ioState);
   }
 
-  void EvdWindow::RenderControlBar()
+  void EvdWindow::RenderControlBar(const int width, const int height)
   {
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x, 0.f), ImGuiCond_Always, ImVec2(1.0f, 1.0));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 20.f));
@@ -250,7 +263,7 @@ namespace mygl
     {
       if(ImGui::Button("Print"))
       {
-        //Print(); //TODO: Implement this in a non-Gtk way
+        Print(width, height); 
       } 
       ImGui::SameLine();
 

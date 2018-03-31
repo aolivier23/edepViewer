@@ -5,7 +5,9 @@
 
 //local includes
 #include "gl/objects/ShaderProg.h" //Header
-#include "gl/objects/GenException.h" //General-purpose exception class
+
+//util includes
+#include "util/GenException.h" //General-purpose exception class
 
 //glm includes
 #include <glm/glm.hpp>

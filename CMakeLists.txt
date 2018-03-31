@@ -49,7 +49,7 @@ find_package( OpenGL REQUIRED )
 #Set up to build against ROOT
 #I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake
 list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})
-find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer EG)
+find_package(ROOT REQUIRED COMPONENTS Core Geom Tree RIO TreePlayer EG ASImage) #ASImage to write png files
 include(${ROOT_USE_FILE})
 
 #local stuff that GLDrawArea needs to know about
