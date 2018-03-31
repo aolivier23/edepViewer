@@ -33,15 +33,15 @@ namespace draw
     fMaxDepth = config->IntAttribute("MaxDepth", 7);
   }
 
-  void DefaultGeo::AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
+  void DefaultGeo::AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                  TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
   {
     auto children = parentNode->GetNodes();
     if(depth == fMaxDepth) return;
-    for(auto child: *children) AppendNode(viewer, nextID, (TGeoNode*)(child), mat, parent, depth+1);
+    for(auto child: *children) AppendNode(scene, nextID, (TGeoNode*)(child), mat, parent, depth+1);
   }
 
-  void DefaultGeo::AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, 
+  void DefaultGeo::AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, 
                                              TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
   {
     //Get the model matrix for node using it's parent's matrix
@@ -50,14 +50,14 @@ namespace draw
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
-    auto iter = viewer.AddDrawable<mygl::PolyMesh>("Geometry", nextID++, parent, false, glm::make_mat4(matPtr),
-                                                   node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
+    auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, false, glm::make_mat4(matPtr),
+                                                  node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
     auto& row = *iter;
 
     row[fGeoRecord->fName] = node->GetName();
     row[fGeoRecord->fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++(*fColor);
-    AppendChildren(viewer, nextID, iter, node, local, depth);
+    AppendChildren(scene, nextID, iter, node, local, depth);
 
     //return row;
   }
@@ -71,11 +71,12 @@ namespace draw
                                   //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 
                                   //I have yet to find a way to unregister a TGeoMatrix.  So, it appears that there is no such 
                                   //thing as a temporary TGeoIdentity.  Good job ROOT... :(
-    auto topIter = viewer.GetScenes().find("Geometry")->second.NewTopLevelNode();
+    auto& scene = viewer.GetScene("Geometry");
+    auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;
     top[fGeoRecord->fName] = data.GetTitle();
     top[fGeoRecord->fMaterial] = "FIXME";
-    AppendNode(viewer, nextID, data.GetTopNode(), *id, topIter, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
+    AppendNode(scene, nextID, data.GetTopNode(), *id, topIter, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
   }
 
   void DefaultGeo::doRequestScenes(mygl::Viewer& viewer)

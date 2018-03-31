@@ -7,6 +7,9 @@
 #ifndef MYGL_POLYMESH_H
 #define MYGL_POLYMESH_H
 
+//model includes
+#include "gl/model/VAO.h"
+
 //c++ includes
 #include <vector>
 
@@ -29,24 +32,20 @@ namespace mygl
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
-      PolyMesh(const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
+      PolyMesh(VAO& vao, const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
                const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets(1, nullptr)
       {
-        Init(vertices, indices, color);
+        Init(vao, vertices, indices, color);
       }
 
-      PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
-      PolyMesh(const glm::mat4& model, TGeoShape* shape, const glm::vec4& color);
+      PolyMesh(VAO& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
+      PolyMesh(VAO& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color);
 
       virtual ~PolyMesh(); //To allow derived classes to override
       
       void DoDraw(ShaderProg& shader);
 
     protected:
-      GLuint fVAO; //Location of vertex array object from opengl. 
-      GLuint fVBO; //Location of vertex buffer object from opengl.  
-      GLuint fEBO; //Location of element buffer object from opengl.  
-
       std::vector<int> fNVertices; //Number of vertices in each polygon.  Using int instead of size_t for compatibility with opengl
       std::vector<GLuint*> fIndexOffsets; //Pointer to the beginning of the indices for each polygon
 
@@ -54,7 +53,7 @@ namespace mygl
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
-      void Init(const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
+      void Init(VAO& vao, const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
       {
         std::vector<Vertex> vertexData;
         for(const auto& vertex: vertices)
@@ -76,29 +75,7 @@ namespace mygl
           fIndexOffsets.push_back((GLuint*)(indexPos*sizeof(GLuint)));
         }
 
-        //Set up vertices for drawing. 
-        glGenVertexArrays(1, &fVAO); 
-        glBindVertexArray(fVAO);
-
-        //Set up indices for drawing
-        glGenBuffers(1, &fEBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, flatIndices.size()*sizeof(GLuint), &flatIndices[0], GL_STATIC_DRAW);
-
-        //Construct buffer for vertices 
-        glGenBuffers(1, &fVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, fVBO);
-
-        glBufferData(GL_ARRAY_BUFFER, vertexData.size()*sizeof(Vertex), &vertexData[0], GL_STATIC_DRAW);
-
-        //Set up vertex attributes expected by vertex shader
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(0));
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(glm::vec3)));
-
-        glBindVertexArray(0); 
+        fOffset = vao.Register(vertexData, flatIndices); 
       }
   };
 }

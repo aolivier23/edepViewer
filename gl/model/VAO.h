@@ -17,6 +17,9 @@
 //    (OpenGL VAO, vertex buffer, and index buffer) managed by that VAO. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//model includes
+#include "gl/model/Drawable.h"
+
 //c++ includes
 #include <vector>
 
@@ -25,19 +28,15 @@
 
 namespace mygl
 {
-
-  class Drawable;
-  typename Drawable::Vertex;
-
-  class VAO
+class VAO
   {
     public:
       VAO(); //Allocate OpenGL resources, but no vertices to bind yet.
       virtual ~VAO(); //Deallocate all OpenGL resources managed
 
       //Interfaces between Drawables and a VAO
-      unsigned int Register(const std::vector<Vertex>& vertices); //Register vertices only to be used with glDrawArrays()
-      unsigned int Register(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices); //Register vertices and indices to 
+      unsigned int Register(const std::vector<Drawable::Vertex>& vertices); //Register vertices only to be used with glDrawArrays()
+      unsigned int Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices); //Register vertices and indices to 
                                                                                                             //be used with glDrawElements()
 
       void Use(); //Bind managed OpenGL resources for use during drawing.  The first time this is called, send OpenGL resources to the GPU.
@@ -49,7 +48,7 @@ namespace mygl
       unsigned int fEBO; //The index of the OpenGL Element Buffer Object (EBO) of indices managed
 
       //Data from Drawables that needs to be sent to the GPU.  It will all be sent at once, then deleted from here
-      std::vector<Vertex> fVertices; //Vertices
+      std::vector<Drawable::Vertex> fVertices; //Vertices
       std::vector<unsigned int> fIndices; //Indices
 
       //Internal flag since structure is weird

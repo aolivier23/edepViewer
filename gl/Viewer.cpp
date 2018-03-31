@@ -284,5 +284,13 @@ namespace mygl
     //      would benefit from a redesign.  
     auto found = fSceneMap.find(sceneName);
     if(found != fSceneMap.end()) found->second.RemoveAll();
+    else throw util::GenException("Scene Not Found") << "Could not find Scene named " << sceneName << " in Viewer::RemoveAll().\n";
+  }
+
+  Scene& Viewer::GetScene(const std::string& name)
+  {
+    auto found = fSceneMap.find(name);
+    if(found != fSceneMap.end()) return found->second;
+    else throw util::GenException("Scene Not Found") << "Could not find Scene named " << name << " in Viewer::GetScene().\n";
   }
 }

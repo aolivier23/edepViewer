@@ -19,21 +19,21 @@
 
 namespace mygl
 {
+  class VAO;
+
   class Path: public Drawable //A Path is a Drawable
   {
     public:
-      Path(const glm::mat4& model, const std::vector<Vertex>& points, const float width);
-      Path(const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, const float width);
+      Path(VAO& vao, const glm::mat4& model, const std::vector<Vertex>& points, const float width);
+      Path(VAO& vao, const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, const float width);
       virtual ~Path();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 
     private:
-      GLuint fVAO; //Location of vertex array object from opengl. 
-      GLuint fVBO; //Location of vertex buffer object from opengl.
       const GLuint fNVertices; //Number of vertices in this path
 
-      void Init(std::vector<Vertex> points);
+      void Init(VAO& vao, std::vector<Vertex> points);
 
       const float fWidth;
   };

@@ -11,6 +11,7 @@
 #include "gl/VisID.h"
 #include "gl/ColRecord.cpp"
 #include "gl/UserCut.h"
+#include "gl/model/VAO.h"
 
 //local includes
 #include "gl/TreeModel.h"
@@ -42,10 +43,45 @@ namespace mygl
       
       virtual ~Scene();
 
-      //Warning: The following function may not do anything if Gtk::GLArea::make_current() is 
-      //         not called just before.  
-      virtual TreeModel::iterator AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const TreeModel::iterator parent, 
-                                              const bool active);
+      template <class DRAWABLE, class ...ARGS>
+      TreeModel::iterator AddDrawable(const VisID& id, const TreeModel::iterator parent, const bool active, ARGS... args)
+      {
+        
+        //Create a row in the TreeView for the drawable being added 
+        auto iter = fModel.NewNode(parent);
+        auto& row = *iter;
+                                                                                                           
+        //Make sure that a drawable with this VisID doesn't already exist
+        auto exists = fActive.find(id);
+        if(exists != fActive.end()) 
+        {
+          std::stringstream str;
+          for(auto& pair: fActive) str << pair.first << "\n";
+          throw util::GenException("Duplicate ID") << "In view::Scene::AddDrawable(), tried to add a new "
+                                                   << "drawable with ID " << id << " in scene " << fName 
+                                                   << ", but an object already exists with this ID!\n"
+                                                   << "Active IDs so far are:\n" << str.str() << "\n";
+        }
+        exists = fHidden.find(id);
+        if(exists != fHidden.end()) 
+        {
+          std::stringstream str;
+          for(auto& pair: fHidden) str << pair.first << "\n";
+          throw util::GenException("Duplicate ID") << "In view::Scene::AddDrawable(), tried to add a new "
+                                                   << "drawable with ID " << id << " in scene " << fName
+                                                   << ", but an object already exists with this ID!\n"
+                                                   << "Hidden IDs so far are:\n" << str.str() << "\n";
+        }
+        else
+        {
+          if(active) fActive.emplace(id, std::unique_ptr<Drawable>(new DRAWABLE(*fVAO, args...)));
+          else fHidden.emplace(id, std::unique_ptr<Drawable>(new DRAWABLE(*fVAO, args...)));
+          row[fSelfCol] = active;
+          row[fIDCol] = id;
+        }
+        return iter;
+      }
+
       virtual TreeModel::iterator NewTopLevelNode();
       virtual void RemoveAll();
 

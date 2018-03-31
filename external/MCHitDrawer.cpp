@@ -42,9 +42,10 @@ namespace mygl
 
   void MCHitDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
   {
-    viewer.RemoveAll(fHitName);
+    auto& scene = viewer.GetScene(fHitName);
+    scene.RemoveAll();
 
-    auto topIter = viewer.GetScenes().find(fHitName)->second.NewTopLevelNode();
+    auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;
     top[fHitRecord->fEnergy] = std::accumulate(fHits->begin(), fHits->end(), 0., [](double value, const auto& hit) { return value + hit.Energy; });
     top[fHitRecord->fParticle] = fHitName; //Algorithm name
@@ -56,8 +57,8 @@ namespace mygl
            
       glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(hit.Position.X(), hit.Position.Y(), hit.Position.Z()));
 
-      auto& row = *(viewer.AddDrawable<mygl::PolyMesh>(fHitName, nextID++, topIter, true, pos,
-                                                       &box, glm::vec4(fPalette(hit.Energy), 1.0))); 
+      auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+                                                      &box, glm::vec4(fPalette(hit.Energy), 1.0))); 
       row[fHitRecord->fEnergy] = hit.Energy;
       row[fHitRecord->fTime] = hit.Position.T();
       row[fHitRecord->fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 

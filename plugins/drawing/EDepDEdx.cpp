@@ -34,7 +34,7 @@ namespace draw
   void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    viewer.MakeScene("EDep", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+    viewer.MakeScene("EDepDEdx", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
                      INSTALL_GLSL_DIR "/wideLine.geom");
     /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
     edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
@@ -45,8 +45,10 @@ namespace draw
 
   void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
   {
+    auto& scene = viewer.GetScene("EDepDEdx");
+
     //Remove old drawing elements
-    viewer.RemoveAll("EDep");
+    scene.RemoveAll();
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition
@@ -54,7 +56,7 @@ namespace draw
     for(auto& det: edepToDet)
     {
       auto detName = det.first;
-      auto detIter = viewer.GetScenes().find("EDep")->second.NewTopLevelNode();
+      auto detIter = scene.NewTopLevelNode();
       auto& detRow = *detIter;
       auto edeps = det.second;
 
@@ -127,7 +129,8 @@ namespace draw
         if(alpha > 1.) alpha = 1.;
         if(alpha < 0.) alpha = 0.;*/
         
-        auto iter = viewer.AddDrawable<mygl::Path>("EDep", nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
+        auto iter = scene.AddDrawable<mygl::Path>(nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+                                                  glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
         auto& row = *iter;
         //fPalette(dEdx), 1.0));
         //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));

@@ -34,9 +34,9 @@ namespace draw
       virtual void doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;
 
       //Helper functions for drawing geometry volumes
-      virtual void AppendNode(mygl::Viewer& viewer, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
+      virtual void AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
                               const mygl::TreeModel::iterator parent, size_t depth);
-      virtual void AppendChildren(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
+      virtual void AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                   TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
 
       //Data needed when appending geometry nodes

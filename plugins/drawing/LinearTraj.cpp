@@ -99,8 +99,10 @@ namespace draw
   void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
   {
     //First, clear the scenes I plan to draw on
-    viewer.RemoveAll("Trajectories");
-    viewer.RemoveAll("TrajPts");
+    auto& trajScene = viewer.GetScene("Trajectories");
+    trajScene.RemoveAll();
+    auto& ptScene = viewer.GetScene("TrajPts");
+    ptScene.RemoveAll();
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -114,7 +116,7 @@ namespace draw
     auto& primaries = evt.Primaries;
     for(auto& prim: primaries)
     {
-      auto iter = viewer.GetScenes().find("Trajectories")->second.NewTopLevelNode();
+      auto iter = trajScene.NewTopLevelNode();
       auto& row = *iter;
         
       //Turn GENIE's interaction string into something easier to read
@@ -139,9 +141,9 @@ namespace draw
       const auto color = (*(services.fPDGToColor))[pdg];
 
       //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
-      auto ptIter = viewer.AddDrawable<mygl::Point>("TrajPts", nextID++, 
-                                                    viewer.GetScenes().find("TrajPts")->second.NewTopLevelNode(), true, 
-                                                    glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
+      auto ptIter = ptScene.AddDrawable<mygl::Point>(nextID++, 
+                                                     ptScene.NewTopLevelNode(), true, 
+                                                     glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
       auto& ptRow = *ptIter;
       ptRow[fTrajPtRecord->fMomMag] = -1.; //TODO: Get primary momentum
       ptRow[fTrajPtRecord->fTime] = ptPos.T();
@@ -200,7 +202,8 @@ namespace draw
     }
 
     //TODO: Change "false" back to "true" to draw trajectories by default
-    auto iter = viewer.AddDrawable<mygl::Path>("Trajectories", nextID, parent, true, glm::mat4(), vertices, glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
+    auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), vertices, 
+                                                                        glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     auto& row = *iter;
     row[fTrajRecord->fPartName] = traj.Name;
     auto p = traj.InitialMomentum;
@@ -242,9 +245,9 @@ namespace draw
   {
     //Add Trajectory Point
     const auto pos = pt.Position;
-    auto ptIter = viewer.AddDrawable<mygl::Point>("TrajPts", nextID++,
-                                                  parent, true,
-                                                  glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
+    auto ptIter = viewer.GetScene("TrajPts").AddDrawable<mygl::Point>(nextID++,
+                                                                      parent, true,
+                                                                      glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
     auto& ptRow = *ptIter;
     ptRow[fTrajPtRecord->fMomMag] = pt.Momentum.Mag();
     ptRow[fTrajPtRecord->fTime] = pos.T();

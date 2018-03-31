@@ -43,9 +43,10 @@ namespace mygl
   {
     mygl::ColorIter color; //unique color for each cluster
 
-    viewer.RemoveAll(fClusterName);
+    auto& scene = viewer.GetScene(fClusterName);
+    scene.RemoveAll();
 
-    auto topIter = viewer.GetScenes().find(fClusterName)->second.NewTopLevelNode();
+    auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;
     top[fClusterRecord->fEnergy] = std::accumulate(fClusters->begin(), fClusters->end(), 0., [](double value, const auto& clust) { return value + clust.Energy; });
     top[fClusterRecord->fParticle] = fClusterName; //Algorithm name
@@ -85,8 +86,8 @@ namespace mygl
              
         glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(clust.Position.X(), clust.Position.Y(), clust.Position.Z()));
 
-        auto& row = *(viewer.AddDrawable<mygl::PolyMesh>(fClusterName, nextID++, topIter, true, pos,
-                                                         &shape, glm::vec4((glm::vec3)color, 0.3))); 
+        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+                                                        &shape, glm::vec4((glm::vec3)color, 0.3))); 
 
         ++color;
         row[fClusterRecord->fEnergy] = clust.Energy;

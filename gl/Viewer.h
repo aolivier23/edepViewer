@@ -41,33 +41,7 @@ namespace mygl
       Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel = 1, const float yPerPixel = 1, const float zPerPiexel = 1); 
       virtual ~Viewer();
 
-      //TODO: At first, this function seems superfluous if I give the user access to the map of scenes.  However, the Gtk::GLArea::make_current() call 
-      //      here is essential to properly managing the opengl resources in a Drawable.  So, maybe I should remove user access to the scenes a Viewer 
-      //      owns?  This will require adding entry points for basically all of the Scene public functions as well as each Scene's TreeView.
-      template <class T, class ...ARGS>
-      TreeModel::iterator AddDrawable(const std::string& scene, const VisID& id, const TreeModel::iterator parent, 
-                                      const bool active, ARGS... args) //Add a drawable to a scene
-      {
-        auto scenePair = fSceneMap.find(scene);
-        if(scenePair == fSceneMap.end())
-        {
-          std::stringstream scenes;
-          for(const auto& scenePair: fSceneMap) scenes << scenePair.first << "\n";
-          throw util::GenException("No Such Scene") << "In mygl::Viewer::AddDrawable(), could not add Drawable because scene " << scene << " does not exist.  "
-                                                    << "The current list of scenes is:\n" << scenes.str() << "\n";
-        }
-
-        return scenePair->second.AddDrawable(std::move(std::unique_ptr<Drawable>(new T(args...))), id, parent, active);
-      }
-
       //Use overloads so that this compiles with Clang as well as gcc.  See https://stackoverflow.com/questions/34494765/interaction-between-default-arguments-and-parameter-pack-gcc-and-clang-disagree
-
-      template <class T, class ...ARGS>
-      TreeModel::iterator AddDrawable(const std::string& scene, const VisID& id, const TreeModel::iterator parent,
-                                      ARGS... args) //Add a drawable to a scene
-      {
-        return AddDrawable(scene, id, parent, true, args...);
-      }
 
       //User access to Scenes
       void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc = INSTALL_GLSL_DIR "/userColor.frag", 
@@ -78,8 +52,8 @@ namespace mygl
       //Makes sure openGL context is current before destroying Drawables.  
       void RemoveAll(const std::string& sceneName);
 
-      //TODO: Consider removing this function.  It violates the concept of the Viewer making sure that its' GLArea is current when its' Scenes are modified.
       std::map<std::string, Scene>& GetScenes() { return fSceneMap; }
+      Scene& GetScene(const std::string& name);
 
       //Interface for interacting with the list of Cameras from plugins.  
       void AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera); //Add a new Camera to the list of Cameras managed by this Viewer

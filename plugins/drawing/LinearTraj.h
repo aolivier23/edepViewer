@@ -45,11 +45,11 @@ namespace draw
       float fLineWidth; //Width of lines to draw
 
       //Helper functions for drawing trajectories and trajectory points
-      void AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
+      void AppendTrajectory(mygl::Viewer& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                             const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                             const mygl::TreeModel::iterator ptRow, Services& services);
 
-      mygl::TreeModel::iterator AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
+      mygl::TreeModel::iterator AddTrajPt(mygl::Viewer& scene, mygl::VisID& nextID, const std::string& particle, 
                                     const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator ptRow, const glm::vec4& color);
 
       //Description of the data saved for a trajectory

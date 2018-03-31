@@ -40,46 +40,6 @@ namespace mygl
 
   Scene::~Scene() {}
 
-  //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
-  //         the proper GL context is bound for resource allocation.
-  TreeModel::iterator Scene::AddDrawable(std::unique_ptr<Drawable>&& drawable, const VisID& id, const TreeModel::iterator parent, 
-                                         const bool active)
-  {
-    //Create a row in the TreeView for the drawable being added 
-    auto iter = fModel.NewNode(parent);
-    auto& row = *iter;
-
-    //Make sure that a drawable with this VisID doesn't already exist
-    auto exists = fActive.find(id);
-    if(exists != fActive.end()) 
-    {
-      std::stringstream str;
-      for(auto& pair: fActive) str << pair.first << "\n";
-      throw util::GenException("Duplicate ID") << "In view::Scene::AddDrawable(), tried to add a new "
-                                               << "drawable with ID " << id << " in scene " << fName 
-                                               << ", but an object already exists with this ID!\n"
-                                               << "Active IDs so far are:\n" << str.str() << "\n";
-    }
-    exists = fHidden.find(id);
-    if(exists != fHidden.end()) 
-    {
-      std::stringstream str;
-      for(auto& pair: fHidden) str << pair.first << "\n";
-      throw util::GenException("Duplicate ID") << "In view::Scene::AddDrawable(), tried to add a new "
-                                               << "drawable with ID " << id << " in scene " << fName
-                                               << ", but an object already exists with this ID!\n"
-                                               << "Hidden IDs so far are:\n" << str.str() << "\n";
-    }
-    else
-    {
-      if(active) fActive.emplace(id, std::move(drawable));
-      else fHidden.emplace(id, std::move(drawable));
-      row[fSelfCol] = active;
-      row[fIDCol] = id;
-    }
-    return iter;
-  }
-
   TreeModel::iterator Scene::NewTopLevelNode()
   {
     return fModel.NewNode();
@@ -148,7 +108,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
-    fVAO.Use();
+    fVAO->Use();
     fShader.Use();
     fShader.SetUniform("view", view);
     fShader.SetUniform("projection", persp);
@@ -165,6 +125,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
+    fVAO->Use();
     fSelectionShader.Use();
     fSelectionShader.SetUniform("view", view);
     fSelectionShader.SetUniform("projection", persp);
@@ -179,6 +140,8 @@ namespace mygl
                                            //Drawables are now responsible for binding their own 
                                            //model matrices.
     }
+
+    glBindVertexArray(0);
   }
 
   //This function destroys Drawables that might (and probably should) make opengl calls in their destructors.  

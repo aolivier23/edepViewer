@@ -3,14 +3,14 @@
 //       detailed description of my convoluted object model. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//model includes
+#include "gl/model/VAO.h"
+
 //glad includes
 #include "glad/include/glad/glad.h" //For OpenGL functions and enums
 
 //glm includes
 #include <glm/glm.hpp>
-
-//model includes
-#include "gl/model/Drawable.h"
 
 namespace mygl
 {
@@ -28,10 +28,10 @@ namespace mygl
 
     //Map the definition of Drawable::Vertex to an organization of data on the GPU
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(0));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Drawable::Vertex), (GLvoid*)(0));
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(glm::vec3)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Drawable::Vertex), (GLvoid*)(sizeof(glm::vec3)));
 
     glBindVertexArray(0); //Put current vertex array in unbound state to detect error more easily
   }
@@ -45,27 +45,27 @@ namespace mygl
   }
 
   //Interface between Drawables and VAO.  Return the offset to the first index for this Drawable.
-  unsigned int VAO::Register(const std::vector<Vertex>& vertices)
+  unsigned int VAO::Register(const std::vector<Drawable::Vertex>& vertices)
   { 
     const auto result = fVertices.size();
-    fVertices.insert(vertices.begin(), vertices.end());
+    fVertices.insert(fVertices.end(), vertices.begin(), vertices.end());
     return result;
   }
 
-  unsigned int VAO::Register(const std::vector<Vertex>& vertices, const std::vector<unsigned int> indices)
+  unsigned int VAO::Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices)
   {
     const auto result = fIndices.size();
-    fVertices.insert(vertices.begin(), vertices.end());
-    fIndices.insert(indices.begin(), indices.end());
+    fVertices.insert(fVertices.end(), vertices.begin(), vertices.end());
+    fIndices.insert(fIndices.end(), indices.begin(), indices.end());
     return result;
   }
 
   void VAO::Use()
   {
-    if(fUpload) //Upload data to the GPU once ever?
+    if(fUploadData) //Upload data to the GPU once ever?
     {
-      UploadData();
-      fUpload = false;
+      Upload();
+      fUploadData = false;
     }
 
     glBindVertexArray(fVAO);
@@ -82,7 +82,7 @@ namespace mygl
 
     //Send vertices to the GPU
     glBindBuffer(GL_ARRAY_BUFFER, fVBO);
-    glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(Vertex), &fVertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(Drawable::Vertex), &fVertices[0], GL_STATIC_DRAW);
 
     glBindVertexArray(0); //Put current vertex array in unbound state to detect error more easily
 
