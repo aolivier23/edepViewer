@@ -26,7 +26,8 @@ namespace mygl
                                                                                                                         fIDCol(cols->fVisID), 
                                                                                                                         fCols(cols), 
                                                                                                                         fCutBar(cols->size()), 
-                                                                                                                        fBuffer(fCutBar.fInput)
+                                                                                                                        fBuffer(fCutBar.fInput), 
+                                                                                                                        fVAO(new VAO())
   {
   }
 
@@ -147,6 +148,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
+    fVAO.Use();
     fShader.Use();
     fShader.SetUniform("view", view);
     fShader.SetUniform("projection", persp);
@@ -155,6 +157,8 @@ namespace mygl
     for(auto& pair: fActive) pair.second->Draw(fShader); //This is different from my old DRAWER contract because 
                                                          //Drawables are now responsible for binding their own 
                                                          //model matrices.
+
+    glBindVertexArray(0);
   }
 
   void Scene::RenderSelection(const glm::mat4& view, const glm::mat4& persp)
@@ -183,6 +187,7 @@ namespace mygl
   {
     fActive.erase(fActive.begin(), fActive.end());
     fHidden.erase(fHidden.begin(), fHidden.end());
+    fVAO.reset(new VAO());
     fModel.Clear();
     fSelection = VisID();
   }

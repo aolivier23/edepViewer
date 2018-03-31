@@ -31,6 +31,7 @@ namespace mygl
 {
   class ShaderProg;
   class Drawable;
+  class VAO;
 
   class Scene
   {
@@ -91,6 +92,8 @@ namespace mygl
       //Details to save user code when working with the TreeModel
       TreeModel::Column<bool> fSelfCol;
       TreeModel::Column<VisID> fIDCol;
+
+      std::unique_ptr<VAO> fVAO; //OpenGL resources to be sent to GPU
   };
 }
 
