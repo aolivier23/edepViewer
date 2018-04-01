@@ -108,20 +108,21 @@ namespace mygl
   }
 
   //TODO: Return some sort of TreeView configuration
-  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc)
+  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc, 
+                         std::unique_ptr<SceneConfig>&& config)
   {
     PrepareToAddScene(name);
     ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                      std::forward_as_tuple(name, fragSrc, vertSrc, cols)).first->second, *cols); //lol
+                      std::forward_as_tuple(name, fragSrc, vertSrc, cols, std::move(config))).first->second, *cols); //lol
   }
  
   //TODO: Return some sort of TreeView configuration
   void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc, 
-                                   const std::string& geomSrc)
+                         const std::string& geomSrc, std::unique_ptr<SceneConfig>&& config)
   {
     PrepareToAddScene(name);
     ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols)).first->second, *cols); //lol
+                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols, std::move(config))).first->second, *cols); //lol
   }
 
   void Viewer::PrepareToAddScene(const std::string& name)
@@ -141,9 +142,6 @@ namespace mygl
 
   void Viewer::area_realize()
   {
-    //Quick GUI interlude in a convenient place
-    //set_position(get_width()*0.8); //Set default relative size of GLArea
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }

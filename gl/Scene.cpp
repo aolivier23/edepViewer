@@ -8,6 +8,7 @@
 //gl includes
 #include "gl/Scene.h"
 #include "gl/model/Drawable.h"
+#include "gl/SceneConfig.cpp"
 
 //c++ includes
 #include <sstream>
@@ -17,24 +18,21 @@ namespace mygl
 {
   //Warning: Make sure that Gtk::GLArea::make_current() is called just before this function so that 
   //         the proper GL context is bound for shader allocation.
-  Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols): 
-                                                                                                                        fName(name), fActive(), fHidden(), 
-                                                                                                                        fShader(fragSrc, vertSrc), 
-                                                                                                                        fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc),
-                                                                                                                        fSelection(), fModel(cols), 
-                                                                                                                        fSelfCol(cols->fDrawSelf),  
-                                                                                                                        fIDCol(cols->fVisID), 
-                                                                                                                        fCols(cols), 
-                                                                                                                        fCutBar(cols->size()), 
-                                                                                                                        fBuffer(fCutBar.fInput), 
-                                                                                                                        fVAO(new VAO())
+  Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols, 
+               std::unique_ptr<SceneConfig>&& config): 
+                                                      fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc), 
+                                                      fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc),
+                                                      fSelection(), fModel(cols), fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), 
+                                                      fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput), fVAO(new VAO()), 
+                                                      fConfig(std::move(config))
   {
   }
 
   Scene::Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-               std::shared_ptr<mygl::ColRecord>& cols): fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc, geomSrc), 
-               fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc), fModel(cols), 
-               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput)
+               std::shared_ptr<mygl::ColRecord>& cols, std::unique_ptr<SceneConfig>&& config): fName(name), fActive(), fHidden(), 
+               fShader(fragSrc, vertSrc, geomSrc), fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc), fModel(cols), 
+               fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput), 
+               fConfig(std::move(config))
   {
   }
 
@@ -108,6 +106,7 @@ namespace mygl
   {
     //Note that these uniform names assume that like-named uniforms are 
     //handled by the shader programs used to form fShader
+    fConfig->BeforeRender();
     fVAO->Use();
     fShader.Use();
     fShader.SetUniform("view", view);
@@ -117,6 +116,7 @@ namespace mygl
     for(auto& pair: fActive) pair.second->Draw(fShader); //This is different from my old DRAWER contract because 
                                                          //Drawables are now responsible for binding their own 
                                                          //model matrices.
+    fConfig->AfterRender();
 
     glBindVertexArray(0);
   }

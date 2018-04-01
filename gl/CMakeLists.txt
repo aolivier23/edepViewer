@@ -15,7 +15,7 @@ add_library( TreeModel TreeModel.cpp )
 target_link_libraries( TreeModel )
 install( TARGETS TreeModel DESTINATION lib )
 
-add_library( Scene VisID.cpp ColRecord.cpp UserCut.cpp Scene.cpp )
+add_library( Scene VisID.cpp ColRecord.cpp UserCut.cpp SceneConfig.cpp Scene.cpp )
 target_link_libraries( Scene glad Drawable exception GLObjects TreeModel VAO)
 install( TARGETS Scene DESTINATION lib )
 
@@ -23,4 +23,4 @@ add_library( Viewer Viewer.cpp )
 target_link_libraries( Viewer Camera Scene ${OPENGL_LIBRARIES})
 install( TARGETS Viewer DESTINATION lib )
 
-install( FILES TreeModel.h Viewer.h VisID.h UserCut.h Scene.h DESTINATION include/gl )
+install( FILES TreeModel.h Viewer.h VisID.h UserCut.h Scene.h SceneConfig.cpp DESTINATION include/gl )

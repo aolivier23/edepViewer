@@ -46,6 +46,7 @@ namespace draw
       //Drawing data
       mygl::Palette fPalette; //Mapping from dE/dx to color
       float fLineWidth; //The width of lines to be drawn for energy deposits
+      float fMinLength; //Hit segments with length less than this value will not be drawn
 
       class EDepRecord: public mygl::ColRecord
       {

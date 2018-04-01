@@ -27,7 +27,8 @@ namespace draw
 {
   EDepDEdx::EDepDEdx(const tinyxml2::XMLElement* config): fPalette(config->FloatAttribute("dEdxMin", 0.), 
                                                                    config->FloatAttribute("dEdxMax", 8.)), 
-                                                          fLineWidth(config->FloatAttribute("LineWidth", 0.008)), fEDepRecord(new EDepRecord())
+                                                          fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
+                                                          fMinLength(config->FloatAttribute("MinLength", 1.0)), fEDepRecord(new EDepRecord())
   {    
   }
 
@@ -91,7 +92,7 @@ namespace draw
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
 
-        //if((start-stop).Vect().Mag() < 0.1) continue; //TODO: Can I move this to the GPU?
+        if((start-stop).Vect().Mag() < fMinLength) continue;
           
         //Get the density of material at the middle of this energy deposit
         /*const auto diff = start.Vect()-stop.Vect();

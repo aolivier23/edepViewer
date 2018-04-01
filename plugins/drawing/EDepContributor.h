@@ -48,6 +48,7 @@ namespace draw
       std::map<int, glm::vec3> fPDGToColor;
       mygl::ColorIter fPDGColor; //TODO: Merge this with fPDGToColor 
       float fLineWidth; //The width of lines to be drawn for energy deposits
+      float fMinLength; //Hit segments with length less than this will not be drawn
 
       class EDepRecord: public mygl::ColRecord
       {

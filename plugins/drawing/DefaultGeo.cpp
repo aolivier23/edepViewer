@@ -85,7 +85,7 @@ namespace draw
     //geoTree.append_column("Volume Name", fGeoRecord.fName);
     //geoTree.append_column("Material", fGeoRecord.fMaterial);
     viewer.MakeScene("Geometry", fGeoRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
-                     INSTALL_GLSL_DIR "/triangleBorder.geom");
+                     INSTALL_GLSL_DIR "/triangleBorder.geom", std::unique_ptr<mygl::SceneConfig>(new GeoConfig()));
   }
 
   REGISTER_PLUGIN(DefaultGeo, GeoDrawer);

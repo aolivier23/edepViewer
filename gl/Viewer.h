@@ -13,6 +13,7 @@
 #include "gl/camera/Camera.h"
 #include "gl/Scene.h"
 #include "util/GenException.h"
+#include "gl/SceneConfig.cpp"
 
 //glm includes
 #include <glm/glm.hpp>
@@ -45,9 +46,10 @@ namespace mygl
 
       //User access to Scenes
       void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc = INSTALL_GLSL_DIR "/userColor.frag", 
-                     const std::string& vertSrc = INSTALL_GLSL_DIR "/camera.vert");
+                     const std::string& vertSrc = INSTALL_GLSL_DIR "/camera.vert", 
+                     std::unique_ptr<SceneConfig>&& config = std::unique_ptr<SceneConfig>(new SceneConfig()));
       void MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc,
-                     const std::string& geomSrc);
+                     const std::string& geomSrc, std::unique_ptr<SceneConfig>&& config = std::unique_ptr<SceneConfig>(new SceneConfig()));
 
       //Makes sure openGL context is current before destroying Drawables.  
       void RemoveAll(const std::string& sceneName);

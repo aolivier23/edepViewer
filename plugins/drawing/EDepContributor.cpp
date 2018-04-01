@@ -27,6 +27,7 @@ namespace draw
 {
   EDepContributor::EDepContributor(const tinyxml2::XMLElement* config): fPDGToColor(), fPDGColor(), 
                                                                         fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
+                                                                        fMinLength(config->FloatAttribute("MinLength", 1.0)),
                                                                         fEDepRecord(new EDepRecord)
   {    
   }
@@ -69,8 +70,9 @@ namespace draw
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
+
+        if((stop-start).Vect().Mag() < fMinLength) continue;
           
-        //TODO: dE/dx plugin so I can use a simpler algorithm when neded.
         //Get the weighted density of the material that most of this energy deposit was deposited in.  Increase the accuracy of this 
         //material guess by increasing the number of sample points, but beware of event loading time!
         /*const size_t nSamples = 1;

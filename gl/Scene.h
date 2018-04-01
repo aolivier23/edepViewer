@@ -33,13 +33,15 @@ namespace mygl
   class ShaderProg;
   class Drawable;
   class VAO;
+  class SceneConfig;
 
   class Scene
   {
     public:
-      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols);
+      Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, std::shared_ptr<mygl::ColRecord>& cols, 
+            std::unique_ptr<SceneConfig>&& config);
       Scene(const std::string& name, const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
-            std::shared_ptr<mygl::ColRecord>& cols);
+            std::shared_ptr<mygl::ColRecord>& cols, std::unique_ptr<SceneConfig>&& config);
       
       virtual ~Scene();
 
@@ -121,6 +123,9 @@ namespace mygl
 
       //Cut bar buffer
       std::array<char, 256> fBuffer;
+
+      //User handle to configure openGL just before and after rendering.  
+      std::unique_ptr<SceneConfig> fConfig;
 
     private: 
       void Transfer(std::map<VisID, std::unique_ptr<Drawable>>& from, std::map<VisID, std::unique_ptr<Drawable>>& to, const VisID& id);      

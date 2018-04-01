@@ -3,6 +3,9 @@
 //       draws 3D shapes using ROOT's tesselation facilities.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//gl includes
+#include "gl/SceneConfig.cpp"
+
 //draw includes
 #include "plugins/drawing/GeoDrawer.cpp"
 
@@ -58,6 +61,21 @@ namespace draw
       };
 
       std::shared_ptr<GeoRecord> fGeoRecord;
+
+      class GeoConfig: public mygl::SceneConfig
+      {
+        public:
+          GeoConfig() = default;
+          virtual ~GeoConfig() = default;
+
+          virtual void BeforeRender() override
+          {
+          }
+
+          virtual void AfterRender() override
+          {
+          }
+      };
   };
 }
 
