@@ -55,9 +55,10 @@ int main(const int argc, const char** argv)
   // Setup style
   //TODO: All IMGUI stuff from this point onwards needs to become part of some Window class?  Try to reduce boilerplate 
   //      as much as possible in case I need to switch windowing systems one day (i.e. Emscripten?).
-  //TODO: Option to choose background style.  Dark for monitors and white for projectors.  
+  //TODO: Use ImGui::StyleColorsLight() one day when I have time to make the font more bold
   ImGui::StyleColorsDark();
   //ImGui::StyleColorsClassic();
+  //ImGui::StyleColorsLight();
   
   //TODO: Can I use glm here instead?  
   //TODO: Get this from application Model.

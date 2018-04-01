@@ -90,6 +90,8 @@ namespace draw
         const auto start = edep.Start;
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
         const auto stop = edep.Stop;
+
+        //if((start-stop).Vect().Mag() < 0.1) continue; //TODO: Can I move this to the GPU?
           
         //Get the density of material at the middle of this energy deposit
         /*const auto diff = start.Vect()-stop.Vect();
