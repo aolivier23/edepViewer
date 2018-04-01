@@ -24,59 +24,10 @@
 //c++ includes
 #include <regex>
 
-namespace
-{
-  //TODO: This function seems generally useful for working with edepsim.  Move it to its' own file.
-  std::string ProcStr(const TG4TrajectoryPoint& pt)
-  {
-    const auto proc = pt.Process;
-    const auto subProc = pt.Subprocess;
-                                                                                                    
-    std::string procStr = "";
-    //Process Type
-    if(proc == 0)      procStr = "Not Defined";
-    else if(proc == 1) procStr = "Transportation";
-    else if(proc == 2) procStr = "Electromagnetic";
-    else if(proc == 3) procStr = "Optical";
-    else if(proc == 4) procStr = "Hadronic";
-    else if(proc == 5) procStr = "PhotoLeptonHadron";
-    else if(proc == 6) procStr = "Decay";
-    else if(proc == 7) procStr = "General";
-    else if(proc == 8) procStr = "Parameterization";
-    else if(proc == 9) procStr = "User Defined";
-    else procStr = "Unknown";
-                                                                                                    
-    procStr += " ";
-                                                                                                    
-    //Subtype
-    if(subProc == 1)        procStr += "Coulomb Scattering";
-    else if(subProc == 2)   procStr += "Ionization";
-    else if(subProc == 3)   procStr += "Bremsstrahlung";
-    else if(subProc == 4)   procStr += "Pair Production";
-    else if(subProc == 8)   procStr += "Nuclear Stopping";
-                                                                                                    
-    else if(subProc == 10)  procStr += "Multiple Scattering";
-    else if(subProc == 12)  procStr += "Photoelectric";
-    else if(subProc == 13)  procStr += "Compton Scattering";
-    else if(subProc == 14)  procStr += "Gamma Conversion";
-                                                                                                    
-    else if(subProc == 111) procStr += "Elastic";
-    else if(subProc == 121) procStr += "Inelastic";
-    else if(subProc == 131) procStr += "Capture";
-    else if(subProc == 161) procStr += "Charge Exchange";
-                                                                                                    
-    else if(subProc == 401) procStr += "General Step Limit";
-    else                    procStr += "Unknown";
-                                                                                                    
-    return procStr;
-  }
-}
-
 namespace draw
 {
-  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): fTrajRecord(new TrajRecord()), fTrajPtRecord(new TrajPtRecord)
+  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): fTrajRecord(new TrajRecord())
   {
-    fPointRad = config->FloatAttribute("PointRad", 0.010);
     fLineWidth = config->FloatAttribute("LineWidth", 0.008);
   }
 
@@ -87,13 +38,6 @@ namespace draw
     //trajTree.append_column("Particle Type", fTrajRecord.fPartName);
     //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
     //trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
-
-    //Configure Trajectory Point Scene
-    viewer.MakeScene("TrajPts", fTrajPtRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/widePoint.geom");
-    /*ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
-    ptTree.append_column("Process", fTrajPtRecord.fProcess);
-    ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
-    ptTree.append_column("Time", fTrajPtRecord.fTime);*/
   }
 
   void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
@@ -101,8 +45,6 @@ namespace draw
     //First, clear the scenes I plan to draw on
     auto& trajScene = viewer.GetScene("Trajectories");
     trajScene.RemoveAll();
-    auto& ptScene = viewer.GetScene("TrajPts");
-    ptScene.RemoveAll();
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -140,29 +82,19 @@ namespace draw
       const int pdg = std::stoi(match[1].str());
       const auto color = (*(services.fPDGToColor))[pdg];
 
-      //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
-      auto ptIter = ptScene.AddDrawable<mygl::Point>(nextID++, 
-                                                     ptScene.NewTopLevelNode(), true, 
-                                                     glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
-      auto& ptRow = *ptIter;
-      ptRow[fTrajPtRecord->fMomMag] = -1.; //TODO: Get primary momentum
-      ptRow[fTrajPtRecord->fTime] = ptPos.T();
-      ptRow[fTrajPtRecord->fProcess] = nu+" "+match[5].str()+" "+match[6].str();
-      ptRow[fTrajPtRecord->fParticle] = nu;
-
       const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajectory(viewer, nextID, iter, child, parentID, ptIter, services);
+      for(const auto& child: children) AppendTrajectory(viewer, nextID, iter, child, parentID, services);
     }
   }
 
   //Helper functions for drawing trajectories and trajectory points
   void LinearTraj::AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                     const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                                    const mygl::TreeModel::iterator parentPt, Services& services)
+                                    Services& services)
   {
     const int pdg = traj.PDGCode;
     const auto color = (*(services.fPDGToColor))[pdg];
-                                                                                                                                                               
+
     auto points = traj.Points;
     std::vector<glm::vec3> vertices;
     for(auto pointIt = points.begin(); pointIt != points.end(); ++pointIt)
@@ -201,7 +133,6 @@ namespace draw
       }
     }
 
-    //TODO: Change "false" back to "true" to draw trajectories by default
     auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), vertices, 
                                                                         glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     auto& row = *iter;
@@ -213,9 +144,9 @@ namespace draw
     row[fTrajRecord->fEnergy] = p.E()-invariantMass; //Kinetic energy
     ++nextID;
 
-    //TODO: Append children based on what points they start at
     //Second pass over trajectory points to find starting points of children.
     auto children = parentToTraj[traj.TrackId];
+
     //Produce map of closest trajectory point to child trajectory
     std::map<std::vector<TG4TrajectoryPoint>::iterator, std::vector<TG4Trajectory>> ptToTraj;
     for(const auto& child: children)
@@ -231,30 +162,12 @@ namespace draw
     for(auto ptIt = points.begin(); ptIt != points.end(); ++ptIt)
     {
       const auto& point = *ptIt;
-      auto ptIter = AddTrajPt(viewer, nextID, traj.Name, point, parentPt, glm::vec4(color, 1.0));
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
-        AppendTrajectory(viewer, nextID, iter, child, parentToTraj, ptIter, services);
+        AppendTrajectory(viewer, nextID, iter, child, parentToTraj, services);
       }
     }
-  }
-
-  mygl::TreeModel::iterator LinearTraj::AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
-                                                  const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator parent, const glm::vec4& color)
-  {
-    //Add Trajectory Point
-    const auto pos = pt.Position;
-    auto ptIter = viewer.GetScene("TrajPts").AddDrawable<mygl::Point>(nextID++,
-                                                                      parent, true,
-                                                                      glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
-    auto& ptRow = *ptIter;
-    ptRow[fTrajPtRecord->fMomMag] = pt.Momentum.Mag();
-    ptRow[fTrajPtRecord->fTime] = pos.T();
-    ptRow[fTrajPtRecord->fProcess] = ::ProcStr(pt); //TODO: Convert Geant process codes to string
-    ptRow[fTrajPtRecord->fParticle] = particle;
-  
-    return ptIter;
   }
 
   REGISTER_PLUGIN(LinearTraj, EventDrawer);

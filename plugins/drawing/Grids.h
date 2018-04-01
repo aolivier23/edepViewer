@@ -1,9 +1,9 @@
-//File: Guides.cpp
-//Brief: Interface between drawing code and event display window.  A Guides is given a chance to request one or more 
-//       Scene names from a Viewer.  Then, the main window tells the input provider to give the Guides a source of data 
-//       to draw, and the Guides is given a chance to remove old objects and add new objects to its Scene(s).  
-//       Guides is the abstract base class for all plugins that can be used with the edepsim event display. 
-//TODO: Make a Guides responsible for exactly one Scene?  This would mean separate loops for trajectory point 
+//File: Grids.cpp
+//Brief: Interface between drawing code and event display window.  A Grids is given a chance to request one or more 
+//       Scene names from a Viewer.  Then, the main window tells the input provider to give the Grids a source of data 
+//       to draw, and the Grids is given a chance to remove old objects and add new objects to its Scene(s).  
+//       Grids is the abstract base class for all plugins that can be used with the edepsim event display. 
+//TODO: Make a Grids responsible for exactly one Scene?  This would mean separate loops for trajectory point 
 //      and trajectory drawing with my current design. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
@@ -17,8 +17,8 @@
 //tinyxml2 include for configuration
 #include <tinyxml2.h>
 
-#ifndef DRAW_GUIDES_H
-#define DRAW_GUIDES_H
+#ifndef DRAW_GRIDS_H
+#define DRAW_GRIDS_H
 
 class TGeoManager;
 
@@ -29,15 +29,15 @@ namespace mygl
 
 namespace draw
 {
-  class Guides: public GeoDrawer
+  class Grids: public GeoDrawer
   {
     public:
-      Guides(const tinyxml2::XMLElement* config); //Configure a new Guides
-      virtual ~Guides() = default;
+      Grids(const tinyxml2::XMLElement* config); //Configure a new Grids
+      virtual ~Grids() = default;
 
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
-      //behavior common to all Guides here.
+      //behavior common to all Grids here.
       virtual void doRequestScenes(mygl::Viewer& viewer);
       virtual void doDrawEvent(const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID);
 
@@ -58,4 +58,4 @@ namespace draw
   };
 }
 
-#endif //DRAW_GUIDES_H
+#endif //DRAW_GRIDS_H

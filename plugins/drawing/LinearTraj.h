@@ -41,16 +41,12 @@ namespace draw
                                mygl::VisID& nextID, Services& services) override;
 
       //Drawing data
-      float fPointRad; //Radius of points to draw
       float fLineWidth; //Width of lines to draw
 
       //Helper functions for drawing trajectories and trajectory points
       void AppendTrajectory(mygl::Viewer& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                             const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                            const mygl::TreeModel::iterator ptRow, Services& services);
-
-      mygl::TreeModel::iterator AddTrajPt(mygl::Viewer& scene, mygl::VisID& nextID, const std::string& particle, 
-                                    const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator ptRow, const glm::vec4& color);
+                            Services& services);
 
       //Description of the data saved for a trajectory
       class TrajRecord: public mygl::ColRecord
@@ -67,25 +63,6 @@ namespace draw
       };
 
       std::shared_ptr<TrajRecord> fTrajRecord;
-
-      //Description of the data saved for a TrajectoryPoint
-      class TrajPtRecord: public mygl::ColRecord
-      {
-        public:
-          TrajPtRecord(): ColRecord(), fMomMag("Momentum [MeV/c]"), fTime("Time [ns]"), fProcess("Process"), fParticle("Particle")
-          {
-            Add(fMomMag);
-            Add(fTime);
-            Add(fProcess);
-            Add(fParticle);
-          }
- 
-          mygl::TreeModel::Column<double> fMomMag;
-          mygl::TreeModel::Column<double> fTime;
-          mygl::TreeModel::Column<std::string> fProcess;
-          mygl::TreeModel::Column<std::string> fParticle;
-      };
-      std::shared_ptr<TrajPtRecord> fTrajPtRecord;
   };
 }
 
