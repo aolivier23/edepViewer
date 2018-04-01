@@ -87,6 +87,7 @@ namespace mygl
     for(size_t col = 2; col < fCols->size(); ++col) 
     {
       ImGui::Text(fCols->Name(col).c_str());
+      //ImGui::SetColumnWidth(-1, ); //TODO: Make sure columns shown whole label and scroll
       ImGui::NextColumn();
     }
     ImGui::Separator();
@@ -266,8 +267,10 @@ namespace mygl
 
     //If this Node's VisID is selected, highlight this line in the list tree
     const bool selected = (id == fSelection);
+    const bool hasChildren = (iter->begin() != iter->end());
+    bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
-    const bool open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
+    open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
 
     //If this Node was selected by a single click, select its' VisID.  
     if(ImGui::IsItemClicked()) SelectID(id);
@@ -291,13 +294,26 @@ namespace mygl
       if(ImGui::Selectable(((*iter)[col]+"##"+idBase).c_str(), selected)) SelectID(id);
       ImGui::NextColumn();
     }
+    
+    //Scroll to this Node if it's selected
+    if(selected) ImGui::SetScrollHere();
 
     ImGui::Separator(); 
 
     //Draw children of this Node
     if(open) 
     {
-      for(auto child = iter->begin(); child != iter->end(); ++child) DrawNode(child, false);
+      if(hasChildren)
+      {
+        ImGuiListClipper clipper(INT_MAX);
+        while(clipper.Step())
+        {
+          for(auto child = iter->begin()+clipper.DisplayStart; child != iter->end() && child < iter->begin()+clipper.DisplayEnd; ++child) 
+          {
+            DrawNode(child, false);
+          }
+        }
+      }
       ImGui::TreePop();
     }
   }

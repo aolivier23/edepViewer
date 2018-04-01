@@ -70,6 +70,13 @@ namespace mygl
     return copy;
   }
 
+  TreeModel::iterator TreeModel::iterator::operator +(const int dist)
+  {
+    auto copy = *this;
+    copy.fNode += dist;
+    return copy;
+  }
+
   //TODO: Needs parent
   /*operator (bool)() const
   {

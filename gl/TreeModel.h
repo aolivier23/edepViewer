@@ -182,6 +182,8 @@ namespace mygl
           //Minimal STL-style iterator interface
           iterator operator ++();
           iterator operator ++(int);
+
+          iterator operator +(const int dist);
           //operator (bool)() const;
           //iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
           bool operator <(const iterator& other) const; 

@@ -81,18 +81,12 @@ int main(const int argc, const char** argv)
     // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
     glfwPollEvents(); //TODO: Since this is an event viewer rather than a game, use glfwWaitEvents() instead?
-    //glfwWaitEvents(); //TODO: Experiment with this instead.  I don't notice the difference yet.  
     ImGui_ImplGlfwGL3_NewFrame();
 
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-    //TODO: Does this mean that Viewer needs to be rendered first?
-    /*glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT); */
 
-    //TODO: Render my event display stuff here.  Application Model probably has a Render() function 
-    //      that is expected to be called in rendering loop.
     evd.Render(display_w, display_h, io);
 
     //#if defined(DEBUG) //TODO: Does this work with non-GCC compilers?
