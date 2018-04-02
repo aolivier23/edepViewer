@@ -70,6 +70,7 @@ namespace mygl
           inline iterator end() { return iterator(fChildren.end()); }
           inline const_iterator cbegin() const { return const_iterator(fChildren.cbegin()); }
           inline const_iterator cend() const { return const_iterator(fChildren.cend()); }
+          size_t NChildren() const { return fChildren.size(); }
                                                                                                                         
           //Alter parentage
           inline iterator NewChild(const ColumnModel& cols) 

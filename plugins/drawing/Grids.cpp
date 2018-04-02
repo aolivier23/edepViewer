@@ -24,7 +24,7 @@ namespace draw
 {
   Grids::Grids(const tinyxml2::XMLElement* config): fGuideRecord(new GuideRecord())
   {
-    fLineWidth = config->FloatAttribute("LineWidth", 0.002);
+    fLineWidth = config->FloatAttribute("LineWidth", 0.006);
   }
 
   void Grids::doRequestScenes(mygl::Viewer& viewer)
