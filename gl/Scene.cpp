@@ -301,7 +301,7 @@ namespace mygl
     ImGui::Separator(); 
 
     //Draw children of this Node
-    if(open && iter->NChildren() > 0) 
+    if(open) 
     {
       //TODO: Right now, frame rate really drops on restrictive cuts because I have to filter so many entries before 
       //      I get the ones clipper needs.  A couple of options might help here:
@@ -313,33 +313,45 @@ namespace mygl
       //          I haven't yet thought of a strategy that gives me the number of children that pass cuts in time for 
       //          clipper's construction, but that might also help if I could make it work.  
 
-      //First, let clipper figure out how many lines it wants
-      ImGuiListClipper clipper(iter->NChildren());
-      clipper.Step(); //clipper.StepNo == 0
-      auto firstChild = iter->end();
-      for(auto child = iter->begin(); child != iter->end(); ++child) 
-      {
-        if(fCutBar.do_filter(child)) 
+      //TODO: Figure this number out programatically.  Measured it in an example for now
+      if(iter->NChildren() > 100) //21 entries with max height on my laptop, but drawing 100 entries should not be a problem
+      {  
+        //First, let clipper figure out how many lines it wants
+        ImGuiListClipper clipper(iter->NChildren());
+        clipper.Step(); //clipper.StepNo == 0
+        auto firstChild = iter->end();
+        for(auto child = iter->begin(); child != iter->end(); ++child) 
         {
-          DrawNode(child, false); //ImGuiListClipper really just needs me to draw one example line for step 0
-          firstChild = child;
-          break;
+          if(fCutBar.do_filter(child)) 
+          {
+            DrawNode(child, false); //ImGuiListClipper really just needs me to draw one example line for step 0
+            firstChild = child;
+            break;
+          }
         }
-      }
-      clipper.Step(); //clipper.StepNo == 1
-
-      //I now know how many lines clipper wants to draw.  Find enough children that pass cut bar to fill those lines
-      size_t pos = 0;
-      for(auto child = firstChild; child != iter->end() && pos < clipper.DisplayEnd; ++child)
-      {
-        if(fCutBar.do_filter(child)) //TODO: do_filter() is too slow for an imgui loop
+        clipper.Step(); //clipper.StepNo == 1
+  
+        //I now know how many lines clipper wants to draw.  Find enough children that pass cut bar to fill those lines
+        size_t pos = 0;
+        for(auto child = firstChild; child != iter->end() && pos < clipper.DisplayEnd; ++child)
         {
-          ++pos;
-          if(pos >= clipper.DisplayStart) DrawNode(child, false);
+          if(fCutBar.do_filter(child)) //TODO: do_filter() is too slow for an imgui loop
+          {
+            ++pos;
+            if(pos >= clipper.DisplayStart) DrawNode(child, false);
+          }
         }
+        clipper.Step(); //clipper.StepNo == 3
+        ImGui::TreePop();
       }
-      clipper.Step(); //clipper.StepNo == 3
-      ImGui::TreePop();
+      else //This is a short list, so no need for ListClipper
+      {
+        for(auto child = iter->begin(); child != iter->end(); ++child)
+        {
+          if(fCutBar.do_filter(child)) DrawNode(child, false);
+        }
+        ImGui::TreePop();
+      }
     }
   }
 }

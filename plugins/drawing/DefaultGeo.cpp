@@ -44,6 +44,10 @@ namespace draw
   void DefaultGeo::AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, 
                                              TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
   {
+    //TODO: This is actually a pretty cool way to make a basic ASCII hierarchical representation.  Maybe enable it in DEBUG mode?
+    //for(size_t tab = 0; tab < depth; ++tab) std::cout << "  ";
+    //std::cout << "Appending node " << node->GetName() << "\n";
+    
     //Get the model matrix for node using it's parent's matrix
     TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
     local.MultiplyLeft(&mat);

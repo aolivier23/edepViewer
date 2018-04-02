@@ -63,23 +63,35 @@ namespace draw
         
       //Turn GENIE's interaction string into something easier to read
       std::smatch match;
-      if(!std::regex_match(prim.Reaction, match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
-                                                                      << prim.Reaction << "\n";
-
-      const std::string nu = TDatabasePDG::Instance()->GetParticle(std::stoi(match[1].str()))->GetName();
-      //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
-
-      /*const auto particle = TDatabasePDG::Instance()->GetParticle(std::stoi(match[3].str()));
-      if(particle)
+      std::string nu;
+      int pdg;
+      if(std::regex_match(prim.Reaction, match, genieToEvd)) 
       {
-        const std::string nucleon = particle->GetName(); 
-      }*/
-      row[fTrajRecord->fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
-      row[fTrajRecord->fEnergy] = -1; //TODO: Use std::regex (maybe) to extract this from prim.Reaction
 
-      //Add this interaction vertex to the scene of trajectory points
+        const std::string nu = TDatabasePDG::Instance()->GetParticle(std::stoi(match[1].str()))->GetName();
+        //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
+
+        /*const auto particle = TDatabasePDG::Instance()->GetParticle(std::stoi(match[3].str()));
+        if(particle)
+        {
+          const std::string nucleon = particle->GetName(); 
+        }*/
+
+        //Add this interaction vertex to the scene of trajectory points
+        pdg = std::stoi(match[1].str());
+      }
+      else
+      {
+        std::cerr << "WARNING: Got interaction string from GENIE that does not match what I expect:\n"
+                  << prim.Reaction << "\n";
+        nu = prim.Reaction;
+        pdg = 0; //Supposed to be a "Geantino" to indicate that something is wrong
+      }
+
+      row[fTrajRecord->fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
+      row[fTrajRecord->fEnergy] = -1; //TODO: Get this from updated TG4PrimaryVertex?
+
       const auto ptPos = prim.Position;
-      const int pdg = std::stoi(match[1].str());
       const auto color = (*(services.fPDGToColor))[pdg];
 
       const auto& children = parentID[-1];

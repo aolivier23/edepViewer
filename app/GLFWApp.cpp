@@ -90,8 +90,8 @@ int main(const int argc, const char** argv)
     evd.Render(display_w, display_h, io);
 
     //#if defined(DEBUG) //TODO: Does this work with non-GCC compilers?
-      bool showMetrics = true;
-      ImGui::ShowMetricsWindow(&showMetrics);
+      //bool showMetrics = true;
+      //ImGui::ShowMetricsWindow(&showMetrics);
     //#endif
 
     ImGui::Render();
