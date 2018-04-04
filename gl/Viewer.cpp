@@ -81,6 +81,7 @@ namespace mygl
     {
       //A button to select the current Camera
       ImGui::Text("Cameras");
+      ImGui::Separator();
       for(auto cam = fCameras.begin(); cam != fCameras.end(); ++cam) 
       {
         selected = (fCurrentCamera == cam);
@@ -94,6 +95,7 @@ namespace mygl
       //Render overall Viewer controls
       ImGui::Separator();
       ImGui::Text("Viewer Controls");
+      ImGui::Separator();
       ImGui::ColorEdit3("Choose a Background", glm::value_ptr(fBackgroundColor));
       //TODO: Am I missing any controls?  Please let me know if you have requests!
     }

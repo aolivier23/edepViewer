@@ -5,6 +5,8 @@ link_directories( /usr/local/lib )
 include_directories( "${IMGUI_DIR}" )
 link_directories( "${IMGUI_DIR}" )
 
+add_definitions(-DFONT_DIR="${IMGUI_DIR}/misc/fonts")
+
 #Set up edep-sim
 #set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
 #include_directories( "${EDEP_DIR}/include/edep-sim" )

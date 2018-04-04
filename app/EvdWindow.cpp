@@ -237,7 +237,7 @@ namespace mygl
     {
       //Pop up legend of particle colors used
       auto db = TDatabasePDG::Instance();
-      ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
+      //ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
       ImGui::Begin("Legend");
       for(auto& pdg: *(fServices.fPDGToColor))
       {

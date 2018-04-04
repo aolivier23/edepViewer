@@ -44,6 +44,7 @@ int main(const int argc, const char** argv)
   // Setup ImGui binding
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); 
+
   ImGui_ImplGlfwGL3_Init(window, true);
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -53,12 +54,14 @@ int main(const int argc, const char** argv)
   //      myself?  Leaning towards former option to make switching window creation libraries as easy as possible.  
 
   // Setup style
+  //TODO: Make style stuff either part of Window class or write it in a function with style default values.  
   //TODO: All IMGUI stuff from this point onwards needs to become part of some Window class?  Try to reduce boilerplate 
   //      as much as possible in case I need to switch windowing systems one day (i.e. Emscripten?).
-  //TODO: Use ImGui::StyleColorsLight() one day when I have time to make the font more bold
-  ImGui::StyleColorsDark();
-  //ImGui::StyleColorsClassic();
-  //ImGui::StyleColorsLight();
+  //ImGui::StyleColorsDark();
+  ImGui::StyleColorsLight();
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(209./255., 209./255., 209./255., 1));
+  
+  io.Fonts->AddFontFromFileTTF(FONT_DIR "/Roboto-Medium.ttf", 18.0f); //Because the default font is not as readable
   
   //TODO: Can I use glm here instead?  
   //TODO: Get this from application Model.
