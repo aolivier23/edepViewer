@@ -333,7 +333,7 @@ namespace mygl
   
         //I now know how many lines clipper wants to draw.  Find enough children that pass cut bar to fill those lines
         size_t pos = 0;
-        for(auto child = firstChild; child != iter->end() && pos < clipper.DisplayEnd; ++child)
+        for(auto child = firstChild+1; child != iter->end() && pos < clipper.DisplayEnd; ++child)
         {
           if(fCutBar.do_filter(child)) //TODO: do_filter() is too slow for an imgui loop
           {
