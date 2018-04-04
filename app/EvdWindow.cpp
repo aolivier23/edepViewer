@@ -273,7 +273,7 @@ namespace mygl
         goto_event(entry);
       }*/
       int ids[] = {fSource->RunID(), fSource->EventID()};
-      if(ImGui::InputInt2("(Run, Event)", ids))
+      if(ImGui::InputInt2("(Run, Event)", ids, ImGuiInputTextFlags_EnterReturnsTrue))
       {
         goto_id(ids[0], ids[1]);
       }
@@ -314,11 +314,11 @@ namespace mygl
 
   void EvdWindow::goto_id(const int run, const int evt)
   {
-    if(fSource->GoTo(evt))
+    if(fSource->GoTo(run, evt))
     {
       ReadEvent();
     }
-    else std::cerr << "Failed to get event " << evt << " from file " << fSource->GetFile() << "\n";
+    else std::cerr << "Failed to get event (" << run << ", " << evt << ") from file " << fSource->GetFile() << "\n";
   }
 
   void EvdWindow::next_event()

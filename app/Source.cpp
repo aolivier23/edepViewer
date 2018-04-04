@@ -20,7 +20,10 @@ namespace src
     fReader.SetTree("EDepSimEvents", fFile.get());
     //TODO: Make a copy of this tree that passes some cuts instead?  Requires that those cuts come from user input somehow.  
     //      Should probably do this in a separate file so EvdWindow can parse the options file for cuts to apply.
-    fReader.GetTree()->BuildIndex("RunId", "EventId");
+    if(fReader.GetTree()->BuildIndex("RunId", "EventId") <= 0)
+    {
+      std::cerr << "In Source constructor, failed to build TTreeIndex on branches RunId and EventId.\n";
+    }
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
