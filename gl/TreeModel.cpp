@@ -70,12 +70,12 @@ namespace mygl
     return copy;
   }
 
-  TreeModel::iterator TreeModel::iterator::operator +(const int dist)
+  /*TreeModel::iterator TreeModel::iterator::operator +(const int dist)
   {
     auto copy = *this;
     copy.fNode += dist;
     return copy;
-  }
+  }*/
 
   //TODO: Needs parent
   /*operator (bool)() const
@@ -83,10 +83,10 @@ namespace mygl
     return fNode == 
   }*/
 
-  bool TreeModel::iterator::operator <(const iterator& other) const
+  /*bool TreeModel::iterator::operator <(const iterator& other) const
   { 
     return fNode < other.fNode;
-  }
+  }*/
 
   bool TreeModel::iterator::operator ==(const iterator& other) const
   {
@@ -127,10 +127,10 @@ namespace mygl
     return fNode == 
   }*/
                                                                
-  bool TreeModel::const_iterator::operator <(const const_iterator& other) const
+  /*bool TreeModel::const_iterator::operator <(const const_iterator& other) const
   { 
     return fNode < other.fNode;
-  }
+  }*/
                                                                
   bool TreeModel::const_iterator::operator ==(const const_iterator& other) const
   {

@@ -267,7 +267,7 @@ namespace mygl
     const auto idBase = ss.str();
 
     //If this Node's VisID is selected, highlight this line in the list tree
-    const bool selected = (id == fSelection);
+    const bool selected = (id == fSelection); //TODO: Open also if a child is selected
     bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
     open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
@@ -333,7 +333,7 @@ namespace mygl
   
         //I now know how many lines clipper wants to draw.  Find enough children that pass cut bar to fill those lines
         size_t pos = 0;
-        for(auto child = firstChild+1; child != iter->end() && pos < clipper.DisplayEnd; ++child)
+        for(auto child = ++firstChild; child != iter->end() && pos != clipper.DisplayEnd; ++child)
         {
           if(fCutBar.do_filter(child)) //TODO: do_filter() is too slow for an imgui loop
           {

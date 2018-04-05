@@ -5,6 +5,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //c++ includes
+#include <list>
 #include <vector>
 #include <memory>
 #include <sstream>
@@ -76,14 +77,14 @@ namespace mygl
           inline iterator NewChild(const ColumnModel& cols) 
           { 
             fChildren.emplace_back(new Node(cols));
-            return iterator(fChildren.end()-1); 
+            return iterator(--(fChildren.end())); 
           }
           inline void Remove(iterator child) { fChildren.erase(child.GetBase()); } //Remove a child of this Node
-          //void Reparent(Node* parent); //Change the parent of this Node.  Parameter is an observer pointer.
+          inline void MoveToEnd(iterator child) { fChildren.splice(fChildren.end(), fChildren, child.GetBase()); } 
+          //Move a child to the end of this Node
                                                                                                                         
         private:
-          //Node* fParent; //Observer pointer to parent.  Think about what happens in parent's destructor...
-          std::vector<std::unique_ptr<Node>> fChildren; //Owning pointers to children.
+          std::list<std::unique_ptr<Node>> fChildren; //Owning pointers to children.
           std::vector<std::unique_ptr<DataBase>> fColData; //Vector of column data
          
         public: 
@@ -170,7 +171,7 @@ namespace mygl
       class iterator
       {
         private:
-          typedef std::vector<std::unique_ptr<Node>>::iterator Base;
+          typedef std::list<std::unique_ptr<Node>>::iterator Base;
 
         public:
           iterator(Base node); 
@@ -184,10 +185,8 @@ namespace mygl
           iterator operator ++();
           iterator operator ++(int);
 
-          iterator operator +(const int dist);
-          //operator (bool)() const;
-          //iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
-          bool operator <(const iterator& other) const; 
+          //iterator operator +(const int dist);
+          //bool operator <(const iterator& other) const; 
           bool operator ==(const iterator& other) const;
           bool operator !=(const iterator& other) const { return !(*this == other); }
 
@@ -203,7 +202,7 @@ namespace mygl
       class const_iterator
       {
         private:
-          typedef std::vector<std::unique_ptr<Node>>::const_iterator Base;
+          typedef std::list<std::unique_ptr<Node>>::const_iterator Base;
 
         public:
           const_iterator(const Base node); //TODO: Pass parent or child Node here?
@@ -216,9 +215,7 @@ namespace mygl
           //Minimal STL-style iterator interface
           const_iterator operator ++();
           const_iterator operator ++(int);
-          //operator (bool)() const;
-          //iterator Parent(); //TODO: Automatically go to fParent's next child in operator ++ instead?
-          bool operator <(const const_iterator& other) const;
+          //bool operator <(const const_iterator& other) const;
           bool operator ==(const const_iterator& other) const;
           bool operator !=(const const_iterator& other) const { return !(*this == other); }
 
@@ -240,7 +237,7 @@ namespace mygl
       inline iterator NewNode() 
       { 
         fTopNodes.emplace_back(new Node(*fColumns)); 
-        return iterator(fTopNodes.end()-1); 
+        return iterator(--(fTopNodes.end())); 
       } //Create a new top-level Node
       inline iterator NewNode(const iterator& parent)
       {
@@ -286,7 +283,7 @@ namespace mygl
     protected:
       std::shared_ptr<ColumnModel> fColumns; //Remember the columns in this TreeModel so that someone else can draw them.
                                              //The user should still own his own copy(ies) of this ColumnModel.  
-      std::vector<std::unique_ptr<Node>> fTopNodes; //top-level nodes
+      std::list<std::unique_ptr<Node>> fTopNodes; //top-level nodes
   };
 }
 
