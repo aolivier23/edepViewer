@@ -101,7 +101,6 @@ namespace mygl
       void remove_row(const TreeModel::iterator& path);
 
       bool SelectID(const mygl::VisID& id);
-      void on_tree_selection();
 
     protected:
       //opengl components
@@ -117,10 +116,17 @@ namespace mygl
       std::shared_ptr<mygl::TreeModel::ColumnModel> fCols;
 
       //Data needed for highlighting
-      mygl::VisID fSelection; //The currently selected VisID
+      std::vector<mygl::VisID> fSelectPath; //The path to the currently-selected Node
+     
+      //Helper function for selection
+      bool FindID(const mygl::VisID& id, const mygl::TreeModel::iterator iter);
 
-      //Helper function for drawing tree
-      void DrawNode(const mygl::TreeModel::iterator iter, const bool top);
+      //Helper functions for drawing tree
+      bool DrawNodeData(const mygl::TreeModel::iterator iter, const bool top);
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top); //Draw a Node that is not in the selection path
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch); //Draw a Node that 
+                                                                                                                            //could be in the 
+                                                                                                                            //selection path
 
       //Cut bar buffer
       std::array<char, 256> fBuffer;

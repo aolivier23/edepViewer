@@ -23,7 +23,7 @@ namespace mygl
                std::unique_ptr<SceneConfig>&& config): 
                                                       fName(name), fActive(), fHidden(), fShader(fragSrc, vertSrc), 
                                                       fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc),
-                                                      fSelection(), fModel(cols), fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), 
+                                                      fSelectPath(), fModel(cols), fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), 
                                                       fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput), fVAO(new VAO()), 
                                                       fConfig(std::move(config))
   {
@@ -33,7 +33,7 @@ namespace mygl
                std::shared_ptr<mygl::ColRecord>& cols, std::unique_ptr<SceneConfig>&& config): fName(name), fActive(), fHidden(), 
                fShader(fragSrc, vertSrc, geomSrc), fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc), fModel(cols), 
                fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput), 
-               fConfig(std::move(config))
+               fConfig(std::move(config)), fSelectPath()
   {
   }
 
@@ -106,7 +106,9 @@ namespace mygl
 
     try
     {
-      for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true);
+      //TODO: The ImGuiListClipper really needs to appear here and act on all of the elements of this tree.  
+      //      Thinking about passing a "position" variable by reference that each call to DrawNode increments. 
+      for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true, fSelectPath.begin());
     }
     catch(const util::GenException& e)
     {
@@ -165,7 +167,7 @@ namespace mygl
     fHidden.erase(fHidden.begin(), fHidden.end());
     fVAO.reset(new VAO());
     fModel.Clear();
-    fSelection = VisID();
+    fSelectPath.clear();
   }
 
   //All of the magic happens here.  Moving a unique_ptr from one container to another seems like a very difficult task... 
@@ -190,81 +192,128 @@ namespace mygl
     to.emplace(id, std::unique_ptr<Drawable>(copyPtr)).second;
   }
 
-  //TODO: switch to this Scene and tell other Scenes that this VisID has been selected
-  //TODO: What happens when an object that is not visible in the 3D view is selected with the list tree? 
-  //      Seems to usually be OK for now.  
+  bool Scene::FindID(const mygl::VisID& id, const mygl::TreeModel::iterator iter)
+  {
+    //If this Node has been selected
+    const auto& localID = (*iter)[this->fIDCol];
+    if(localID == id) 
+    {
+      fSelectPath.insert(fSelectPath.begin(), localID);
+      return true;
+    }
+
+    //If a child of this Node has been selected
+    for(auto child = iter->begin(); child != iter->end(); ++child)
+    {
+      if(FindID(id, child))
+      {
+        fSelectPath.insert(fSelectPath.begin(), localID);
+        return true;
+      }
+    }
+    
+    //This Node is not in the path to the selected Node
+    return false;
+  }
+
+  //TODO: Tell other Scenes that this VisID has been selected
   bool Scene::SelectID(const mygl::VisID& id)
   {
-    //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
-    auto result = fModel.end();
-    fModel.Walk([&result, &id, this](const TreeModel::iterator& pos) 
-                {
-                  const bool found = ((mygl::VisID)((*pos)[this->fIDCol]) == id);
-                  if(found) result = pos;
-                  return found;
-                });
-
-    if(result != fModel.end())
+    //Regardless of what was selected, unselect the last thing that was selected
+    const auto prevID = fSelectPath.empty()?mygl::VisID():fSelectPath.back();
+    auto prev = fActive.find(prevID); //The previously selected object might have been disabled since 
+                                      //it was selected.
+    //TODO: Make border color and width a user parameter
+    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    else
     {
+      prev = fHidden.find(prevID);
+      if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+      else std::cerr << "Failed to find previously selected object with ID " << prevID << "\n";
+    }
+
+    fSelectPath.clear();
+
+    //Find all objects with VisID id in the TreeModel.  Needed for generating a tooltip.
+    bool result = false;
+    for(auto child = fModel.begin(); child != fModel.end(); ++child)
+    {
+      if(FindID(id, child)) //FindID constructs the current selection path if it returns true
+      {
+        result = true;
+        break;
+      }
+    }
+
+    if(result)
+    {
+      std::cout << "Highlighting 3D object with ID " << id << "\n";
       //Highlight graphics object that was selected
       auto found = fActive.find(id);
       if(found != fActive.end())
       {
         found->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
+        std::cout << "Selected the following path of objects:\n";
+        for(const auto& id: fSelectPath) std::cout << id << "\n";
 
-        //Highlight selected objects in the TreeView
-        //TODO: Restore this functionality with ImGUI
-        //fTreeView.expand_to_path(result);
-        //fTreeView.set_cursor(result);
-  
-        //TODO: overhaul signalling between Scenes and Viewers so that this only happens in one place.
-        //Regardless of what was selected, unselect the last thing that was selected
-        auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
-                                                    //it was selected.
-        //TODO: Make border color and width a user parameter
-        if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-        else
-        {
-          prev = fHidden.find(fSelection);
-          if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-        }
-
-        //Mark this object as the new selection
-        fSelection = id;
         return true;
       }
     }
 
-    //return std::string("");
     return false;
   }
 
-  void Scene::on_tree_selection()
+  //Draw a Node that could have selected children
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch)
   {
-    //TODO: Restore this functionality with ImGUI
-    /*const auto found = fTreeView.get_selection()->get_selected();
-
-    //Regardless of what was selected, unselect the last thing that was selected
-    auto prev = fActive.find(fSelection); //The previously selected object might have been disabled since 
-                                                //it was selected.
-    //TODO: Make border color and width a user parameter
-    if(prev != fActive.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+    const bool selected = (selectSearch != fSelectPath.end() && ((*iter)[fIDCol] == *selectSearch));
+    if(selected) ImGui::SetNextTreeNodeOpen(true); //, ImGuiCond_Appearing);
+    const bool open = DrawNodeData(iter, top);
+  
+    if(selected)
+    {
+      if(open)
+      {
+        //Draw children of this Node while looking for selected Node
+        if(iter->NChildren() > 0)
+        {
+          ImGuiListClipper clipper(iter->NChildren());
+          while(clipper.Step())
+          {
+            size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
+            for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
+            {
+              if(pos >= clipper.DisplayStart) DrawNode(child, false, selectSearch+1);
+              ++pos;
+            }
+          }
+        }
+      }
+    }
     else
     {
-      prev = fHidden.find(fSelection);
-      if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+      //Draw children of this Node
+      if(open)
+      {
+        if(iter->NChildren() > 0)
+        {
+          ImGuiListClipper clipper(iter->NChildren());
+          while(clipper.Step())
+          {
+            size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
+            for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
+            {
+              if(pos >= clipper.DisplayStart) DrawNode(child, false);
+              ++pos;
+            }
+          }
+        }
+      }
     }
-
-    if(!found) return;
-    const auto id = (*found)[fIDCol];
-    auto toHighlight = fActive.find(id);
-    if(toHighlight != fActive.end()) toHighlight->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
-    fSelection = id;*/
+    if(open) ImGui::TreePop();
   }
 
-  //TODO: The "top" bool is a hack to prevent the user from trying to draw top-level Nodes' objects. 
-  //      So far, I have been using top-level nodes as placeholders.  
-  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)   
+  bool Scene::DrawNodeData(const mygl::TreeModel::iterator iter, const bool top)
   {
     //This tree entry needs a unique ID for imgui.  Turn the 
     //VisID it includes into a string since I am not currently
@@ -275,21 +324,17 @@ namespace mygl
     const auto idBase = ss.str();
 
     //If this Node's VisID is selected, highlight this line in the list tree
-    const bool selected = (id == fSelection); //TODO: Open also if a child is selected
+    const bool selected = (!fSelectPath.empty()) && (id == fSelectPath.back()); 
     bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
     if(iter->NChildren() == 0) node_flags |= ImGuiTreeNodeFlags_Leaf;
     open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
-
-    //If this Node was selected by a single click, select its' VisID.  
-    if(ImGui::IsItemClicked()) SelectID(id);
 
     //Draw this Node's data
     //Draw a checkbox for the first column
     ImGui::SameLine(); //Put the checkbox on the same line as the tree arrow
     if(!top)
     {
-      //std::cout << "Drawing checkbox.\n";
       if(ImGui::Checkbox(("##Check"+idBase).c_str(), &(*iter)[fSelfCol]))
       {
         if((*iter)[fSelfCol]) Transfer(fHidden, fActive, (*iter)[fIDCol]);
@@ -305,9 +350,17 @@ namespace mygl
     }
     
     //Scroll to this Node if it's selected
-    //if(selected) ImGui::SetScrollHere();
+    if(selected) ImGui::SetScrollHere();
 
     ImGui::Separator(); 
+
+    return open;
+  }
+
+  //Draw a Node that I don't need to check whether its' children are selected
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)
+  {
+    const bool open = DrawNodeData(iter, top);
 
     //Draw children of this Node
     if(open) 
@@ -317,7 +370,7 @@ namespace mygl
         ImGuiListClipper clipper(iter->NChildren());
         while(clipper.Step())
         {
-          size_t pos = 0;
+          size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
           for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
           {
             if(pos >= clipper.DisplayStart) DrawNode(child, false);
@@ -325,7 +378,6 @@ namespace mygl
           }
         }
       }
-
       ImGui::TreePop();
     }
   }
