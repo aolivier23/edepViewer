@@ -44,13 +44,35 @@ namespace mygl
     return fModel.NewNode();
   }
 
+  void Scene::apply_filter(const TreeModel::iterator& parent)
+  {
+    std::list<TreeModel::iterator> toMove; //List of children to move to end of parent
+
+    for(auto child = parent->begin(); child != parent->end(); ++child)
+    {
+      if(!fCutBar.do_filter(child))
+      {
+        auto& visible = (*child)[fSelfCol];
+        if(visible)
+        {
+          visible = false;
+          this->Transfer(fActive, fHidden, (*child)[fIDCol]);
+        }
+        toMove.push_back(child);
+      }
+      apply_filter(child);
+    }
+
+    //Move things around only after the loop
+    for(auto& iter: toMove) parent->MoveToEnd(iter);
+  }
+
   //Call this before Render() to get updates from user interaction with list tree.  
   void Scene::RenderGUI()
   {
     //Cut bar
-    ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size());
-    ImGui::SameLine();
-    if(ImGui::Button("Filter")) 
+    if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
+    //TODO: Help text about filter syntax
     {
       fCutBar.fInput = fBuffer;
 
@@ -62,18 +84,7 @@ namespace mygl
       //      imgui works out.  
       try
       {
-        fModel.Walk([this](const auto iter)
-                    {
-                      if(!fCutBar.do_filter(iter))
-                      {
-                        auto& visible = (*iter)[fSelfCol];
-                        if(visible)
-                        {
-                          visible = false;
-                          this->Transfer(fActive, fHidden, (*iter)[fIDCol]);
-                        }
-                      }
-                    });
+        for(auto top = fModel.begin(); top != fModel.end(); ++top) apply_filter(top);
       }
       catch(const util::GenException& e)
       {
@@ -196,7 +207,6 @@ namespace mygl
     if(result != fModel.end())
     {
       //Highlight graphics object that was selected
-      const auto id = (mygl::VisID)((*result)[this->fIDCol]);
       auto found = fActive.find(id);
       if(found != fActive.end())
       {
@@ -256,8 +266,6 @@ namespace mygl
   //      So far, I have been using top-level nodes as placeholders.  
   void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)   
   {
-    //if(!top && !fCutBar.do_filter(iter)) return;
-
     //This tree entry needs a unique ID for imgui.  Turn the 
     //VisID it includes into a string since I am not currently
     //putting the same VisID in more than one place in a given tree.
@@ -270,6 +278,7 @@ namespace mygl
     const bool selected = (id == fSelection); //TODO: Open also if a child is selected
     bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
+    if(iter->NChildren() == 0) node_flags |= ImGuiTreeNodeFlags_Leaf;
     open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
 
     //If this Node was selected by a single click, select its' VisID.  
@@ -303,55 +312,21 @@ namespace mygl
     //Draw children of this Node
     if(open) 
     {
-      //TODO: Right now, frame rate really drops on restrictive cuts because I have to filter so many entries before 
-      //      I get the ones clipper needs.  A couple of options might help here:
-      //      1.) The equivalent of Gtk::TreeModelFilter.  Create a dummy TreeModel with only Nodes that pass cuts.  
-      //          This might also give me the chance to address children that pass cuts when their parents don't.  
-      //          Basically, caches the result of all of those do_filter() calls.  I really only need to store iterators to 
-      //          the main TreeModel if I am careful...
-      //      2.) Optimize for small numbers for NChildren.  I could probably guess a reasonable threshold for this.  
-      //          I haven't yet thought of a strategy that gives me the number of children that pass cuts in time for 
-      //          clipper's construction, but that might also help if I could make it work.  
-
-      //TODO: Figure this number out programatically.  Measured it in an example for now
-      if(iter->NChildren() > 100) //21 entries with max height on my laptop, but drawing 100 entries should not be a problem
-      {  
-        //First, let clipper figure out how many lines it wants
-        ImGuiListClipper clipper(iter->NChildren());
-        clipper.Step(); //clipper.StepNo == 0
-        auto firstChild = iter->end();
-        for(auto child = iter->begin(); child != iter->end(); ++child) 
-        {
-          if(fCutBar.do_filter(child)) 
-          {
-            DrawNode(child, false); //ImGuiListClipper really just needs me to draw one example line for step 0
-            firstChild = child;
-            break;
-          }
-        }
-        clipper.Step(); //clipper.StepNo == 1
-  
-        //I now know how many lines clipper wants to draw.  Find enough children that pass cut bar to fill those lines
-        size_t pos = 0;
-        for(auto child = ++firstChild; child != iter->end() && pos != clipper.DisplayEnd; ++child)
-        {
-          if(fCutBar.do_filter(child)) //TODO: do_filter() is too slow for an imgui loop
-          {
-            ++pos;
-            if(pos >= clipper.DisplayStart) DrawNode(child, false);
-          }
-        }
-        clipper.Step(); //clipper.StepNo == 3
-        ImGui::TreePop();
-      }
-      else //This is a short list, so no need for ListClipper
+      if(iter->NChildren() > 0)
       {
-        for(auto child = iter->begin(); child != iter->end(); ++child)
+        ImGuiListClipper clipper(iter->NChildren());
+        while(clipper.Step())
         {
-          if(fCutBar.do_filter(child)) DrawNode(child, false);
+          size_t pos = 0;
+          for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
+          {
+            if(pos >= clipper.DisplayStart) DrawNode(child, false);
+            ++pos;   
+          }
         }
-        ImGui::TreePop();
       }
+
+      ImGui::TreePop();
     }
   }
 }

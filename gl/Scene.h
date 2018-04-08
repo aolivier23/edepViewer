@@ -96,6 +96,7 @@ namespace mygl
       
       //GUI components that the Viewer will arrange
       mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
+      void apply_filter(const TreeModel::iterator& path);
 
       void remove_row(const TreeModel::iterator& path);
 
