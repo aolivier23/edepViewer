@@ -33,7 +33,7 @@ namespace mygl
                std::shared_ptr<mygl::ColRecord>& cols, std::unique_ptr<SceneConfig>&& config): fName(name), fActive(), fHidden(), 
                fShader(fragSrc, vertSrc, geomSrc), fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc), fModel(cols), 
                fSelfCol(cols->fDrawSelf), fIDCol(cols->fVisID), fCols(cols), fCutBar(cols->size()), fBuffer(fCutBar.fInput), 
-               fConfig(std::move(config)), fSelectPath()
+               fVAO(new VAO()), fConfig(std::move(config)), fSelectPath()
   {
   }
 
@@ -219,6 +219,8 @@ namespace mygl
   //TODO: Tell other Scenes that this VisID has been selected
   bool Scene::SelectID(const mygl::VisID& id)
   {
+    std::cout << "Trying to select object with VisID " << id << "\n";
+
     //Regardless of what was selected, unselect the last thing that was selected
     const auto prevID = fSelectPath.empty()?mygl::VisID():fSelectPath.back();
     auto prev = fActive.find(prevID); //The previously selected object might have been disabled since 
@@ -350,7 +352,7 @@ namespace mygl
     }
     
     //Scroll to this Node if it's selected
-    if(selected) ImGui::SetScrollHere();
+    //if(selected) ImGui::SetScrollHere();
 
     ImGui::Separator(); 
 

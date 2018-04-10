@@ -18,8 +18,9 @@ namespace mygl
   class OrthoCamera: public Camera
   {
     public:
-      OrthoCamera(const glm::vec3& pos, const glm::vec3& front, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 1000.): Camera(pos, front, up), 
-             fZoom(1.0), fFarPlane(farPlane), fScrollSpeed(0.1)
+      OrthoCamera(const glm::vec3& pos, const glm::vec3& front, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f), const float farPlane = 1000., 
+                  const float zoom = 1.0): Camera(pos, front, up), 
+             fZoom(zoom), fFarPlane(farPlane), fScrollSpeed(0.1)
       {
       }
       virtual ~OrthoCamera() = default;
@@ -31,15 +32,6 @@ namespace mygl
       float fZoom; //Zoom of the camera
       float fFarPlane; //Farthest away that objects can be rendered
       float fScrollSpeed; //Measure of how fast zooming is
-
-      //Frustrum parameters
-      /*double fTop;
-      double fBottom;
-      double fLeft;
-      double fRight;*/
-
-      void set_zoom();
-      void set_speed();
 
     protected:
       virtual void ReCalcView() = 0;

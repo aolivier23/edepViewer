@@ -4,6 +4,10 @@ find_package( tinyxml2 REQUIRED )
 #Stuff for Opengl
 find_package( OpenGL REQUIRED )
 
+#Find IMGUI
+include_directories( "${IMGUI_DIR}" )
+link_directories( "${IMGUI_DIR}" )
+
 #Set up to build against ROOT
 #I learned how to do this here: https://root.cern.ch/how/integrate-root-my-project-cmake
 list( APPEND CMAKE_PREFIX_PATH $ENV{ROOT_SYS})

@@ -48,7 +48,7 @@ namespace draw
       //viewer.AddCamera(vert.Reaction, new PlaneCam()); //TODO: Configure new camera based on vert's position and maybe zoom based on some measure of activity?
     }
   
-    const glm::vec3 pos(0., 0., avgPos.Z());
+    const glm::vec3 pos(avgPos.X(), avgPos.Y(), avgPos.Z()); //0., 0., avgPos.Z());
     const glm::vec3 dir(avgPos.X() - pos.x, avgPos.Y() - pos.y, avgPos.Z() - pos.z);
 
     //Center the default camera on average position of interaction vertices in each event

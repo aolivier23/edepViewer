@@ -164,8 +164,8 @@ namespace mygl
     {
       const auto view = fCurrentCamera->second->GetView();
 
-      scenePair.second.Render(view, glm::scale(fCurrentCamera->second->GetPerspective(width, height), 
-                                               glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+      scenePair.second.Render(view, fCurrentCamera->second->GetPerspective(width, height)); //glm::scale(fCurrentCamera->second->GetPerspective(width, height), 
+                                    //           glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
     }
   }
   
@@ -240,8 +240,7 @@ namespace mygl
       const auto view = fCurrentCamera->second->GetView();
  
       //TODO: It would be great to be able to change out this selection algorithm.  
-      scenePair.second.RenderSelection(view, glm::scale(fCurrentCamera->second->GetPerspective(width, height),
-                                       glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+      scenePair.second.RenderSelection(view, fCurrentCamera->second->GetPerspective(width, height));
       //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
     }
     glFlush();

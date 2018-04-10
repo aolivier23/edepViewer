@@ -42,6 +42,8 @@ namespace draw
         doDrawEvent(event, viewer, nextID, services);
       }
 
+      virtual void Render() {} //User handle for a time to draw in each event loop
+
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all ExternalDrawers here.

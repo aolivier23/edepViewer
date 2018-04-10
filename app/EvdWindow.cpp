@@ -251,6 +251,11 @@ namespace mygl
       ImGui::End();
 
       RenderControlBar(width, height);
+
+      //TODO: Allow Drawers to Render() here?  Really, I think I want to move the PDGToColor service to a 
+      //      more generic color mapping service, implement named service instantiations, and Render() 
+      //      services so that they can use IMGUI.   
+      for(const auto& drawer: fExtDrawers) drawer->Render();
     }
     fViewer.Render(width, height, ioState);
   }
