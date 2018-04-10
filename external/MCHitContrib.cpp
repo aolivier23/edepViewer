@@ -22,6 +22,7 @@
 
 //ROOT includes
 #include "TGeoBBox.h" //Easiest way to specify vertices to PolyMesh.
+#include "TGeoSphere.h" //For distance particle could have travelled
 
 //TODO: If I depend on EdepNeutrons (external package) anyway, can't I just use its' headers here?
 namespace
@@ -93,8 +94,9 @@ namespace mygl
            
       glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(hit.Position.X(), hit.Position.Y(), hit.Position.Z()));
 
-      auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
-                                                      &box, glm::vec4(found.first->second, 1.0))); 
+      auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+                                                    &box, glm::vec4(found.first->second, 1.0)); 
+      auto& row = *iter;
       row[fHitRecord->fEnergy] = hit.Energy;
       row[fHitRecord->fTime] = hit.Position.T();
       row[fHitRecord->fDist] = (hit.Position - FSPart.Points.front().Position).Vect().Mag();
@@ -103,6 +105,23 @@ namespace mygl
                                                   {
                                                     return names+" "+trajs[id].Name;
                                                   });
+
+      //Produce Spheres for distance this neutron could travel in time resolution
+      const double c = 30.; //speed of light in cm/ns
+      const auto diff = (hit.Position - FSPart.Points.front().Position);
+      const double beta = diff.Vect().Mag()/c/diff.T();
+      const double timeRes = 0.7; //Measured in test beam in ns
+
+      for(size_t sigmas = 1; sigmas < 6; ++sigmas)
+      {
+        TGeoSphere sphere(0., beta*c*timeRes*sigmas);
+        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, iter, false, pos, &sphere, glm::vec4(found.first->second, 0.2)));
+
+        row[fHitRecord->fEnergy] = hit.Energy;
+        row[fHitRecord->fTime]   = timeRes*sigmas;
+        row[fHitRecord->fDist]   = beta*c*timeRes*sigmas;
+        row[fHitRecord->fParticle] = std::to_string(sigmas)+" Sigmas";
+      }
     }
   }
 

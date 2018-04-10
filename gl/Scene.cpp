@@ -268,7 +268,7 @@ namespace mygl
   //Draw a Node that could have selected children
   void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch)
   {
-    const bool selected = (selectSearch != fSelectPath.end() && ((*iter)[fIDCol] == *selectSearch));
+    const bool selected = (selectSearch < fSelectPath.end()-1 && ((*iter)[fIDCol] == *selectSearch));
     if(selected) ImGui::SetNextTreeNodeOpen(true); //, ImGuiCond_Appearing);
     const bool open = DrawNodeData(iter, top);
   
