@@ -17,18 +17,14 @@ include(${ROOT_USE_FILE})
 #Make sure system libraries can be found
 link_directories( /usr/local/lib )
 
-#Set up edep-sim
-#set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-#include_directories( "${EDEP_DIR}/include/edep-sim" )
-#link_directories( "${EDEP_DIR}/lib" )
-
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Install all of the external Drawers as one target
+message( "From the external directory, EXTERNAL_LIBS is " ${EXTERNAL_LIBS} )
 add_library( external SHARED ExternalDrawer.cpp ${EXTERNAL_SOURCE} )
 target_link_libraries( external Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
-                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} imgui )
+                       Factory tinyxml2 Geometry Drawers ${EXTERNAL_LIBS} imgui ${EDepSimIO})
 install( TARGETS external DESTINATION lib )
 
 #install headers

@@ -7,18 +7,6 @@ link_directories( "${IMGUI_DIR}" )
 
 add_definitions(-DFONT_DIR="${IMGUI_DIR}/misc/fonts")
 
-#Set up edep-sim
-#set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
-#include_directories( "${EDEP_DIR}/include/edep-sim" )
-#link_directories( "${EDEP_DIR}/lib" )
-
-#Grab imgui from wherever it is and build it here.  Distributes a version of imgui with this project
-#add_library(imgui ${IMGUI_DIR}/imgui.cpp)
-#target_link_libraries(imgui LINK_PUBLIC)
-
-#add_library(imgui_glfw ${IMGUI_DIR}/examples/opengl3_example/imgui_impl_glfw_gl3.cpp)
-#target_link_libraries(imgui_glfw imgui glfw)
-
 #local stuff that GLDrawArea needs to know about
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
@@ -37,11 +25,11 @@ target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIE
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine CmdLine.cpp )
-target_link_libraries( CmdLine tinyxml2 Source )
+target_link_libraries( CmdLine LINK_PUBLIC tinyxml2 Source )
 install( TARGETS CmdLine DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw TreeModel CmdLine)
+target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw TreeModel CmdLine ${EDepSimIO})
 
 install( TARGETS GLFWApp DESTINATION bin )
 

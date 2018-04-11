@@ -30,15 +30,14 @@ find_package(EDepSim)
 if(EDepSim_FOUND) #If edep-sim is not new enough to have CMake support, set it up using EDEP_DIR
   set(EDepSimIO EDepSim::edepsim_io) 
   include_directories("${EDepSim_DIR}/include/EDepSim") 
+  message("EDepSim_DIR is " ${EDepSim_DIR} )
 else()
-  set(EDepSim_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
   set(EDepSimIO edepsim)
-  link_directories("${EDepSim_DIR}/lib")
-  include_directories("${EDepSim_DIR}/include/edep-sim") 
+  link_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/lib")
+  include_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/include/edep-sim") 
+  message("EDepSim_DIR is " $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET} )
 endif()
 
-message("EDepSim_DIR is " ${EDepSim_DIR} )
-  
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 
