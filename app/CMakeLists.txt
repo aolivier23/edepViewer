@@ -28,12 +28,12 @@ target_link_libraries( GUI imgui )
 install( TARGETS GUI DESTINATION lib )
 
 add_library( Source Source.cpp )
-target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} EDepSim::edepsim_io )
+target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} ${EDepSimIO} )
 install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             EDepSim::edepsim_io Factory Drawers external tinyxml2 GUI Geometry Source TreeModel)
+                                             ${EDepSimIO} Factory Drawers tinyxml2 GUI Geometry Source TreeModel ${EXTERNAL_LIBS} external)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine CmdLine.cpp )
@@ -41,7 +41,8 @@ target_link_libraries( CmdLine tinyxml2 Source )
 install( TARGETS CmdLine DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow ${EXTERNAL_LIBS} glfw imgui imgui_glfw TreeModel CmdLine)
+target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw TreeModel CmdLine)
+
 install( TARGETS GLFWApp DESTINATION bin )
 
 #install headers

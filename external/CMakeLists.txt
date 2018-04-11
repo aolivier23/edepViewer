@@ -17,9 +17,6 @@ include(${ROOT_USE_FILE})
 #Make sure system libraries can be found
 link_directories( /usr/local/lib )
 
-#Set ouput directory for executables
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../bin )
-
 #Set up edep-sim
 #set(EDEP_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
 #include_directories( "${EDEP_DIR}/include/edep-sim" )

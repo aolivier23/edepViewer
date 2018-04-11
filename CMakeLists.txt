@@ -26,10 +26,19 @@ add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
 add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
 
 #Find the EDepSim library that this package is designed to work with
-find_package(EDepSim REQUIRED)
-include_directories("${EDepSim_DIR}/include") #TODO: Should I have to do this?  
-message("EDepSim_DIR is " ${EDepSim_DIR} )
+find_package(EDepSim)
+if(EDepSim_FOUND) #If edep-sim is not new enough to have CMake support, set it up using EDEP_DIR
+  set(EDepSimIO EDepSim::edepsim_io) 
+  include_directories("${EDepSim_DIR}/include/EDepSim") 
+else()
+  set(EDepSim_DIR $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET})
+  set(EDepSimIO edepsim)
+  link_directories("${EDepSim_DIR}/lib")
+  include_directories("${EDepSim_DIR}/include/edep-sim") 
+endif()
 
+message("EDepSim_DIR is " ${EDepSim_DIR} )
+  
 #XML parser library for configuration
 find_package( tinyxml2 REQUIRED )
 
@@ -68,7 +77,7 @@ if(DEFINED EDEPNEUTRONS_DIR)
 
   #Find EDepNeutrons directory
   message("Building external plugins for EDepNeutrons with installation at path ${EDEPNEUTRONS_DIR}")
-  include_directories( "${EDEPNEUTRONS_DIR}/src" )
+  include_directories( "${EDEPNEUTRONS_DIR}/include" )
   link_directories( "${EDEPNEUTRONS_DIR}/lib" )
 endif()
 

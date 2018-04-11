@@ -15,7 +15,7 @@
 #include "TLorentzVector.h"
 
 //edepsim includes
-#include "EDepSim/TG4Event.h"
+#include "TG4Event.h"
 
 //tinyxml2 include for configuration
 #include <tinyxml2.h>

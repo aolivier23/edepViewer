@@ -63,10 +63,6 @@ int main(const int argc, const char** argv)
   
   io.Fonts->AddFontFromFileTTF(FONT_DIR "/Roboto-Medium.ttf", 18.0f); //Because the default font is not as readable
   
-  //TODO: Can I use glm here instead?  
-  //TODO: Get this from application Model.
-  ImVec4 clear_color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
   mygl::EvdWindow evd; //evd(argc, argv);
 
   //Parse the command line to configure evd window

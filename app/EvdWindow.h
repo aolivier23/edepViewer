@@ -30,7 +30,7 @@
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
-#include "EDepSim/TG4Event.h" 
+#include "TG4Event.h" 
 
 #ifndef EVD_EVDWINDOW
 #define EVD_EVDWINDOW
