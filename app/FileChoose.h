@@ -30,6 +30,6 @@ namespace file
       TSystemDirectory* fCurrent; //Current path that the user is exploring
       std::array<char, 512> fBuffer; //Buffer for user path input
 
-      TSystemFile* DrawFile(TSystemFile* file);
+      TSystemFile* DrawFile(TSystemFile* file, const std::string& extension);
   };
 }

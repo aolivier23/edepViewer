@@ -72,14 +72,14 @@ namespace file
     ImGui::NextColumn();
 
     //Tree view of current directory
-    auto chosen = DrawFile(fCurrent);
+    auto chosen = DrawFile(fCurrent, extension);
     ImGui::NextColumn();
 
     ImGui::Columns(1);
     return chosen;
   }
 
-  TSystemFile* FileChoose::DrawFile(TSystemFile* file)
+  TSystemFile* FileChoose::DrawFile(TSystemFile* file, const std::string& extension)
   {
     std::string name(file->GetName());
     const auto found = name.find_last_of('/');
@@ -97,7 +97,7 @@ namespace file
         {
           for(auto obj: *files)
           {
-            auto chosen = DrawFile((TSystemFile*)obj);
+            auto chosen = DrawFile((TSystemFile*)obj, extension);
             if(chosen)
             {
               ImGui::TreePop();
@@ -110,14 +110,16 @@ namespace file
     }
     else
     {
-      ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing()); 
-      if(ImGui::Button((baseName+"##File").c_str())) //Otherwise, create a button to choose this file
+      if(baseName.substr(baseName.find_first_of('.'), std::string::npos) == extension)
       {
+        ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing()); 
+        if(ImGui::Button((baseName+"##File").c_str())) //Otherwise, create a button to choose this file
+        {
+          ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
+          return file;
+        }
         ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
-        //TODO: Check whether file has right extension
-        return file;
       }
-      ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
     }
     return nullptr;
   }
