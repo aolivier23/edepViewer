@@ -93,6 +93,7 @@ namespace mygl
     }
 
     //Tree column labels
+    ImGui::BeginChild("List Tree");
     ImGui::Columns(fCols->size()-1);
     ImGui::Text(fCols->Name(1).c_str());
     ImGui::NextColumn();
@@ -106,15 +107,17 @@ namespace mygl
 
     try
     {
-      //TODO: The ImGuiListClipper really needs to appear here and act on all of the elements of this tree.  
-      //      Thinking about passing a "position" variable by reference that each call to DrawNode increments. 
-      for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) DrawNode(iter, true, fSelectPath.begin());
+      for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) 
+      {
+        DrawNode(iter, true, fSelectPath.begin()); 
+      }
     }
     catch(const util::GenException& e)
     {
       std::cerr << "Caught std::exception " << e.what() << " when parsing formula.  Ignoring filter expression.\n";
     }
     ImGui::Columns(1); //Leave the multi-column context?
+    ImGui::EndChild();
   }
 
   void Scene::Render(const glm::mat4& view, const glm::mat4& persp) 
@@ -269,50 +272,51 @@ namespace mygl
   void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch)
   {
     const bool selected = (selectSearch != fSelectPath.end() && selectSearch < fSelectPath.end()-1 && ((*iter)[fIDCol] == *selectSearch));
-    if(selected) ImGui::SetNextTreeNodeOpen(true); //, ImGuiCond_Appearing);
-    const bool open = DrawNodeData(iter, top);
+    if(selected) ImGui::SetNextTreeNodeOpen(true); 
+    const bool open = DrawNodeData(iter, top); //TODO: Figure out whether a TreeNode() is open without drawing it?  Default to open TreeNode()s?
   
-    if(selected)
+    if(open)
     {
-      if(open)
+      //Draw children of this Node while looking for selected Node
+      //If too many children, use ListClipper
+      //TODO: If I use ListClipper, I seem to get the wrong cursor position for children.  I think I get back the right cursor position for 
+      //      children if I comment out the SetCursorPosYAndSetupDummyPrevLine() call in ImGuiListClipper::End().  It seems like I could set 
+      //      items_count to INT_MAX to get the same behavior, but I cannot scroll when I do that.  So, I might want to consider suggesting a 
+      //      bug fix/feature in ImGui or writing a custom TreeClipper that does most of what ImGuiListClipper does.  
+      /*if(iter->NChildren() > 200)
       {
-        //Draw children of this Node while looking for selected Node
-        if(iter->NChildren() > 0)
+        ImGuiListClipper clipper(iter->NChildren(), ImGui::GetTextLineHeightWithSpacing());
+        while(clipper.Step())
         {
-          ImGuiListClipper clipper(iter->NChildren());
-          while(clipper.Step())
+          const size_t start = clipper.DisplayStart;
+          const size_t end = clipper.DisplayEnd;
+          size_t pos = 0;
+          auto child = iter->begin();
+          for(; child != iter->end() && pos < end; ++child)
           {
-            size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
-            for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
+            if(pos >= start) 
             {
-              if(pos >= clipper.DisplayStart) DrawNode(child, false, selectSearch+1);
-              ++pos;
+              if(selected) DrawNode(child, false, selectSearch+1);
+              else DrawNode(child, false);
             }
+            ++pos;
           }
+          
+          //ListClipper doesn't handle the last entry in a list very well, so draw it myself
+          //if(selected) DrawNode(child, false, selectSearch+1);
+          //else DrawNode(child, false);
         }
       }
-    }
-    else
-    {
-      //Draw children of this Node
-      if(open)
+      else*/
       {
-        if(iter->NChildren() > 0)
+        for(auto child = iter->begin(); child != iter->end(); ++child)
         {
-          ImGuiListClipper clipper(iter->NChildren());
-          while(clipper.Step())
-          {
-            size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
-            for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
-            {
-              if(pos >= clipper.DisplayStart) DrawNode(child, false);
-              ++pos;
-            }
-          }
+          if(selected) DrawNode(child, false, selectSearch+1);
+          else DrawNode(child, false);
         }
       }
+      ImGui::TreePop();
     }
-    if(open) ImGui::TreePop();
   }
 
   bool Scene::DrawNodeData(const mygl::TreeModel::iterator iter, const bool top)
@@ -365,21 +369,40 @@ namespace mygl
     const bool open = DrawNodeData(iter, top);
 
     //Draw children of this Node
-    if(open) 
+    if(open)
     {
-      if(iter->NChildren() > 0)
+      /*if(iter->NChildren() > 200)
       {
-        ImGuiListClipper clipper(iter->NChildren());
+        //TODO: ImGuiListClipper does not work when a TreeNode() has siblings.  I need to re-engineer it somehow 
+        //      to only take up the space I give it.  
+        ImGuiListClipper clipper(iter->NChildren(), ImGui::GetTextLineHeightWithSpacing());
         while(clipper.Step())
         {
-          size_t pos = 0; //TODO: No need to loop over children before pos == clipper.DisplayStart
-          for(auto child = iter->begin(); child != iter->end() && pos < clipper.DisplayEnd; ++child)
+          const size_t start = clipper.DisplayStart;
+          const size_t end = clipper.DisplayEnd;
+          size_t pos = 0;
+          auto child = iter->begin();
+          for(; child != iter->end() && pos < end; ++child)
           {
-            if(pos >= clipper.DisplayStart) DrawNode(child, false);
-            ++pos;   
+            if(pos >= start)
+            { 
+              DrawNode(child, false);
+            }
+            ++pos;
           }
+
+          //ListClipper doesn't handle drawing the last node of a list very well, so draw it myself
+          //DrawNode(child, false);
         }
       }
+      else*/
+      {
+        for(auto child = iter->begin(); child != iter->end(); ++child)
+        { 
+          DrawNode(child, false);
+        }
+      }
+
       ImGui::TreePop();
     }
   }

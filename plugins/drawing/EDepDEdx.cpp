@@ -37,11 +37,6 @@ namespace draw
     //Configure energy deposit Scene
     viewer.MakeScene("EDepDEdx", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
                      INSTALL_GLSL_DIR "/wideLine.geom");
-    /*edepTree.append_column("Main Contributor", fEDepRecord.fPrimName);
-    edepTree.append_column("Energy [MeV]", fEDepRecord.fEnergy);
-    edepTree.append_column("dE/dx [MeV*cm^2/g]", fEDepRecord.fdEdx);
-    edepTree.append_column("Scintillation Energy [MeV]", fEDepRecord.fScintE);
-    edepTree.append_column("Start Time [ns?]", fEDepRecord.fT0);*/
   }
 
   void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
@@ -53,7 +48,7 @@ namespace draw
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition
-            
+
     for(auto& det: edepToDet)
     {
       auto detName = det.first;
@@ -68,13 +63,15 @@ namespace draw
       //TODO: Energy depositions children of sensitive detector?  This doesn't seem so useful at the moment, and sensitive detectors 
       //      do not have the "properties" I plan to include in the energy deposition tree. I will just cut out energy depositions 
       //      in volumes by setting the frustrum box from the camera API (hopefully).   
-      double sumE = 0., sumScintE = 0., minT = 1e10;
-                                                                                                                                                                                       
+      double sumE = 0., sumScintE = 0., minT = 1e10;                                                                                                        
+      //Produce a map of true trajectory to TreeModel::iterator
+      std::map<int, mygl::TreeModel::iterator> idToIter;
+
       //Get minimum energy, maximum energy, and mean energy in this event for deciding on palette
       //TODO: Do I want a palette that is fixed per event instead?  This algorithm seems designed to 
       //      highlight structure rather than give an absolute energy scale. 
       //double mindEdx = 0., maxdEdx = 1e6; //, sumdEdx = 0.; //TODO: Check average dEdx and look at order of magnitude of its' ratio with 
-                                                            //      maxdEdx to decide whether to use log scale.
+                                                              //      maxdEdx to decide whether to use log scale.
       /*for(auto& edep: edeps)
       {
         const auto energy = edep.EnergyDeposit;
@@ -132,7 +129,24 @@ namespace draw
         if(alpha > 1.) alpha = 1.;
         if(alpha < 0.) alpha = 0.;*/
         
-        auto iter = scene.AddDrawable<mygl::Path>(nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+        auto found = idToIter.find(edep.PrimaryId);
+        if(found == idToIter.end())
+        {
+          found = idToIter.emplace(std::make_pair(edep.PrimaryId, scene.NewNode(detIter))).first;
+          auto& row = *(found->second);
+          row[fEDepRecord->fVisID] = nextID;
+          ++nextID;
+          row[fEDepRecord->fScintE] = 0;
+          row[fEDepRecord->fEnergy] = data.Trajectories[edep.PrimaryId].InitialMomentum.E();
+          row[fEDepRecord->fdEdx] = data.Trajectories[edep.PrimaryId].InitialMomentum.E()/
+                                    (data.Trajectories[edep.PrimaryId].Points.front().Position
+                                     -data.Trajectories[edep.PrimaryId].Points.back().Position).Vect().Mag();
+          row[fEDepRecord->fT0] = data.Trajectories[edep.PrimaryId].Points.front().Position.T();
+          row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name;
+        }
+        auto parent = found->second;
+
+        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
                                                   glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
         auto& row = *iter;
         //fPalette(dEdx), 1.0));
@@ -145,6 +159,8 @@ namespace draw
         row[fEDepRecord->fT0]      = start.T();
         row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
         ++nextID;
+
+        //(*parent)[fEDepRecord->fScintE] += edep.SecondaryDeposit;
 
         sumE += energy;
         sumScintE += edep.SecondaryDeposit;

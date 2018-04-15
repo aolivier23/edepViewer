@@ -85,6 +85,7 @@ namespace mygl
       }
 
       virtual TreeModel::iterator NewTopLevelNode();
+      virtual TreeModel::iterator NewNode(TreeModel::iterator parent) { return fModel.NewNode(parent); }
       virtual void RemoveAll();
 
       //Draws all of the objects in fDrawables using fShader, view matrix, and persp(ective) matrix
@@ -123,8 +124,10 @@ namespace mygl
 
       //Helper functions for drawing tree
       bool DrawNodeData(const mygl::TreeModel::iterator iter, const bool top);
-      void DrawNode(const mygl::TreeModel::iterator iter, const bool top); //Draw a Node that is not in the selection path
-      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch); //Draw a Node that 
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top); 
+      //Draw a Node that is not in the selection path
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch); 
+                                                                                                                            //Draw a Node that 
                                                                                                                             //could be in the 
                                                                                                                             //selection path
 
