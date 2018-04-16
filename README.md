@@ -116,7 +116,7 @@ This package also supports CPack, so you can "make package" if you need a tarbal
 [edep-sim](https://github.com/ClarkMcGrew/edep-sim)            The package that produces the files that edepViewer reads.  
                                                                Defines the objects that edepViewer knows how to read.
 
-[Dear IMGUI](https://github.com/ocornut/imgui)                 Pure-OpenGL Graphical User Interface used for information 
+[Dear IMGUI v1.60](https://github.com/ocornut/imgui)           Pure-OpenGL Graphical User Interface used for information 
                                                                and control widgets.  Should be completely OS-independent.
                                                                The GLFW OpenGL3 example from Dear IMGUI is embedded in 
                                                                this project.
