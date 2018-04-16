@@ -65,6 +65,9 @@ namespace draw
       detRow[fEDepRecord->fPrimName] = detName;
       double sumE = 0., sumScintE = 0., minT = 1e10;
 
+      //Produce a map of true trajectory to TreeModel::iterator
+      std::map<int, mygl::TreeModel::iterator> idToIter;
+
       for(auto& edep: edeps)
       {
         const auto start = edep.Start;
@@ -94,6 +97,23 @@ namespace draw
           sumZ += mat->GetZ();
         }
         const double density = sumDensity/nSamples/6.24e24*1e6;*/
+
+        auto found = idToIter.find(edep.PrimaryId);
+        if(found == idToIter.end())
+        {
+          found = idToIter.emplace(std::make_pair(edep.PrimaryId, scene.NewNode(detIter))).first;
+          auto& row = *(found->second);
+          row[fEDepRecord->fVisID] = nextID;
+          ++nextID;
+          row[fEDepRecord->fScintE] = 0;
+          row[fEDepRecord->fEnergy] = data.Trajectories[edep.PrimaryId].InitialMomentum.E();
+          row[fEDepRecord->fdEdx] = data.Trajectories[edep.PrimaryId].InitialMomentum.E()/
+                                    (data.Trajectories[edep.PrimaryId].Points.front().Position
+                                     -data.Trajectories[edep.PrimaryId].Points.back().Position).Vect().Mag();
+          row[fEDepRecord->fT0] = data.Trajectories[edep.PrimaryId].Points.front().Position.T();
+          row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name;
+        }
+        auto parent = found->second;
   
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
         const double energy = edep.EnergyDeposit;
@@ -104,7 +124,7 @@ namespace draw
         //if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ;
         double dEdx = edep.EnergyDeposit/edep.TrackLength;
 
-        auto iter = scene.AddDrawable<mygl::Path>(nextID, detIter, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
                                                   glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.PrimaryId].PDGCode], 1.0), fLineWidth);
         auto& row = *iter;
 
