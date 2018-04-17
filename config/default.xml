@@ -1,10 +1,11 @@
 <config>
   <drawer>
     <global>
-      <Guides/>
+      <Grids/>
       <DefaultGeo MaxDepth="7"/>
     </global>
     <event>
+      <VertexCamera/>
       <LinearTraj/>
       <EDepDEdx/> 
     </event>
