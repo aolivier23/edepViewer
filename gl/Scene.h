@@ -124,9 +124,9 @@ namespace mygl
 
       //Helper functions for drawing tree
       bool DrawNodeData(const mygl::TreeModel::iterator iter, const bool top);
-      void DrawNode(const mygl::TreeModel::iterator iter, const bool top); 
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, const size_t depth); 
       //Draw a Node that is not in the selection path
-      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch); 
+      void DrawNode(const mygl::TreeModel::iterator iter, const bool top, const size_t depth, std::vector<mygl::VisID>::iterator selectSearch); 
                                                                                                                             //Draw a Node that 
                                                                                                                             //could be in the 
                                                                                                                             //selection path

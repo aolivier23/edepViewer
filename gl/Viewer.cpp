@@ -53,9 +53,8 @@ namespace mygl
   void Viewer::Render(const int width, const int height, const ImGuiIO& ioState)
   {
     ImGui::SetNextWindowPos(ImVec2(ioState.DisplaySize.x, 35.f), ImGuiCond_Always, ImVec2(1.0f, 0.f));
-    ImGui::SetNextWindowSize(ImVec2(ioState.DisplaySize.x/5., ioState.DisplaySize.y-35.f), ImGuiCond_Appearing);
-    ImGui::Begin("Viewer", nullptr, ImGuiWindowFlags_ResizeFromAnySide | ImGuiWindowFlags_AlwaysHorizontalScrollbar 
-                                    | ImGuiWindowFlags_AlwaysVerticalScrollbar); 
+    ImGui::SetNextWindowSize(ImVec2(ioState.DisplaySize.x/4., ioState.DisplaySize.y-35.f), ImGuiCond_Appearing);
+    ImGui::Begin("Viewer", nullptr, ImGuiWindowFlags_ResizeFromAnySide | ImGuiWindowFlags_AlwaysVerticalScrollbar); 
     ImGui::Columns(fSceneMap.size()+1);
 
     //Render selectable text for each Scene.  Basically, a poor-man's tab widget.

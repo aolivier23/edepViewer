@@ -93,14 +93,21 @@ namespace mygl
     }
 
     //Tree column labels
-    ImGui::BeginChild("List Tree");
+    //Calculate the total length of text I will want to display
+    float width = 5.*ImGui::GetTreeNodeToLabelSpacing(); //Make space for 5 tree node opens
+    for(size_t col = 2; col < fCols->size(); ++col)
+    {
+      width += 2.*ImGui::CalcTextSize(fCols->Name(col).c_str()).x + ImGui::GetStyle().ItemSpacing.x;
+    }
+
+    ImGui::SetNextWindowContentSize(ImVec2(width, 0)); //Make space for 5 tree node opens plus column labels
+    ImGui::BeginChild("List Tree", ImVec2(0,0), true, ImGuiWindowFlags_HorizontalScrollbar);
     ImGui::Columns(fCols->size()-1);
     ImGui::Text(fCols->Name(1).c_str());
     ImGui::NextColumn();
     for(size_t col = 2; col < fCols->size(); ++col) 
     {
       ImGui::Text(fCols->Name(col).c_str());
-      //ImGui::SetColumnWidth(-1, ); //TODO: Make sure columns shown whole label and scroll
       ImGui::NextColumn();
     }
     ImGui::Separator();
@@ -109,7 +116,7 @@ namespace mygl
     {
       for(auto iter = fModel.begin(); iter != fModel.end(); ++iter) 
       {
-        DrawNode(iter, true, fSelectPath.begin()); 
+        DrawNode(iter, true, 1, fSelectPath.begin()); 
       }
     }
     catch(const util::GenException& e)
@@ -269,7 +276,7 @@ namespace mygl
   }
 
   //Draw a Node that could have selected children
-  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, std::vector<mygl::VisID>::iterator selectSearch)
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, const size_t depth, std::vector<mygl::VisID>::iterator selectSearch)
   {
     const bool selected = (selectSearch != fSelectPath.end() && selectSearch < fSelectPath.end()-1 && ((*iter)[fIDCol] == *selectSearch));
     if(selected) ImGui::SetNextTreeNodeOpen(true); 
@@ -309,10 +316,16 @@ namespace mygl
       }
       else*/
       {
+        //Make sure column is wide enough for checkboxes
+        if(open && ImGui::GetColumnWidth() < ImGui::GetTreeNodeToLabelSpacing()*(depth+1))
+        {
+          ImGui::SetColumnWidth(-1, ImGui::GetTreeNodeToLabelSpacing()*(depth+1)); //Leave extra space for the checkbox
+        }
+
         for(auto child = iter->begin(); child != iter->end(); ++child)
         {
-          if(selected) DrawNode(child, false, selectSearch+1);
-          else DrawNode(child, false);
+          if(selected) DrawNode(child, false, depth+1, selectSearch+1);
+          else DrawNode(child, false, depth+1);
         }
       }
       ImGui::TreePop();
@@ -364,7 +377,7 @@ namespace mygl
   }
 
   //Draw a Node that I don't need to check whether its' children are selected
-  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top)
+  void Scene::DrawNode(const mygl::TreeModel::iterator iter, const bool top, const size_t depth)
   {
     const bool open = DrawNodeData(iter, top);
 
@@ -397,9 +410,15 @@ namespace mygl
       }
       else*/
       {
+        //Make sure column is wide enough for checkboxes
+        if(open && ImGui::GetColumnWidth() < ImGui::GetTreeNodeToLabelSpacing()*(depth+1))
+        {
+          ImGui::SetColumnWidth(-1, ImGui::GetTreeNodeToLabelSpacing()*(depth+1)); //Leave extra space for the checkbox
+        }
+
         for(auto child = iter->begin(); child != iter->end(); ++child)
         { 
-          DrawNode(child, false);
+          DrawNode(child, false, depth+1);
         }
       }
 

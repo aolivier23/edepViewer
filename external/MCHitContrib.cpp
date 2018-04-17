@@ -112,15 +112,18 @@ namespace mygl
       const double beta = diff.Vect().Mag()/c/diff.T();
       const double timeRes = 0.7; //Measured in test beam in ns
 
-      for(size_t sigmas = 1; sigmas < 6; ++sigmas)
+      if(beta > 0) 
       {
-        TGeoSphere sphere(0., beta*c*timeRes*sigmas);
-        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, iter, false, pos, &sphere, glm::vec4(found.first->second, 0.2)));
+        for(size_t sigmas = 1; sigmas < 6; ++sigmas)
+        {
+          TGeoSphere sphere(0., beta*c*timeRes*sigmas);
+          auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, iter, false, pos, &sphere, glm::vec4(found.first->second, 0.2)));
 
-        row[fHitRecord->fEnergy] = hit.Energy;
-        row[fHitRecord->fTime]   = timeRes*sigmas;
-        row[fHitRecord->fDist]   = beta*c*timeRes*sigmas;
-        row[fHitRecord->fParticle] = std::to_string(sigmas)+" Sigmas";
+          row[fHitRecord->fEnergy] = hit.Energy;
+          row[fHitRecord->fTime]   = timeRes*sigmas;
+          row[fHitRecord->fDist]   = beta*c*timeRes*sigmas;
+          row[fHitRecord->fParticle] = std::to_string(sigmas)+" Sigmas";
+        }
       }
     }
   }
