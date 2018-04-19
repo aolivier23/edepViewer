@@ -2,7 +2,7 @@
   <drawer>
     <global>
       <Grids/>
-      <DefaultGeo MaxDepth="7"/>
+      <DefaultGeo MaxDepth="3"/>
     </global>
     <event>
       <VertexCamera/>
