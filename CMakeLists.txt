@@ -25,13 +25,24 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
 add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
 
-#Find the EDepSim library that this package is designed to work with
-find_package(EDepSim)
+#Find the EDepSim library that this package is designed to work with.  I will provide for 3 different strategies:
+#1.) Look for the currently setup edep-sim.  This is not CMake's usual/default behavior as far as I can tell.  
+#2.) Look for edep-sim that is "registered" via CMake.  I think this is how CMake usually looks for packages.  
+#3.) Look for edep-sim without a CMake setup system.  v2.0.1 and older didn't have a Find*.cmake file.  
+
+#First, look for currently setup edep-sim.  This should override all other cases/
+if(DEFINED ENV{"$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/lib"})
+  find_package(EDepSim HINTS "$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/lib" NO_DEFAULT_PATH)
+else() 
+  find_package(EDepSim) #If edep-sim is not set up, try to find it "the CMake way" as documented at 
+                        #https://cmake.org/cmake/help/v3.0/command/find_package.html
+endif()
+
 if(EDepSim_FOUND) #If edep-sim is not new enough to have CMake support, set it up using EDEP_DIR
   set(EDepSimIO EDepSim::edepsim_io) 
   include_directories("${EDepSim_DIR}/include/EDepSim") 
   message("EDepSim_DIR is " ${EDepSim_DIR} )
-else()
+else() #If I couldn't find edep-sim using either its' environment variables or CMake's default behavior, try the old edep-sim setup method
   set(EDepSimIO edepsim)
   link_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/lib")
   include_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/include/edep-sim") 
