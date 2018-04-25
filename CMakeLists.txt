@@ -39,10 +39,13 @@ else()
 endif()
 
 if(EDepSim_FOUND) #If edep-sim is not new enough to have CMake support, set it up using EDEP_DIR
+  add_definitions(-DEDEPSIM_FORCE_PRIVATE_FIELDS=true) #Use accessor functions instead of public fields so that Clark can change the format of 
+                                                       #the io classes without breaking things like edepViewer
   set(EDepSimIO EDepSim::edepsim_io) 
   include_directories("${EDepSim_DIR}/include/EDepSim") 
   message("EDepSim_DIR is " ${EDepSim_DIR} )
 else() #If I couldn't find edep-sim using either its' environment variables or CMake's default behavior, try the old edep-sim setup method
+  #add_definitions(-DEDEPSIM_FORCE_PRIVATE_FIELDS=false) #This option wasn't available until after v2.0.1
   set(EDepSimIO edepsim)
   link_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/lib")
   include_directories("$ENV{EDEP_ROOT}/$ENV{EDEP_TARGET}/include/edep-sim") 
