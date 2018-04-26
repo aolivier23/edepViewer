@@ -11,7 +11,7 @@
 
 //gl includes
 #include "gl/camera/PlaneCam.h"
-#include "gl/objects/Texture2D.cpp"
+//#include "gl/objects/Texture2D.cpp"
 
 //Load plugins for drawing from Factory
 #include "plugins/Factory.cpp"

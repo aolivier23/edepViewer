@@ -19,8 +19,8 @@ namespace mygl
   template <class FORMAT>
   struct enumToType
   {
-    std::enable_if<false, decltype(GL_INVALID_ENUM)> Type = GL_INVALID_ENUM; //Not what this enum is really for, but gets the point 
-                                                                             //across and should have the intended result
+    typename std::enable_if<false, decltype(GL_INVALID_ENUM)>::type Type = GL_INVALID_ENUM; //Not what this enum is really for, but gets the point 
+                                                                                            //across and should have the intended result
   };
 
   template <>
