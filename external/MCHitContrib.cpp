@@ -30,8 +30,13 @@ namespace
   //Returns the FS TG4Trajectory that led to child.
   const TG4Trajectory& Matriarch(const TG4Trajectory& child, const std::vector<TG4Trajectory>& trajs)
   {
+    #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
     if(child.GetParentId() == -1) return child;
     return Matriarch(trajs[child.GetParentId()], trajs);
+    #else
+    if(child.ParentId == -1) return child;
+    return Matriarch(trajs[child.ParentId], trajs);
+    #endif
   }
 }
 
@@ -80,12 +85,22 @@ namespace mygl
       const auto& FSPart = ::Matriarch(trajs[hit.TrackIDs.front()], trajs);
       for(const auto& id: hit.TrackIDs)
       {
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
         if(::Matriarch(trajs[id], trajs).GetTrackId() != FSPart.GetTrackId()) std::cerr << "Found an MCHit with multiple FS particles!\n";
+        #else
+        if(::Matriarch(trajs[id], trajs).TrackId != FSPart.TrackId) std::cerr << "Found an MCHit with multiple FS particles!\n";
+        #endif
       }
       FSInfo info;
+      #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
       info.TrackID = FSPart.GetTrackId();
       info.Name = FSPart.GetName();
       info.Energy = FSPart.GetInitialMomentum().E() - FSPart.GetInitialMomentum().Mag();
+      #else
+      info.TrackID = FSPart.TrackId;
+      info.Name = FSPart.Name;
+      info.Energy = FSPart.InitialMomentum.E() - FSPart.InitialMomentum.Mag();
+      #endif
 
       const auto found = fContribToColor.emplace(info, (glm::vec3)color);
       if(found.second) ++color;
@@ -99,16 +114,28 @@ namespace mygl
       auto& row = *iter;
       row[fHitRecord->fEnergy] = hit.Energy;
       row[fHitRecord->fTime] = hit.Position.T();
+      #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
       row[fHitRecord->fDist] = (hit.Position - FSPart.Points.front().GetPosition()).Vect().Mag();
+      #else
+      row[fHitRecord->fDist] = (hit.Position - FSPart.Points.front().Position).Vect().Mag();
+      #endif
       row[fHitRecord->fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 
                                                   [&trajs](std::string& names, const int id)
                                                   {
+                                                    #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
                                                     return names+" "+std::string(trajs[id].GetName());
+                                                    #else
+                                                    return names+" "+std::string(trajs[id].Name);
+                                                    #endif
                                                   });
 
       //Produce Spheres for distance this neutron could travel in time resolution
       const double c = 30.; //speed of light in cm/ns
+      #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
       const auto diff = (hit.Position - FSPart.Points.front().GetPosition());
+      #else 
+      const auto diff = (hit.Position - FSPart.Points.front().Position);
+      #endif
       const double beta = diff.Vect().Mag()/c/diff.T();
       const double timeRes = 0.7; //Measured in test beam in ns
 

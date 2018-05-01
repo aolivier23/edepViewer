@@ -70,9 +70,17 @@ namespace draw
 
       for(auto& edep: edeps)
       {
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
         const auto start = edep.GetStart();
+        #else 
+        const auto start = edep.Start;
+        #endif
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
         const auto stop = edep.GetStop();
+        #else
+        const auto stop = edep.Stop;
+        #endif
 
         if((stop-start).Vect().Mag() < fMinLength) continue;
           
@@ -98,50 +106,85 @@ namespace draw
         }
         const double density = sumDensity/nSamples/6.24e24*1e6;*/
 
-        auto found = idToIter.find(edep.GetPrimaryId());
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+        const auto id = edep.GetPrimaryId();
+        #else
+        const auto id = edep.PrimaryId;
+        #endif
+        auto found = idToIter.find(id);
         if(found == idToIter.end())
         {
-          found = idToIter.emplace(std::make_pair(edep.GetPrimaryId(), scene.NewNode(detIter))).first;
+          found = idToIter.emplace(std::make_pair(id, scene.NewNode(detIter))).first;
           auto& row = *(found->second);
           row[fEDepRecord->fVisID] = nextID;
           ++nextID;
           row[fEDepRecord->fScintE] = 0;
-          row[fEDepRecord->fEnergy] = data.Trajectories[edep.GetPrimaryId()].GetInitialMomentum().E();
-          row[fEDepRecord->fdEdx] = data.Trajectories[edep.GetPrimaryId()].GetInitialMomentum().E()/
-                                    (data.Trajectories[edep.GetPrimaryId()].Points.front().GetPosition()
-                                     -data.Trajectories[edep.GetPrimaryId()].Points.back().GetPosition()).Vect().Mag();
-          row[fEDepRecord->fT0] = data.Trajectories[edep.GetPrimaryId()].Points.front().GetPosition().T();
-          row[fEDepRecord->fPrimName] = data.Trajectories[edep.GetPrimaryId()].GetName();
+          #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+          row[fEDepRecord->fEnergy] = data.Trajectories[id].GetInitialMomentum().E();
+          row[fEDepRecord->fdEdx] = data.Trajectories[id].GetInitialMomentum().E()/
+                                    (data.Trajectories[id].Points.front().GetPosition()
+                                     -data.Trajectories[id].Points.back().GetPosition()).Vect().Mag();
+          row[fEDepRecord->fT0] = data.Trajectories[id].Points.front().GetPosition().T();
+          row[fEDepRecord->fPrimName] = data.Trajectories[id].GetName();
+          #else
+          row[fEDepRecord->fEnergy] = data.Trajectories[id].InitialMomentum.E();
+          row[fEDepRecord->fdEdx] = data.Trajectories[id].InitialMomentum.E()/
+                                    (data.Trajectories[id].Points.front().Position
+                                     -data.Trajectories[id].Points.back().Position).Vect().Mag();
+          row[fEDepRecord->fT0] = data.Trajectories[id].Points.front().Position.T();
+          row[fEDepRecord->fPrimName] = data.Trajectories[id].Name;
+          #endif
         }
         auto parent = found->second;
   
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
         const double energy = edep.GetEnergyDeposit();
         const double length = edep.GetTrackLength();
+        #else
+        const double energy = edep.EnergyDeposit;
+        const double length = edep.TrackLength;
+        #endif
         //double dEdx = 0.;
         //From http://pdg.lbl.gov/2011/reviews/rpp2011-rev-passage-particles-matter.pdf, the Bethe formula for dE/dx in 
         //MeV*cm^2/g goes as Z/A.  To get comparable stopping powers for all materials, try to "remove the Z/A dependence".
         //if(length > 0.) dEdx = energy/length*10./density*sumA/sumZ;
-        double dEdx = edep.GetEnergyDeposit()/edep.GetTrackLength();
+        double dEdx = energy/length;
+
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+        const auto pdg = data.Trajectories[id].GetPDGCode();
+        #else
+        const auto pdg = data.Trajectories[id].PDGCode;
+        #endif
 
         auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
-                                                  glm::vec4((*(services.fPDGToColor))[data.Trajectories[edep.GetPrimaryId()].GetPDGCode()], 1.0), 
+                                                  glm::vec4((*(services.fPDGToColor))[pdg], 1.0), 
                                                   fLineWidth);
         auto& row = *iter;
 
-        row[fEDepRecord->fScintE]  = edep.GetSecondaryDeposit();
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+        const auto secondE = edep.GetSecondaryDeposit();
+        #else
+        const auto secondE = edep.SecondaryDeposit;
+        #endif
+
+        row[fEDepRecord->fScintE]  = secondE;
         row[fEDepRecord->fEnergy]  = energy;
         row[fEDepRecord->fdEdx]    = dEdx;
         row[fEDepRecord->fT0]      = start.T();
-        row[fEDepRecord->fPrimName] = data.Trajectories[edep.GetPrimaryId()].GetName(); //TODO: energy depositions children of contributing tracks?
+        #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+        row[fEDepRecord->fPrimName] = data.Trajectories[id].GetName(); //TODO: energy depositions children of contributing tracks?
+        #else
+        row[fEDepRecord->fPrimName] = data.Trajectories[id].Name;
+        #endif
         ++nextID;
 
         sumE += energy;
-        sumScintE += edep.GetSecondaryDeposit();
+        sumScintE += secondE;
         if(start.T() < minT) minT = start.T();
       }
     }
   }
 
-  REGISTER_PLUGIN(EDepContributor, EventDrawer);
+  REGISTER_PLUGIN(EDepContributor, EventDrawer)
 }

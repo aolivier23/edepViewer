@@ -43,8 +43,12 @@ namespace draw
 
     TLorentzVector avgPos;
     for(const auto& vert: data.Primaries)
-    {
+    { 
+      #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
       avgPos += vert.GetPosition();
+      #else
+      avgPos += vert.Position;
+      #endif
       //viewer.AddCamera(vert.Reaction, new PlaneCam()); //TODO: Configure new camera based on vert's position and maybe zoom based on some measure of activity?
     }
   
