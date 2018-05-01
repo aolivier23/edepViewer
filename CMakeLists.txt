@@ -52,8 +52,8 @@ else() #If I couldn't find edep-sim using either its' environment variables or C
   message("EDepSim_DIR is " $ENV{EDEP_ROOT}/$ENV{EDEP_TARGET} )
 endif()
 
-#XML parser library for configuration
-find_package( tinyxml2 REQUIRED )
+#YAML parser library for configuration
+find_package( yaml-cpp REQUIRED )
 
 #Support for glad
 add_library(glad SHARED glad/src/glad.c)

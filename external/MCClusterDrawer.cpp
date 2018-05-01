@@ -21,11 +21,10 @@
 
 namespace mygl
 {
-  MCClusterDrawer::MCClusterDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fClusters(nullptr), fClusterName("MergedClusters"), 
-                                                                        fClusterRecord(new MCClusterRecord())
+  MCClusterDrawer::MCClusterDrawer(const YAML::Node& config): ExternalDrawer(config), fClusters(nullptr), fClusterName("MergedClusters"), 
+                                                              fClusterRecord(new MCClusterRecord())
   {
-    const auto clustName = config->Attribute("ClusterName");
-    if(clustName != nullptr) fClusterName = clustName;
+    if(config["ClusterName"]) fClusterName = config["ClusterName"].as<std::string>();
   }
 
   void MCClusterDrawer::ConnectTree(TTreeReader& reader)
@@ -86,7 +85,7 @@ namespace mygl
              
         glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(clust.Position.X(), clust.Position.Y(), clust.Position.Z()));
 
-        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, fDefaultDraw, pos,
                                                         &shape, glm::vec4((glm::vec3)color, 0.3))); 
 
         ++color;

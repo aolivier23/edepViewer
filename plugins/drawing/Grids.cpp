@@ -22,9 +22,12 @@
 
 namespace draw
 {
-  Grids::Grids(const tinyxml2::XMLElement* config): fGuideRecord(new GuideRecord())
+  Grids::Grids(const YAML::Node& config): GeoDrawer(config), fGuideRecord(new GuideRecord()), fLineWidth(0.006)
   {
-    fLineWidth = config->FloatAttribute("LineWidth", 0.006);
+    if(config["LineWidth"])
+    {
+      fLineWidth = config["LineWidth"].as<float>();
+    }
   }
 
   void Grids::doRequestScenes(mygl::Viewer& viewer)
@@ -45,22 +48,22 @@ namespace draw
 
     const double gridSize = 1e5;
     //A 1m grid 
-    auto& oneMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, false, glm::mat4(), gridSize, 1000., gridSize, 1000.,
+    auto& oneMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, fDefaultDraw, glm::mat4(), gridSize, 1000., gridSize, 1000.,
                                                     glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
     oneMrow[fGuideRecord->fName] = "1m Grid";
 
     //A 1dm grid 
-    auto& oneDMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, false, glm::mat4(), gridSize, 100., gridSize, 100.,
+    auto& oneDMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, fDefaultDraw, glm::mat4(), gridSize, 100., gridSize, 100.,
                                                      glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
     oneDMrow[fGuideRecord->fName] = "1dm Grid";
 
     //A 1cm grid
-    auto& oneCMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, false, glm::mat4(), gridSize, 10., gridSize, 10.,
+    auto& oneCMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, fDefaultDraw, glm::mat4(), gridSize, 10., gridSize, 10.,
                                                      glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
     oneCMrow[fGuideRecord->fName] = "1cm Grid";
 
     //A 1mm grid
-    auto& oneMMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, false, glm::mat4(), gridSize, 1., gridSize, 1.,
+    auto& oneMMrow = *(scene.AddDrawable<mygl::Grid>(nextID++, rootIter, fDefaultDraw, glm::mat4(), gridSize, 1., gridSize, 1.,
                                                      glm::vec4(0.3f, 0.0f, 0.9f, 0.2f), fLineWidth));
     oneMMrow[fGuideRecord->fName] = "1mm Grid";
   }

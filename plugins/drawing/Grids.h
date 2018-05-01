@@ -14,9 +14,6 @@
 #include "gl/VisID.h"
 #include "gl/Viewer.h"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 #ifndef DRAW_GRIDS_H
 #define DRAW_GRIDS_H
 
@@ -32,7 +29,7 @@ namespace draw
   class Grids: public GeoDrawer
   {
     public:
-      Grids(const tinyxml2::XMLElement* config); //Configure a new Grids
+      Grids(const YAML::Node& config); //Configure a new Grids
       virtual ~Grids() = default;
 
     protected:

@@ -25,11 +25,21 @@
 
 namespace draw
 {
-  EDepDEdx::EDepDEdx(const tinyxml2::XMLElement* config): fPalette(config->FloatAttribute("dEdxMin", 0.), 
-                                                                   config->FloatAttribute("dEdxMax", 8.)), 
-                                                          fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
-                                                          fMinLength(config->FloatAttribute("MinLength", 1.0)), fEDepRecord(new EDepRecord())
-  {    
+  EDepDEdx::EDepDEdx(const YAML::Node& config): EventDrawer(config), fPalette(config["dEdxScale"]["min"].as<float>(), 
+                                                                              config["dEdxScale"]["max"].as<float>()), 
+                                                fLineWidth(0.008), 
+                                                fMinLength(1.0), fEDepRecord(new EDepRecord())
+  {
+    /*auto dEdxScale = std::make_pair(0.f, 8.f);
+    if(config["dEdxScale"])
+    {
+      dEdxScale.first = config["dEdxScale"]["min"].as<float>();
+      dEdxScale.second = config["dEdxScale"]["max"].as<float>();
+    }
+    fPalette = mygl::Palette(dEdxScale.first, dEdxScale.second);*/
+
+    if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
+    if(config["MinLength"]) fMinLength = config["MinLength"].as<float>();    
   }
 
   void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
@@ -172,7 +182,7 @@ namespace draw
         }
         auto parent = found->second;
 
-        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
                                                   glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
         auto& row = *iter;
         //fPalette(dEdx), 1.0));

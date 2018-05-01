@@ -20,11 +20,6 @@
 
 class TG4Event;
 
-namespace tinyxml2
-{
-  class XMLElement;
-}
-
 namespace mygl
 {
   class TreeModel;
@@ -35,7 +30,7 @@ namespace draw
   class EDepDEdx: public EventDrawer
   {
     public:
-      EDepDEdx(const tinyxml2::XMLElement* config);
+      EDepDEdx(const YAML::Node& config);
       virtual ~EDepDEdx() = default;
 
     protected:

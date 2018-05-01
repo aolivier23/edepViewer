@@ -28,9 +28,9 @@
 
 namespace draw
 {
-  DefaultGeo::DefaultGeo(const tinyxml2::XMLElement* config): fColor(new mygl::ColorIter()), fGeoRecord(new GeoRecord())
+  DefaultGeo::DefaultGeo(const YAML::Node& config): GeoDrawer(config), fColor(new mygl::ColorIter()), fGeoRecord(new GeoRecord()), fMaxDepth(3)
   {
-    fMaxDepth = config->IntAttribute("MaxDepth", 7);
+    if(config["MaxDepth"]) fMaxDepth = config["MaxDepth"].as<unsigned int>();
   }
 
   void DefaultGeo::AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
@@ -54,7 +54,7 @@ namespace draw
     double matPtr[16] = {};
     local.GetHomogenousMatrix(matPtr);
 
-    auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, false, glm::make_mat4(matPtr),
+    auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, fDefaultDraw, glm::make_mat4(matPtr),
                                                   node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
     auto& row = *iter;
 

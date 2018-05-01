@@ -21,11 +21,6 @@
 class TGeoManager;
 class TG4Event;
 
-namespace tinyxml2
-{
-  class XMLElement;
-}
-
 namespace mygl
 {
   class TreeModel;
@@ -36,7 +31,7 @@ namespace draw
   class EDepContributor: public EventDrawer
   {
     public:
-      EDepContributor(const tinyxml2::XMLElement* config);
+      EDepContributor(const YAML::Node& config);
       virtual ~EDepContributor() = default;
 
     protected:

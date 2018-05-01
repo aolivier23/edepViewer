@@ -12,9 +12,6 @@
 //external evd includes
 #include "util/Palette.cpp"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 //ROOT includes
 #include "TTreeReaderArray.h"
 
@@ -34,7 +31,7 @@ namespace mygl
   class MCClusterDrawer: public draw::ExternalDrawer
   {
     public:
-      MCClusterDrawer(const tinyxml2::XMLElement* config);
+      MCClusterDrawer(const YAML::Node& config);
       virtual ~MCClusterDrawer() = default;
 
       virtual void ConnectTree(TTreeReader& reader) override;

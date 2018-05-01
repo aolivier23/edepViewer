@@ -22,7 +22,7 @@
 
 namespace draw
 {
-  VertexCamera::VertexCamera(const tinyxml2::XMLElement* config): fFirstTime(true)
+  VertexCamera::VertexCamera(const YAML::Node& config): EventDrawer(config), fFirstTime(true)
   {
     //TODO: Configuration?    
   }
@@ -57,7 +57,7 @@ namespace draw
 
     //Center the default camera on average position of interaction vertices in each event
     viewer.AddCamera("Interaction", std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(pos, glm::normalize(dir), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)));
-    viewer.MakeCameraCurrent("Interaction");
+    if(fDefaultDraw) viewer.MakeCameraCurrent("Interaction");
   }
 
   REGISTER_PLUGIN(VertexCamera, EventDrawer);

@@ -20,16 +20,15 @@
 //edepsim includes
 #include "TG4Event.h"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 namespace draw
 {
-  EDepContributor::EDepContributor(const tinyxml2::XMLElement* config): fPDGToColor(), fPDGColor(), 
-                                                                        fLineWidth(config->FloatAttribute("LineWidth", 0.008)), 
-                                                                        fMinLength(config->FloatAttribute("MinLength", 1.0)),
-                                                                        fEDepRecord(new EDepRecord)
+  EDepContributor::EDepContributor(const YAML::Node& config): EventDrawer(config), fPDGToColor(), fPDGColor(), 
+                                                              fLineWidth(0.008), 
+                                                              fMinLength(1.0),
+                                                              fEDepRecord(new EDepRecord())
   {    
+    if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
+    if(config["MinLength"]) fMinLength = config["MinLength"].as<float>();
   }
 
   void EDepContributor::doRequestScenes(mygl::Viewer& viewer)
@@ -157,7 +156,7 @@ namespace draw
         const auto pdg = data.Trajectories[id].PDGCode;
         #endif
 
-        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
                                                   glm::vec4((*(services.fPDGToColor))[pdg], 1.0), 
                                                   fLineWidth);
         auto& row = *iter;

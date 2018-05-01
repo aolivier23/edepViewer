@@ -68,7 +68,7 @@ int main(const int argc, const char** argv)
   //Parse the command line to configure evd window
   evd.reconfigure(cmd::FindConfig(argc, argv));
   evd.SetSource(cmd::FindSource(argc, argv));
-
+  
   //evd.make_scenes();
 
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
@@ -81,18 +81,18 @@ int main(const int argc, const char** argv)
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
     glfwPollEvents(); //TODO: Since this is an event viewer rather than a game, use glfwWaitEvents() instead?
     ImGui_ImplGlfwGL3_NewFrame();
-
+  
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-
+  
     evd.Render(display_w, display_h, io);
-
+ 
     //#if defined(DEBUG) //TODO: Does this work with non-GCC compilers?
-      bool showMetrics = true;
-      ImGui::ShowMetricsWindow(&showMetrics);
+    bool showMetrics = true;
+    ImGui::ShowMetricsWindow(&showMetrics);
     //#endif
-
+  
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);

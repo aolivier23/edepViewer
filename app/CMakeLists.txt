@@ -21,11 +21,11 @@ install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             ${EDepSimIO} Factory Drawers tinyxml2 GUI Geometry Source TreeModel ${EXTERNAL_LIBS} external)
+                                             ${EDepSimIO} Factory Drawers yaml-cpp GUI Geometry Source TreeModel ${EXTERNAL_LIBS} external)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine CmdLine.cpp )
-target_link_libraries( CmdLine LINK_PUBLIC tinyxml2 Source )
+target_link_libraries( CmdLine LINK_PUBLIC yaml-cpp Source )
 install( TARGETS CmdLine DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )

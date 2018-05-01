@@ -19,11 +19,10 @@
 
 namespace mygl
 {
-  MCHitDrawer::MCHitDrawer(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fPalette(0., 1e3), fHitName("NeutronHits"), 
-                                                                fHitRecord(new MCHitRecord())                                                 
+  MCHitDrawer::MCHitDrawer(const YAML::Node& config): ExternalDrawer(config), fHits(nullptr), fPalette(0., 1e3), fHitName("NeutronHits"), 
+                                                      fHitRecord(new MCHitRecord())                                                 
   {
-    const auto hitName = config->Attribute("HitName");
-    if(hitName != nullptr) fHitName = hitName;
+    if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
   void MCHitDrawer::ConnectTree(TTreeReader& reader)

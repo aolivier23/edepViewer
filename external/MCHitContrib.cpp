@@ -42,11 +42,10 @@ namespace
 
 namespace mygl
 {
-  MCHitContrib::MCHitContrib(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fHitName("NeutronHits"), 
-                                                                  fHitRecord(new MCHitRecord()), fContribToColor()                                                 
+  MCHitContrib::MCHitContrib(const YAML::Node& config): ExternalDrawer(config), fHits(nullptr), fHitName("NeutronHits"), 
+                                                        fHitRecord(new MCHitRecord()), fContribToColor()                                                 
   {
-    const auto hitName = config->Attribute("HitName");
-    if(hitName != nullptr) fHitName = hitName;
+    if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
   void MCHitContrib::ConnectTree(TTreeReader& reader)
@@ -109,7 +108,7 @@ namespace mygl
            
       glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(hit.Position.X(), hit.Position.Y(), hit.Position.Z()));
 
-      auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+      auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, fDefaultDraw, pos,
                                                     &box, glm::vec4(found.first->second, 1.0)); 
       auto& row = *iter;
       row[fHitRecord->fEnergy] = hit.Energy;

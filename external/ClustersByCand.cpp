@@ -19,15 +19,13 @@
 
 namespace mygl
 {
-  ClustersByCand::ClustersByCand(const tinyxml2::XMLElement* config): ExternalDrawer(), fCands(nullptr), fClusters(nullptr),
-                                                                      fClusterRecord(new MCClusterRecord()), 
-                                                                      fCandName("CandFromTOF"), fClusterName("MergedClusters")
+  ClustersByCand::ClustersByCand(const YAML::Node& config): ExternalDrawer(config), fCands(nullptr), fClusters(nullptr),
+                                                            fClusterRecord(new MCClusterRecord()), 
+                                                            fCandName("CandFromTOF"), fClusterName("MergedClusters")
   {
-    const auto candName = config->Attribute("CandidateName");
-    if(candName != nullptr) fCandName = candName;
+    if(config["CandidateName"]) fCandName = config["CandidateName"].as<std::string>();
 
-    const auto clustName = config->Attribute("ClusterName");
-    if(clustName != nullptr) fClusterName = clustName;
+    if(config["ClusterName"]) fClusterName = config["ClusterName"].as<std::string>();
   }
 
   void ClustersByCand::ConnectTree(TTreeReader& reader)
@@ -66,7 +64,7 @@ namespace mygl
                
         glm::mat4 pos = glm::translate(glm::mat4(), glm::vec3(clust.Position.X(), clust.Position.Y(), clust.Position.Z()));
 
-        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, true, pos,
+        auto& row = *(scene.AddDrawable<mygl::PolyMesh>(nextID++, topIter, fDefaultDraw, pos,
                                                         &shape, glm::vec4((glm::vec3)color, 0.3))); 
 
         row[fClusterRecord->fEnergy] = clust.Energy;

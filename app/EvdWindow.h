@@ -26,7 +26,7 @@
 #include "TSystemDirectory.h"
 
 //Tinyxml include
-#include <tinyxml2.h>
+#include "yaml-cpp/yaml.h"
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
@@ -62,13 +62,13 @@ namespace mygl
 
       virtual void make_scenes();
 
-      virtual void reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config);
+      virtual void reconfigure(std::unique_ptr<YAML::Node>&& config);
 
       virtual void Render(const int width, const int height, const ImGuiIO& ioState); //Render this window
 
     protected:
       //Configuration file
-      std::unique_ptr<tinyxml2::XMLDocument> fConfig;
+      std::unique_ptr<YAML::Node> fConfig;
 
       //Child Widgets
       mygl::Viewer fViewer;

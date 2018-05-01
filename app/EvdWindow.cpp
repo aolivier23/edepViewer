@@ -41,63 +41,64 @@ namespace mygl
   EvdWindow::EvdWindow(): 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fNextID(0, 0, 0), fServices(), fConfig(new tinyxml2::XMLDocument()), fSource()//, fPrintTexture(nullptr)
+    fNextID(0, 0, 0), fServices(), fConfig(new YAML::Node()), fSource()//, fPrintTexture(nullptr)
   {
   }
 
-  void EvdWindow::reconfigure(std::unique_ptr<tinyxml2::XMLDocument>&& config)
+  void EvdWindow::reconfigure(std::unique_ptr<YAML::Node>&& config)
   {
     fConfig = std::move(config); //Take ownership of config and manage its' lifetime
 
+    //TODO: Preprocessing for an include directive?
     if(fConfig)
     {
+      //fConfig shall be a YAML document that contains a mapping with the keys Global and Event.  These keys 
+      //shall be sequences of maps.  An External key is also recognized in a similar format to Global and Event.  
+      //Global shall contain all GeoDrawers.
+      //Event shall contain all EventDrawers.
+      //External shall contain all ExternalDrawers.
+      //Each Drawer's configuration map shall have a tag with the c++ type of Drawer it shall configure.
+      //TODO: There is supposed to be a YAML TAG structure to handle "native" types.  Can I exploit it here?
+
       //Load global plugins
       auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
 
-      const auto top = fConfig->FirstChildElement();
-      const auto drawers = top->FirstChildElement();
-      const auto globalConfig = drawers->FirstChildElement("global");
-      if(globalConfig)
+      const auto& top = *fConfig;
+      const auto& drawers = top["Drawers"];
+      if(drawers["Global"])
       {
-        tinyxml2::XMLNode* pluginConfig = globalConfig->FirstChildElement();
-        while(pluginConfig != nullptr)
+        for(const auto& plugin: drawers["Global"])
         {
-          auto drawer = geoFactory.Get(pluginConfig->ToElement());
+          auto drawer = geoFactory.Get(plugin);
           if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get global plugin named " << pluginConfig->Value() << "\n";
-          pluginConfig = pluginConfig->NextSibling();
+          else std::cerr << "Failed to get global plugin named " << plugin.Tag() << "\n";
         }
       }
-      else throw std::runtime_error("Failed to get an element named global from config.xml.\n");
+      else throw std::runtime_error("Failed to get an element named Global from config.yaml.\n");
 
       //Load event plugins
       auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
-      const auto eventConfig = drawers->FirstChildElement("event"); //TODO: Use a Handle
-      if(eventConfig)
+      if(drawers["Event"])
       {
-        tinyxml2::XMLNode* pluginConfig = eventConfig->FirstChildElement();
-        while(pluginConfig != nullptr)
+        const auto& eventConfig = drawers["Event"];
+        for(const auto& plugin: eventConfig)
         {
-          auto drawer = evtFactory.Get(pluginConfig->ToElement());
+          auto drawer = evtFactory.Get(plugin);
           if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get event plugin named " << pluginConfig->Value() << "\n";
-          pluginConfig = pluginConfig->NextSibling();
+          else std::cerr << "Failed to get event plugin named " << plugin.Tag() << "\n";
         }
       }
-      else throw std::runtime_error("Failed to get an element named event from config.xml.\n");
+      else throw std::runtime_error("Failed to get an element named Event from config.yaml.\n");
 
       //Load external plugins
       auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
-      const auto extConfig = drawers->FirstChildElement("external");
-      if(extConfig)
+      if(drawers["External"])
       {
-        tinyxml2::XMLNode* pluginConfig = extConfig->FirstChildElement();
-        while(pluginConfig != nullptr)
+        for(const auto& plugin: drawers["External"])
         {
-          auto drawer = extFactory.Get(pluginConfig->ToElement());
+          auto drawer = extFactory.Get(plugin);
           if(drawer != nullptr) fExtDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get external plugin named " << pluginConfig->Value() << "\n";
-          pluginConfig = pluginConfig->NextSibling();
+          else std::cerr << "Failed to get external plugin named " << plugin.Tag() << "\n";
         }
       }
       make_scenes();
@@ -126,9 +127,9 @@ namespace mygl
     fNextID = mygl::VisID();
     
     //Load service information
-    const auto serviceConfig = fConfig->FirstChildElement()->FirstChildElement("services"); 
+    const auto serviceConfig = (*fConfig)["Services"]; 
     if(!serviceConfig) std::cerr << "Couldn't find services block.\n";
-    const auto geoConfig = serviceConfig->FirstChildElement("geo");
+    const auto geoConfig = serviceConfig["Geo"];
     if(!geoConfig) std::cerr << "Couldn't find geo service.\n";
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
@@ -221,8 +222,8 @@ namespace mygl
         std::string name(file->GetTitle());
         name += "/";
         name += file->GetName();
-        std::unique_ptr<tinyxml2::XMLDocument> doc(new tinyxml2::XMLDocument());
-        if(doc->LoadFile(name.c_str()) == tinyxml2::XML_SUCCESS) reconfigure(std::move(doc));
+        std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(name)));
+        if(doc) reconfigure(std::move(doc));
         else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
       }
     }

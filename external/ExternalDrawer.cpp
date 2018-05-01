@@ -16,6 +16,9 @@
 //ROOT includes
 #include "TTreeReader.h"
 
+//yaml-cpp include for configuration
+#include "yaml-cpp/yaml.h"
+
 #ifndef DRAW_EXTERNALDRAWER_CPP
 #define DRAW_EXTERNALDRAWER_CPP
 
@@ -26,7 +29,10 @@ namespace draw
   class ExternalDrawer
   {
     public:
-      ExternalDrawer() = default; //Configure a new ExternalDrawer
+      ExternalDrawer(const YAML::Node& config): fDefaultDraw(true)
+      {
+        if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<bool>();
+      }
       virtual ~ExternalDrawer() = default;
 
       virtual void RequestScenes(mygl::Viewer& viewer) //Request the needed Scene(s) from the Viewer
@@ -50,6 +56,9 @@ namespace draw
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
       virtual void doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services) = 0;
+
+      //Common options for all ExternalDrawers
+      bool fDefaultDraw; //Should this Drawer's object be visible by default? 
   };
 }
 

@@ -12,8 +12,8 @@
 //ROOT includes
 #include "TGeoManager.h" //For data
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
+//yaml-cpp include for configuration
+#include "yaml-cpp/yaml.h"
 
 #ifndef DRAW_DEFAULTGEO_H
 #define DRAW_DEFAULTGEO_H
@@ -29,7 +29,7 @@ namespace draw
   class DefaultGeo: public GeoDrawer
   {
     public:
-      DefaultGeo(const tinyxml2::XMLElement* config);
+      DefaultGeo(const YAML::Node& config);
       virtual ~DefaultGeo() = default;
 
     protected:

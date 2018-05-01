@@ -26,9 +26,9 @@
 
 namespace draw
 {
-  LinearTraj::LinearTraj(const tinyxml2::XMLElement* config): fTrajRecord(new TrajRecord())
+  LinearTraj::LinearTraj(const YAML::Node& config): EventDrawer(config), fTrajRecord(new TrajRecord()), fLineWidth(0.008)
   {
-    fLineWidth = config->FloatAttribute("LineWidth", 0.008);
+    if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
   }
 
   void LinearTraj::doRequestScenes(mygl::Viewer& viewer) 
@@ -171,7 +171,7 @@ namespace draw
       }
     }
 
-    auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), vertices, 
+    auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), vertices, 
                                                                         glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     auto& row = *iter;
     row[fTrajRecord->fPartName] = traj.GetName();

@@ -79,9 +79,9 @@ namespace
 
 namespace draw
 {
-  TrajPts::TrajPts(const tinyxml2::XMLElement* config): fTrajPtRecord(new TrajPtRecord)
+  TrajPts::TrajPts(const YAML::Node& config): EventDrawer(config), fTrajPtRecord(new TrajPtRecord), fPointRad(0.010)
   {
-    fPointRad = config->FloatAttribute("PointRad", 0.010);
+    if(config["PointRad"]) fPointRad = config["PointRad"].as<float>();
   }
 
   void TrajPts::doRequestScenes(mygl::Viewer& viewer) 
@@ -147,7 +147,7 @@ namespace draw
 
       //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
       auto ptIter = ptScene.AddDrawable<mygl::Point>(nextID++, 
-                                                     ptScene.NewTopLevelNode(), true, 
+                                                     ptScene.NewTopLevelNode(), fDefaultDraw, 
                                                      glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
       auto& ptRow = *ptIter;
       ptRow[fTrajPtRecord->fMomMag] = -1.; //TODO: Get primary momentum

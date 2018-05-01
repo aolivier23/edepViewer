@@ -11,6 +11,9 @@
 #include "gl/VisID.h"
 #include "gl/Viewer.h"
 
+//yaml-cpp includes
+#include "yaml-cpp/yaml.h"
+
 //draw includes
 #include "plugins/drawing/Services.cpp"
 
@@ -24,7 +27,10 @@ namespace draw
   class EventDrawer
   {
     public:
-      EventDrawer() = default; //Configure a new EventDrawer
+      EventDrawer(const YAML::Node& config): fDefaultDraw(true)
+      {
+        if(config["Draw"]) fDefaultDraw = config["Draw"].as<bool>();
+      }
                           //TODO: Standardized configuration based on XML
       virtual ~EventDrawer() = default;
 
@@ -45,6 +51,9 @@ namespace draw
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
       virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
                                mygl::VisID& nextID, Services& services) = 0;
+
+      //Disable drawing of a Scene by default
+      bool fDefaultDraw;
   };
 }
 

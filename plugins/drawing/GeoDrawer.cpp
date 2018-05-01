@@ -7,6 +7,9 @@
 //      and trajectory drawing with my current design. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//yaml-cpp includes
+#include "yaml-cpp/yaml.h"
+
 //gl includes
 #include "gl/VisID.h"
 #include "gl/Viewer.h"
@@ -22,8 +25,11 @@ namespace draw
   class GeoDrawer
   {
     public:
-      GeoDrawer() = default; //Configure a new GeoDrawer
-                          //TODO: Standardized configuration based on XML
+      GeoDrawer(const YAML::Node& config): fDefaultDraw(false)
+      {
+        if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<bool>();
+      }
+
       virtual ~GeoDrawer() = default;
 
       virtual void RequestScenes(mygl::Viewer& viewer) //Request the needed Scene(s) from the Viewer
@@ -41,6 +47,9 @@ namespace draw
       //behavior common to all GeoDrawers here.
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
       virtual void doDrawEvent(const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID) = 0;
+ 
+      //Configuration that applies to all GeoDrawers
+      bool fDefaultDraw; //Should this Drawer's elements be drawn by default?
   };
 }
 

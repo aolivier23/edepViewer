@@ -9,9 +9,6 @@
 //ROOT includes
 #include "TDatabasePDG.h"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 #ifndef DRAW_TRAJPTS_H
 #define DRAW_TRAJPTS_H
 
@@ -32,7 +29,7 @@ namespace draw
   {
     public:
       //TODO: Configuration information when I implement a configuration system
-      TrajPts(const tinyxml2::XMLElement* config);
+      TrajPts(const YAML::Node& config);
       virtual ~TrajPts() = default;
 
     protected:

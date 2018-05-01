@@ -9,9 +9,6 @@
 //ROOT includes
 #include "TDatabasePDG.h"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 #ifndef DRAW_LINEARTRAJ_H
 #define DRAW_LINEARTRAJ_H
 
@@ -32,7 +29,7 @@ namespace draw
   {
     public:
       //TODO: Configuration information when I implement a configuration system
-      LinearTraj(const tinyxml2::XMLElement* config);
+      LinearTraj(const YAML::Node& config);
       virtual ~LinearTraj() = default;
 
     protected:

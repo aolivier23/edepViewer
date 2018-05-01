@@ -19,10 +19,9 @@
 
 namespace mygl
 {
-  MCHitCamera::MCHitCamera(const tinyxml2::XMLElement* config): ExternalDrawer(), fHits(nullptr), fHitName("NeutronHits")
+  MCHitCamera::MCHitCamera(const YAML::Node& config): ExternalDrawer(config), fHits(nullptr), fHitName("NeutronHits")
   {
-    const auto hitName = config->Attribute("HitName");
-    if(hitName != nullptr) fHitName = hitName;
+    if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
   void MCHitCamera::ConnectTree(TTreeReader& reader)
@@ -35,7 +34,7 @@ namespace mygl
   {
     //TODO: Define pos and dir here.  Really, this is just a dummy camera that will be replaced when the first event is drawn.
     viewer.AddCamera("MCHits", std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(glm::vec3(), glm::vec3(), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)));
-    viewer.MakeCameraCurrent("MCHits");
+    if(fDefaultDraw) viewer.MakeCameraCurrent("MCHits");
   }
 
   void MCHitCamera::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
@@ -84,7 +83,7 @@ namespace mygl
     glm::vec3 dir(0., 0., 0.);
 
     viewer.AddCamera("MCHits", std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(center, glm::normalize(dir), glm::vec3(0.0, 1.0, 0.0), maxZ, 100., zoom))); 
-    viewer.MakeCameraCurrent("MCHits");
+    if(fDefaultDraw) viewer.MakeCameraCurrent("MCHits");
   }
 
   REGISTER_PLUGIN(MCHitCamera, draw::ExternalDrawer); 

@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Configuration parser includes
-#include <tinyxml2.h>
+#include "yaml-cpp/yaml.h"
 
 //local includes
 #include "app/Source.h"
@@ -25,26 +25,27 @@ namespace cmd
   }
 
   //TODO: This function needs to change when I switch to yaml
-  std::unique_ptr<tinyxml2::XMLDocument> FindConfig(const int argc, const char** argv)
+  std::unique_ptr<YAML::Node> FindConfig(const int argc, const char** argv)
   {
-    std::unique_ptr<tinyxml2::XMLDocument> doc(new tinyxml2::XMLDocument());
+    std::unique_ptr<YAML::Node> doc(new YAML::Node());
     bool found = false;
     for(int arg = 0; arg < argc; ++arg)
     {
       std::string name(argv[arg]);
-      if(name.find(".xml") != std::string::npos) 
-      {
-        if(doc->LoadFile(name.c_str()) == tinyxml2::XML_SUCCESS) found = true;
+      if(name.find(".yaml") != std::string::npos) 
+      { 
+        doc.reset(new YAML::Node(YAML::Load(name.c_str())));
+        if(!doc->IsNull()) found = true;
       }
     }
 
     //If not configuration file found, fall back to default installed with this package
     if(!found)
     {
-      const auto status = doc->LoadFile(INSTALL_XML_DIR "/default.xml");
-      if(status != tinyxml2::XML_SUCCESS)
+      doc.reset(new YAML::Node(YAML::Load(INSTALL_XML_DIR "/default.yaml")));
+      if(doc->IsNull())
       {
-        throw std::runtime_error("Failed to find an XML configuration file named " INSTALL_XML_DIR "/default.xml in the current directory.\n");
+        throw std::runtime_error("Failed to find a YAML configuration file named " INSTALL_XML_DIR "/default.yaml in the current directory.\n");
       }
     }
     return doc;

@@ -17,11 +17,6 @@
 
 class TG4Event;
 
-namespace tinyxml2
-{
-  class XMLElement;
-}
-
 namespace mygl
 {
   class TreeModel;
@@ -32,7 +27,7 @@ namespace draw
   class VertexCamera: public EventDrawer
   {
     public:
-      VertexCamera(const tinyxml2::XMLElement* config);
+      VertexCamera(const YAML::Node& config);
       virtual ~VertexCamera() = default;
 
     protected:
