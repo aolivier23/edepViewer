@@ -50,10 +50,9 @@ namespace plgn
       }
 
       //TODO: Turn string into parameter system interface
-      std::unique_ptr<BASE> Get(const YAML::Node& config)
+      std::unique_ptr<BASE> Get(const std::string& type, const YAML::Node& config)
       {
-        if(config.IsNull()) return std::unique_ptr<BASE>(); //Return invalid unique_ptr
-        const auto found = fNameToReg.find(config.Tag());
+        const auto found = fNameToReg.find(type);
         if(found != fNameToReg.end()) return found->second->NewPlugin(config); 
         return std::unique_ptr<BASE>(); //Return invalid unique_ptr
       }

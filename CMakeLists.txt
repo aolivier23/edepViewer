@@ -23,7 +23,7 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #Let source code know where this project is installed.  Needed for finding shader sources.  
 #TODO: Get shader sources from an environment variable instead.
 add_definitions(-DINSTALL_GLSL_DIR="${CMAKE_INSTALL_PREFIX}/conf/glsl")
-add_definitions(-DINSTALL_XML_DIR="${CMAKE_INSTALL_PREFIX}/conf/xml")
+add_definitions(-DINSTALL_YAML_DIR="${CMAKE_INSTALL_PREFIX}/conf/yaml")
 
 #Find the EDepSim library that this package is designed to work with.  I will provide for 3 different strategies:
 #1.) Look for the currently setup edep-sim.  This is not CMake's usual/default behavior as far as I can tell.  

@@ -174,10 +174,11 @@ namespace draw
     auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), vertices, 
                                                                         glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     auto& row = *iter;
-    row[fTrajRecord->fPartName] = traj.GetName();
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
+    row[fTrajRecord->fPartName] = traj.GetName();
     auto p = traj.GetInitialMomentum();
     #else
+    row[fTrajRecord->fPartName] = traj.Name;
     auto p = traj.InitialMomentum;
     #endif
     const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 

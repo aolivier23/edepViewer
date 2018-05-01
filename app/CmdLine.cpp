@@ -9,6 +9,9 @@
 //local includes
 #include "app/Source.h"
 
+//c++ includes
+#include <fstream>
+
 namespace cmd
 {
   std::unique_ptr<src::Source> FindSource(const int argc, const char** argv)
@@ -34,7 +37,8 @@ namespace cmd
       std::string name(argv[arg]);
       if(name.find(".yaml") != std::string::npos) 
       { 
-        doc.reset(new YAML::Node(YAML::Load(name.c_str())));
+        std::ifstream file(name);
+        doc.reset(new YAML::Node(YAML::Load(file)));
         if(!doc->IsNull()) found = true;
       }
     }
@@ -42,10 +46,11 @@ namespace cmd
     //If not configuration file found, fall back to default installed with this package
     if(!found)
     {
-      doc.reset(new YAML::Node(YAML::Load(INSTALL_XML_DIR "/default.yaml")));
+      std::ifstream file(INSTALL_YAML_DIR "/default.yaml");
+      doc.reset(new YAML::Node(YAML::Load(file)));
       if(doc->IsNull())
       {
-        throw std::runtime_error("Failed to find a YAML configuration file named " INSTALL_XML_DIR "/default.yaml in the current directory.\n");
+        throw std::runtime_error("Failed to find a YAML configuration file named " INSTALL_YAML_DIR "/default.yaml in the current directory.\n");
       }
     }
     return doc;

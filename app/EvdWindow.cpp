@@ -67,11 +67,11 @@ namespace mygl
       const auto& drawers = top["Drawers"];
       if(drawers["Global"])
       {
-        for(const auto& plugin: drawers["Global"])
+        for(auto plugin = drawers["Global"].begin(); plugin != drawers["Global"].end(); ++plugin)
         {
-          auto drawer = geoFactory.Get(plugin);
+          auto drawer = geoFactory.Get(plugin->first.as<std::string>(), plugin->second);
           if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get global plugin named " << plugin.Tag() << "\n";
+          else std::cerr << "Failed to get global plugin named " << plugin->first << "(end)\n";
         }
       }
       else throw std::runtime_error("Failed to get an element named Global from config.yaml.\n");
@@ -81,11 +81,11 @@ namespace mygl
       if(drawers["Event"])
       {
         const auto& eventConfig = drawers["Event"];
-        for(const auto& plugin: eventConfig)
+        for(auto plugin = eventConfig.begin(); plugin != eventConfig.end(); ++plugin)
         {
-          auto drawer = evtFactory.Get(plugin);
+          auto drawer = evtFactory.Get(plugin->first.as<std::string>(), plugin->second);
           if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get event plugin named " << plugin.Tag() << "\n";
+          else std::cerr << "Failed to get event plugin named " << plugin->first << "(end)\n";
         }
       }
       else throw std::runtime_error("Failed to get an element named Event from config.yaml.\n");
@@ -94,11 +94,11 @@ namespace mygl
       auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
       if(drawers["External"])
       {
-        for(const auto& plugin: drawers["External"])
+        for(YAML::const_iterator plugin = drawers["External"].begin(); plugin != drawers["External"].end(); ++plugin)
         {
-          auto drawer = extFactory.Get(plugin);
+          auto drawer = extFactory.Get(plugin->first.as<std::string>(), plugin->second);
           if(drawer != nullptr) fExtDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get external plugin named " << plugin.Tag() << "\n";
+          else std::cerr << "Failed to get external plugin named " << plugin->first << "\n";
         }
       }
       make_scenes();
@@ -127,10 +127,10 @@ namespace mygl
     fNextID = mygl::VisID();
     
     //Load service information
-    const auto serviceConfig = (*fConfig)["Services"]; 
+    const auto& serviceConfig = (*fConfig)["Services"]; 
     if(!serviceConfig) std::cerr << "Couldn't find services block.\n";
-    const auto geoConfig = serviceConfig["Geo"];
-    if(!geoConfig) std::cerr << "Couldn't find geo service.\n";
+    const auto& geoConfig = serviceConfig["Geo"];
+    if(!geoConfig) std::cerr << "Couldn't find Geo service.\n";
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
@@ -222,7 +222,8 @@ namespace mygl
         std::string name(file->GetTitle());
         name += "/";
         name += file->GetName();
-        std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(name)));
+        std::ifstream file(name);
+        std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(file)));
         if(doc) reconfigure(std::move(doc));
         else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
       }
