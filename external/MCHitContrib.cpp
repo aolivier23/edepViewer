@@ -30,8 +30,8 @@ namespace
   //Returns the FS TG4Trajectory that led to child.
   const TG4Trajectory& Matriarch(const TG4Trajectory& child, const std::vector<TG4Trajectory>& trajs)
   {
-    if(child.ParentId == -1) return child;
-    return Matriarch(trajs[child.ParentId], trajs);
+    if(child.GetParentId() == -1) return child;
+    return Matriarch(trajs[child.GetParentId()], trajs);
   }
 }
 
@@ -80,12 +80,12 @@ namespace mygl
       const auto& FSPart = ::Matriarch(trajs[hit.TrackIDs.front()], trajs);
       for(const auto& id: hit.TrackIDs)
       {
-        if(::Matriarch(trajs[id], trajs).TrackId != FSPart.TrackId) std::cerr << "Found an MCHit with multiple FS particles!\n";
+        if(::Matriarch(trajs[id], trajs).GetTrackId() != FSPart.GetTrackId()) std::cerr << "Found an MCHit with multiple FS particles!\n";
       }
       FSInfo info;
-      info.TrackID = FSPart.TrackId;
-      info.Name = FSPart.Name;
-      info.Energy = FSPart.InitialMomentum.E() - FSPart.InitialMomentum.Mag();
+      info.TrackID = FSPart.GetTrackId();
+      info.Name = FSPart.GetName();
+      info.Energy = FSPart.GetInitialMomentum().E() - FSPart.GetInitialMomentum().Mag();
 
       const auto found = fContribToColor.emplace(info, (glm::vec3)color);
       if(found.second) ++color;
@@ -99,16 +99,16 @@ namespace mygl
       auto& row = *iter;
       row[fHitRecord->fEnergy] = hit.Energy;
       row[fHitRecord->fTime] = hit.Position.T();
-      row[fHitRecord->fDist] = (hit.Position - FSPart.Points.front().Position).Vect().Mag();
+      row[fHitRecord->fDist] = (hit.Position - FSPart.Points.front().GetPosition()).Vect().Mag();
       row[fHitRecord->fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 
                                                   [&trajs](std::string& names, const int id)
                                                   {
-                                                    return names+" "+trajs[id].Name;
+                                                    return names+" "+std::string(trajs[id].GetName());
                                                   });
 
       //Produce Spheres for distance this neutron could travel in time resolution
       const double c = 30.; //speed of light in cm/ns
-      const auto diff = (hit.Position - FSPart.Points.front().Position);
+      const auto diff = (hit.Position - FSPart.Points.front().GetPosition());
       const double beta = diff.Vect().Mag()/c/diff.T();
       const double timeRes = 0.7; //Measured in test beam in ns
 
@@ -159,5 +159,5 @@ namespace mygl
     ImGui::End();
   }
 
-  REGISTER_PLUGIN(MCHitContrib, draw::ExternalDrawer); 
+  REGISTER_PLUGIN(MCHitContrib, draw::ExternalDrawer)
 }

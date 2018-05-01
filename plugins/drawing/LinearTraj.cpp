@@ -50,7 +50,7 @@ namespace draw
     std::map<int, std::vector<TG4Trajectory>> parentID;
     for(auto& traj: evt.Trajectories)
     {
-      parentID[traj.ParentId].push_back(traj);
+      parentID[traj.GetParentId()].push_back(traj);
     }
 
     //Then, add particles to list tree and viewer
@@ -62,10 +62,10 @@ namespace draw
       auto& row = *iter;
         
       //Turn GENIE's interaction string into something easier to read
-      std::smatch match;
+      std::cmatch match;
       std::string nu;
       int pdg;
-      if(std::regex_match(prim.Reaction, match, genieToEvd)) 
+      if(std::regex_match(prim.GetReaction(), match, genieToEvd)) 
       {
 
         const std::string nu = TDatabasePDG::Instance()->GetParticle(std::stoi(match[1].str()))->GetName();
@@ -83,15 +83,15 @@ namespace draw
       else
       {
         std::cerr << "WARNING: Got interaction string from GENIE that does not match what I expect:\n"
-                  << prim.Reaction << "\n";
-        nu = prim.Reaction;
+                  << prim.GetReaction() << "\n";
+        nu = prim.GetReaction();
         pdg = 0; //Supposed to be a "Geantino" to indicate that something is wrong
       }
 
       row[fTrajRecord->fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord->fEnergy] = -1; //TODO: Get this from updated TG4PrimaryVertex?
 
-      const auto ptPos = prim.Position;
+      const auto ptPos = prim.GetPosition();
       const auto color = (*(services.fPDGToColor))[pdg];
 
       const auto& children = parentID[-1];
@@ -104,7 +104,7 @@ namespace draw
                                     const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                                     Services& services)
   {
-    const int pdg = traj.PDGCode;
+    const int pdg = traj.GetPDGCode();
     const auto color = (*(services.fPDGToColor))[pdg];
 
     auto points = traj.Points;
@@ -112,7 +112,7 @@ namespace draw
     for(auto pointIt = points.begin(); pointIt != points.end(); ++pointIt)
     {
       auto& point = *pointIt;
-      const auto& pos = point.Position;
+      const auto& pos = point.GetPosition();
 
       //Require that point is inside fiducial volume
       if(services.fGeometry->IsFiducial(pos.Vect()))
@@ -121,7 +121,7 @@ namespace draw
       }
       else if(pointIt != points.begin()) //Extrapolate to the face of the fiducial volume
       {
-        const auto prevPoint = (pointIt-1)->Position;
+        const auto prevPoint = (pointIt-1)->GetPosition();
 
         //Make sure previous point was in the fiducial volume
         if(services.fGeometry->IsFiducial(prevPoint.Vect()))
@@ -148,8 +148,8 @@ namespace draw
     auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, true, glm::mat4(), vertices, 
                                                                         glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     auto& row = *iter;
-    row[fTrajRecord->fPartName] = traj.Name;
-    auto p = traj.InitialMomentum;
+    row[fTrajRecord->fPartName] = traj.GetName();
+    auto p = traj.GetInitialMomentum();
     const double invariantMass = std::sqrt((p.Mag2()>0)?p.Mag2():0); //Make sure the invariant mass is > 0 as it should be.  It might be negative for 
                                                                        //photons because of floating point precision behavior.  Never trust a computer to 
                                                                        //calculate 0...
@@ -157,7 +157,7 @@ namespace draw
     ++nextID;
 
     //Second pass over trajectory points to find starting points of children.
-    auto children = parentToTraj[traj.TrackId];
+    auto children = parentToTraj[traj.GetTrackId()];
 
     //Produce map of closest trajectory point to child trajectory
     std::map<std::vector<TG4TrajectoryPoint>::iterator, std::vector<TG4Trajectory>> ptToTraj;
@@ -166,8 +166,8 @@ namespace draw
       ptToTraj[std::min_element(points.begin(), points.end(), [&child](const TG4TrajectoryPoint& first, 
                                                                        const TG4TrajectoryPoint& second)
                                                               {
-                                                                return (first.Position - child.Points.front().Position).Mag() < 
-                                                                       (second.Position - child.Points.front().Position).Mag();
+                                                                return (first.GetPosition() - child.Points.front().GetPosition()).Mag() < 
+                                                                       (second.GetPosition() - child.Points.front().GetPosition()).Mag();
                                                               })].push_back(child);
     } 
       

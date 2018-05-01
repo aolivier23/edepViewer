@@ -64,10 +64,10 @@ namespace mygl
       row[fHitRecord->fParticle] = std::accumulate(hit.TrackIDs.begin(), hit.TrackIDs.end(), std::string(""), 
                                                   [&event](std::string& names, const int id)
                                                   {
-                                                    return names+" "+event.Trajectories[id].Name;
+                                                    return names+" "+event.Trajectories[id].GetName();
                                                   });
     }
   }
 
-  REGISTER_PLUGIN(MCHitDrawer, draw::ExternalDrawer); 
+  REGISTER_PLUGIN(MCHitDrawer, draw::ExternalDrawer)
 }

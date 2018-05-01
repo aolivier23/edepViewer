@@ -29,8 +29,8 @@ namespace
   //TODO: This function seems generally useful for working with edepsim.  Move it to its' own file.
   std::string ProcStr(const TG4TrajectoryPoint& pt)
   {
-    const auto proc = pt.Process;
-    const auto subProc = pt.Subprocess;
+    const auto proc = pt.GetProcess();
+    const auto subProc = pt.GetSubprocess();
                                                                                                     
     std::string procStr = "";
     //Process Type
@@ -99,7 +99,7 @@ namespace draw
     std::map<int, std::vector<TG4Trajectory>> parentID;
     for(auto& traj: evt.Trajectories)
     {
-      parentID[traj.ParentId].push_back(traj);
+      parentID[traj.GetParentId()].push_back(traj);
     }
 
     //Then, add particles to list tree and viewer
@@ -108,9 +108,9 @@ namespace draw
     for(auto& prim: primaries)
     {
       //Turn GENIE's interaction string into something easier to read
-      std::smatch match;
-      if(!std::regex_match(prim.Reaction, match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
-                                                                      << prim.Reaction << "\n";
+      std::cmatch match;
+      if(!std::regex_match(prim.GetReaction(), match, genieToEvd)) std::cerr << "Got interaction string from GENIE that does not match what I expect:\n"
+                                                                      << prim.GetReaction() << "\n";
 
       const std::string nu = TDatabasePDG::Instance()->GetParticle(std::stoi(match[1].str()))->GetName();
       //const std::string nucleus = fPdgDB.GetParticle(match[2].str().c_str())->GetName(); //TODO: TDatabasPDG can't read PDG codes for nuclei
@@ -122,7 +122,7 @@ namespace draw
       }*/
 
       //Add this interaction vertex to the scene of trajectory points
-      const auto ptPos = prim.Position;
+      const auto ptPos = prim.GetPosition();
       const int pdg = std::stoi(match[1].str());
       const auto color = (*(services.fPDGToColor))[pdg];
 
@@ -146,12 +146,12 @@ namespace draw
                                  const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
                                  const mygl::TreeModel::iterator parentPt, Services& services)
   {
-    const int pdg = traj.PDGCode;
+    const int pdg = traj.GetPDGCode();
     const auto color = (*(services.fPDGToColor))[pdg];
     auto points = traj.Points;
 
     //Second pass over trajectory points to find starting points of children.
-    auto children = parentToTraj[traj.TrackId];
+    auto children = parentToTraj[traj.GetTrackId()];
 
     //Produce map of closest trajectory point to child trajectory
     std::map<std::vector<TG4TrajectoryPoint>::iterator, std::vector<TG4Trajectory>> ptToTraj;
@@ -160,15 +160,15 @@ namespace draw
       ptToTraj[std::min_element(points.begin(), points.end(), [&child](const TG4TrajectoryPoint& first, 
                                                                        const TG4TrajectoryPoint& second)
                                                               {
-                                                                return (first.Position - child.Points.front().Position).Mag() < 
-                                                                       (second.Position - child.Points.front().Position).Mag();
+                                                                return (first.GetPosition() - child.Points.front().GetPosition()).Mag() < 
+                                                                       (second.GetPosition() - child.Points.front().GetPosition()).Mag();
                                                               })].push_back(child);
     } 
       
     for(auto ptIt = points.begin(); ptIt != points.end(); ++ptIt)
     {
       const auto& point = *ptIt;
-      auto ptIter = AddTrajPt(viewer, nextID, traj.Name, point, parentPt, glm::vec4(color, 1.0));
+      auto ptIter = AddTrajPt(viewer, nextID, traj.GetName(), point, parentPt, glm::vec4(color, 1.0));
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
@@ -181,12 +181,12 @@ namespace draw
                                                   const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator parent, const glm::vec4& color)
   {
     //Add Trajectory Point
-    const auto pos = pt.Position;
+    const auto pos = pt.GetPosition();
     auto ptIter = viewer.GetScene("TrajPts").AddDrawable<mygl::Point>(nextID++,
                                                                       parent, true,
                                                                       glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
     auto& ptRow = *ptIter;
-    ptRow[fTrajPtRecord->fMomMag] = pt.Momentum.Mag();
+    ptRow[fTrajPtRecord->fMomMag] = pt.GetMomentum().Mag();
     ptRow[fTrajPtRecord->fTime] = pos.T();
     ptRow[fTrajPtRecord->fProcess] = ::ProcStr(pt); //TODO: Convert Geant process codes to string
     ptRow[fTrajPtRecord->fParticle] = particle;
@@ -194,5 +194,5 @@ namespace draw
     return ptIter;
   }
 
-  REGISTER_PLUGIN(TrajPts, EventDrawer);
+  REGISTER_PLUGIN(TrajPts, EventDrawer)
 }

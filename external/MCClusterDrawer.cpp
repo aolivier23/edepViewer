@@ -95,7 +95,7 @@ namespace mygl
         row[fClusterRecord->fParticle] = std::accumulate(clust.TrackIDs.begin(), clust.TrackIDs.end(), std::string(""),
                                                          [&event](std::string& names, const int id)
                                                          {
-                                                           return names+" "+event.Trajectories[id].Name;
+                                                           return names+" "+std::string(event.Trajectories[id].GetName());
                                                          });
       /*}
       else std::cerr << "No hits in this cluster!\n";*/

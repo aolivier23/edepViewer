@@ -44,7 +44,7 @@ namespace draw
     TLorentzVector avgPos;
     for(const auto& vert: data.Primaries)
     {
-      avgPos += vert.Position;
+      avgPos += vert.GetPosition();
       //viewer.AddCamera(vert.Reaction, new PlaneCam()); //TODO: Configure new camera based on vert's position and maybe zoom based on some measure of activity?
     }
   

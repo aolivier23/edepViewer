@@ -99,6 +99,8 @@ namespace mygl
       const auto out = glm::normalize(center-polCenter);
 
       //Sort vertices by angle from the first vertex
+      //TODO: Can I take advantage of TGeoShape::ComputeNormal() to get normals at vertices?  Will ROOT behave reasonably at vertices?  
+      //      How can I use normals to find neighbors of a triangle?
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
       std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
       std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)

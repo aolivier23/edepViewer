@@ -85,9 +85,9 @@ namespace draw
                                                                                                                                                                                        
       for(auto& edep: edeps)
       {
-        const auto start = edep.Start;
+        const auto start = edep.GetStart();
         glm::vec3 firstPos(start.X(), start.Y(), start.Z());
-        const auto stop = edep.Stop;
+        const auto stop = edep.GetStop();
 
         if((start-stop).Vect().Mag() < fMinLength) continue;
           
@@ -116,8 +116,8 @@ namespace draw
         //std::cout << "density is " << density << "\n";
   
         glm::vec3 lastPos(stop.X(), stop.Y(), stop.Z());
-        const double energy = edep.EnergyDeposit;
-        const double length = edep.TrackLength;
+        const double energy = edep.GetEnergyDeposit();
+        const double length = edep.GetTrackLength();
         double dEdx = 0.;
         //From http://pdg.lbl.gov/2011/reviews/rpp2011-rev-passage-particles-matter.pdf, the Bethe formula for dE/dx in 
         //MeV*cm^2/g goes as Z/A.  To get comparable stopping powers for all materials, try to "remove the Z/A dependence".
@@ -129,20 +129,20 @@ namespace draw
         if(alpha > 1.) alpha = 1.;
         if(alpha < 0.) alpha = 0.;*/
         
-        auto found = idToIter.find(edep.PrimaryId);
+        auto found = idToIter.find(edep.GetPrimaryId());
         if(found == idToIter.end())
         {
-          found = idToIter.emplace(std::make_pair(edep.PrimaryId, scene.NewNode(detIter))).first;
+          found = idToIter.emplace(std::make_pair(edep.GetPrimaryId(), scene.NewNode(detIter))).first;
           auto& row = *(found->second);
           row[fEDepRecord->fVisID] = nextID;
           ++nextID;
           row[fEDepRecord->fScintE] = 0;
-          row[fEDepRecord->fEnergy] = data.Trajectories[edep.PrimaryId].InitialMomentum.E();
-          row[fEDepRecord->fdEdx] = data.Trajectories[edep.PrimaryId].InitialMomentum.E()/
-                                    (data.Trajectories[edep.PrimaryId].Points.front().Position
-                                     -data.Trajectories[edep.PrimaryId].Points.back().Position).Vect().Mag();
-          row[fEDepRecord->fT0] = data.Trajectories[edep.PrimaryId].Points.front().Position.T();
-          row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name;
+          row[fEDepRecord->fEnergy] = data.Trajectories[edep.GetPrimaryId()].GetInitialMomentum().E();
+          row[fEDepRecord->fdEdx] = data.Trajectories[edep.GetPrimaryId()].GetInitialMomentum().E()/
+                                    (data.Trajectories[edep.GetPrimaryId()].Points.front().GetPosition()
+                                     -data.Trajectories[edep.GetPrimaryId()].Points.back().GetPosition()).Vect().Mag();
+          row[fEDepRecord->fT0] = data.Trajectories[edep.GetPrimaryId()].Points.front().GetPosition().T();
+          row[fEDepRecord->fPrimName] = data.Trajectories[edep.GetPrimaryId()].GetName();
         }
         auto parent = found->second;
 
@@ -153,17 +153,17 @@ namespace draw
         //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));
         //palette(std::log10(dEdx)), 1.0));
         //fPalette(std::log10(energy)), 1.0));
-        row[fEDepRecord->fScintE]  = edep.SecondaryDeposit;
+        row[fEDepRecord->fScintE]  = edep.GetSecondaryDeposit();
         row[fEDepRecord->fEnergy]  = energy;
         row[fEDepRecord->fdEdx]    = dEdx;
         row[fEDepRecord->fT0]      = start.T();
-        row[fEDepRecord->fPrimName] = data.Trajectories[edep.PrimaryId].Name; //TODO: energy depositions children of contributing tracks?
+        row[fEDepRecord->fPrimName] = data.Trajectories[edep.GetPrimaryId()].GetName(); //TODO: energy depositions children of contributing tracks?
         ++nextID;
 
         //(*parent)[fEDepRecord->fScintE] += edep.SecondaryDeposit;
 
         sumE += energy;
-        sumScintE += edep.SecondaryDeposit;
+        sumScintE += edep.GetSecondaryDeposit();
         if(start.T() < minT) minT = start.T();
       }
     }
