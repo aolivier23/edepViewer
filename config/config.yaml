@@ -8,6 +8,6 @@ config:
       VertexCamera:
       LinearTraj:
       EDepContributor:
-  Services:
-    geo:
-      fiducial: "volWorld"
+Services:
+  Geo:
+    fiducial: "volWorld"

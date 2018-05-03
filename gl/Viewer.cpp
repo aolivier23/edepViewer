@@ -286,6 +286,12 @@ namespace mygl
     else throw util::GenException("Scene Not Found") << "Could not find Scene named " << sceneName << " in Viewer::RemoveAll().\n";
   }
 
+  void Viewer::Clear()
+  {
+    fSceneMap.clear();
+    //fCameras.clear(); //TODO: Remove all Cameras except Default
+  }
+
   Scene& Viewer::GetScene(const std::string& name)
   {
     auto found = fSceneMap.find(name);

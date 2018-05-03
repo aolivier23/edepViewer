@@ -34,7 +34,7 @@ namespace draw
   }
 
   void DefaultGeo::AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
-                                 TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
+                                  TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
   {
     auto children = parentNode->GetNodes();
     if(depth == fMaxDepth) return;
@@ -42,17 +42,21 @@ namespace draw
   }
 
   void DefaultGeo::AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, 
-                                             TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
+                              TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
   {
     //TODO: This is actually a pretty cool way to make a basic ASCII hierarchical representation.  Maybe enable it in DEBUG mode?
     //for(size_t tab = 0; tab < depth; ++tab) std::cout << "  ";
     //std::cout << "Appending node " << node->GetName() << "\n";
     
     //Get the model matrix for node using it's parent's matrix
-    TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
+    /*TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
     local.MultiplyLeft(&mat);
     double matPtr[16] = {};
-    local.GetHomogenousMatrix(matPtr);
+    local.GetHomogenousMatrix(matPtr);*/
+    auto local = new TGeoHMatrix(*(node->GetMatrix())); //Update TGeoMatrix for this node
+    local->MultiplyLeft(&mat);
+    double matPtr[16] = {};
+    local->GetHomogenousMatrix(matPtr);
 
     auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, fDefaultDraw, glm::make_mat4(matPtr),
                                                   node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
@@ -61,7 +65,7 @@ namespace draw
     row[fGeoRecord->fName] = node->GetName();
     row[fGeoRecord->fMaterial] = node->GetVolume()->GetMaterial()->GetName();
     ++(*fColor);
-    AppendChildren(scene, nextID, iter, node, local, depth);
+    AppendChildren(scene, nextID, iter, node, *local, depth);
 
     //return row;
   }

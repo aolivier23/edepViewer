@@ -28,9 +28,9 @@ namespace cmd
   }
 
   //TODO: This function needs to change when I switch to yaml
-  std::unique_ptr<YAML::Node> FindConfig(const int argc, const char** argv)
+  YAML::Node FindConfig(const int argc, const char** argv)
   {
-    std::unique_ptr<YAML::Node> doc(new YAML::Node());
+    YAML::Node doc;
     bool found = false;
     for(int arg = 0; arg < argc; ++arg)
     {
@@ -38,8 +38,8 @@ namespace cmd
       if(name.find(".yaml") != std::string::npos) 
       { 
         std::ifstream file(name);
-        doc.reset(new YAML::Node(YAML::Load(file)));
-        if(!doc->IsNull()) found = true;
+        doc = YAML::Load(file);
+        if(!doc.IsNull()) found = true;
       }
     }
 
@@ -47,8 +47,8 @@ namespace cmd
     if(!found)
     {
       std::ifstream file(INSTALL_YAML_DIR "/default.yaml");
-      doc.reset(new YAML::Node(YAML::Load(file)));
-      if(doc->IsNull())
+      doc = YAML::Load(file);
+      if(doc.IsNull())
       {
         throw std::runtime_error("Failed to find a YAML configuration file named " INSTALL_YAML_DIR "/default.yaml in the current directory.\n");
       }
