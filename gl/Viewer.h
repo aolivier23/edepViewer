@@ -73,10 +73,6 @@ namespace mygl
       void on_selection(const mygl::VisID id/*, const int, const int*/);
 
       void Render(const int width, const int height, const ImGuiIO& ioState); //Application/main window calls this in each frame
-
-      void Clear(); //TODO: The need for this function makes it more clear that I need to rethink my Viewer-Scene API structure.  Some kind of 
-                    //      ViewerState and SceneState might be useful to separate control state from the object model.  This is also sounding 
-                    //      more like a state machine.
  
     protected:
       //Viewer parameters the user can customize

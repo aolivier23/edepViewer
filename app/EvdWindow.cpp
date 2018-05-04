@@ -41,27 +41,17 @@ namespace mygl
   EvdWindow::EvdWindow(): 
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fNextID(0, 0, 0), fServices(), fConfig(nullptr), fSource()//, fPrintTexture(nullptr)
+    fNextID(0, 0, 0), fServices(), fConfig(new YAML::Node()), fSource()//, fPrintTexture(nullptr)
   {
   }
 
-  void EvdWindow::reconfigure(YAML::Node config)
+  void EvdWindow::reconfigure(std::unique_ptr<YAML::Node>&& config)
   {
-    fConfig.reset(new gui::YAMLConfig(config)); //Take ownership of config and manage its' lifetime
+    fConfig = std::move(config); //Take ownership of config and manage its' lifetime
 
     //TODO: Preprocessing for an include directive?
     if(fConfig)
     {
-      //Clear old drawing algorithms
-      //TODO: Ability to save algorithms that didn't have configuration changes?
-      fGlobalDrawers.clear();
-      fEventDrawers.clear();
-      fExtDrawers.clear(); //TODO: If I destroy the ExternalDrawers and create new ones, I need to find an unused Source to 
-                           //      connect them to.  
-  
-      //Clear old Scenes
-      fViewer.Clear();
-
       //fConfig shall be a YAML document that contains a mapping with the keys Global and Event.  These keys 
       //shall be sequences of maps.  An External key is also recognized in a similar format to Global and Event.  
       //Global shall contain all GeoDrawers.
@@ -73,7 +63,7 @@ namespace mygl
       //Load global plugins
       auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
 
-      const auto& top = fConfig->GetConfig();
+      const auto& top = *fConfig;
       const auto& drawers = top["Drawers"];
       if(drawers["Global"])
       {
@@ -137,7 +127,7 @@ namespace mygl
     fNextID = mygl::VisID();
     
     //Load service information
-    const auto& serviceConfig = fConfig->GetConfig()["Services"]; 
+    const auto& serviceConfig = (*fConfig)["Services"]; 
     if(!serviceConfig) std::cerr << "Couldn't find services block.\n";
     const auto& geoConfig = serviceConfig["Geo"];
     if(!geoConfig) std::cerr << "Couldn't find Geo service.\n";
@@ -158,6 +148,26 @@ namespace mygl
     std::cout << "Done with event drawers.\n";
 
     for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
+
+    //Last, set current event number for GUI
+    //fEvtNum.set_text(std::to_string(fSource->Entry())); //TODO: Does ImGui do this?  
+
+    /*std::vector<LegendView::Row> rows;
+    auto db = TDatabasePDG::Instance();
+    for(const auto& pdg: *(fServices.fPDGToColor))
+    {
+      const auto particle = db->GetParticle(pdg.first);
+      std::string name;
+      if(particle) name = particle->GetName();
+      else name = std::to_string(pdg.first);
+      Gdk::RGBA color;
+      color.set_rgba(pdg.second.r, pdg.second.g, pdg.second.b, 1.0);
+      rows.emplace_back(name, color);
+    }
+    fLegend.reset(new LegendView(*this, std::move(rows)));
+    //TODO: Not even close to portable
+    fLegend->move(150, 150); //The fact that I specified this in pixels should indicate how frustrated I am...
+    fLegend->show();*/
   }
   
   void EvdWindow::make_scenes()
@@ -172,6 +182,9 @@ namespace mygl
 
     //Configure External Scenes
     for(const auto& extPtr: fExtDrawers) extPtr->RequestScenes(fViewer);
+
+    //ReadGeo();
+    //ReadEvent();
   }
   
   void EvdWindow::Print(const int width, const int height)
@@ -209,9 +222,9 @@ namespace mygl
         std::string name(file->GetTitle());
         name += "/";
         name += file->GetName();
-        std::ifstream configFile(name);
-        YAML::Node doc = YAML::Load(configFile);
-        if(!doc.IsNull()) reconfigure(doc);
+        std::ifstream file(name);
+        std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(file)));
+        if(doc) reconfigure(std::move(doc));
         else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
       }
     }
@@ -228,7 +241,6 @@ namespace mygl
       auto db = TDatabasePDG::Instance();
       //ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
       ImGui::Begin("Legend");
-      bool reload = false;
       for(auto& pdg: *(fServices.fPDGToColor))
       {
         const auto particle = db->GetParticle(pdg.first);
@@ -236,10 +248,9 @@ namespace mygl
         if(particle) name = particle->GetName();
         else name = std::to_string(pdg.first);
         
-        if(ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pdg.second), ImGuiColorEditFlags_NoInputs)) reload = true;
+        ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pdg.second), ImGuiColorEditFlags_NoInputs);
       }
       ImGui::End();
-      if(reload) ReadEvent();
 
       RenderControlBar(width, height);
 
@@ -281,20 +292,8 @@ namespace mygl
       ImGui::SameLine();
       if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
                                                         //GUI to pop up in next loop.
-      ImGui::SameLine();
-      if(ImGui::Button("Configure")) fConfig->Show();
     }
     ImGui::End();
-
-    if(fConfig->Render()) 
-    {
-      reconfigure(fConfig->GetConfig());
-      fNextID = mygl::VisID();
-      auto man = fSource->Geo();
-      for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
-      //ReadGeo(); //TODO: This does strange things to the geometry drawing.  What is going on?  
-      ReadEvent();
-    }
   }
 
   void EvdWindow::choose_file()

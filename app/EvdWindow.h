@@ -1,5 +1,7 @@
 //File: EvdWindow.h
-//Brief: An event display window for edep-sim.  Manages the application state and forwards it to the objects that perform rendering.  
+//Brief: A Gtk::Window for displaying the geometry in a ROOT file.  Has the 
+//       ability to draw individual volumes.  Draws both a list tree view of 
+//       the geometry hierarchy and a 3D view. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Plugin includes
@@ -10,7 +12,6 @@
 
 //local includes
 #include "app/FileChoose.h"
-#include "app/YAMLConfig.h"
 
 //gl includes
 #include "gl/Viewer.h"
@@ -23,6 +24,13 @@
 #include "TGeoMatrix.h"
 #include "TDatabasePDG.h"
 #include "TSystemDirectory.h"
+
+//Tinyxml include
+#include "yaml-cpp/yaml.h"
+
+//TODO: move EDepSim dependence out of this file
+//EDepSim includes
+#include "TG4Event.h" 
 
 #ifndef EVD_EVDWINDOW
 #define EVD_EVDWINDOW
@@ -54,13 +62,13 @@ namespace mygl
 
       virtual void make_scenes();
 
-      virtual void reconfigure(YAML::Node config);
+      virtual void reconfigure(std::unique_ptr<YAML::Node>&& config);
 
       virtual void Render(const int width, const int height, const ImGuiIO& ioState); //Render this window
 
     protected:
-      //Configuration interface
-      std::unique_ptr<gui::YAMLConfig> fConfig;
+      //Configuration file
+      std::unique_ptr<YAML::Node> fConfig;
 
       //Child Widgets
       mygl::Viewer fViewer;

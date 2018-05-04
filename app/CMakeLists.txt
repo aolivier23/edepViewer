@@ -11,10 +11,9 @@ add_definitions(-DFONT_DIR="${IMGUI_DIR}/misc/fonts")
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Libraries for final EDepSim visualization window
-add_library( GUI FileChoose.cpp YAMLConfig.cpp )
-target_link_libraries( GUI imgui yaml-cpp )
+add_library( GUI FileChoose.cpp )
+target_link_libraries( GUI imgui )
 install( TARGETS GUI DESTINATION lib )
-install( FILES YAMLConfig.h DESTINATION include/app )
 
 add_library( Source Source.cpp )
 target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} ${EDepSimIO} )

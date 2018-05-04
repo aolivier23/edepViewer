@@ -6,22 +6,6 @@
 //Header
 #include "app/Source.h"
 
-namespace
-{
-  //Design taken from https://root.cern.ch/doc/v608/TEveGeoShape_8cxx_source.html
-  TGeoManager* cloneGeoManager(TGeoManager* man)
-  {
-    auto oldGeo = gGeoManager;
-    auto oldID = gGeoIdentity;
-    gGeoManager = nullptr;
-    gGeoIdentity = nullptr;
-    auto newGeo = (TGeoManager*)(man->Clone());
-    gGeoManager = oldGeo;
-    gGeoIdentity = oldID;
-    return newGeo; //TODO: Also reset TGeoIdentity like the link above?
-  }
-}
-
 namespace src
 {
   Source::Source(const std::vector<std::string>& files): fFileList(files), fFilePos(fFileList.begin()), fFile(),
@@ -43,7 +27,7 @@ namespace src
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
-    fGeo = ::cloneGeoManager(geo);
+    fGeo = geo;
     //fReader.Next();
   }
 
@@ -64,7 +48,7 @@ namespace src
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
-    fGeo = ::cloneGeoManager(geo);
+    fGeo = geo;
     //fReader.Next();
   }
 
@@ -152,7 +136,7 @@ namespace src
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
-    fGeo = ::cloneGeoManager(geo);
+    fGeo = geo;
     fReader.Next();
     return true;
   }
