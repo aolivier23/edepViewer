@@ -229,7 +229,7 @@ namespace mygl
   //TODO: Tell other Scenes that this VisID has been selected
   bool Scene::SelectID(const mygl::VisID& id)
   {
-    std::cout << "Trying to select object with VisID " << id << "\n";
+    //std::cout << "Trying to select object with VisID " << id << "\n";
 
     //Regardless of what was selected, unselect the last thing that was selected
     const auto prevID = fSelectPath.empty()?mygl::VisID():fSelectPath.back();
@@ -241,7 +241,7 @@ namespace mygl
     {
       prev = fHidden.find(prevID);
       if(prev != fHidden.end()) prev->second->SetBorder(0., glm::vec4(1., 0., 0., 1.));
-      else std::cerr << "Failed to find previously selected object with ID " << prevID << "\n";
+      //else std::cerr << "Failed to find previously selected object with ID " << prevID << "\n";
     }
 
     fSelectPath.clear();
@@ -259,14 +259,14 @@ namespace mygl
 
     if(result)
     {
-      std::cout << "Highlighting 3D object with ID " << id << "\n";
+      //std::cout << "Highlighting 3D object with ID " << id << "\n";
       //Highlight graphics object that was selected
       auto found = fActive.find(id);
       if(found != fActive.end())
       {
         found->second->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
-        std::cout << "Selected the following path of objects:\n";
-        for(const auto& id: fSelectPath) std::cout << id << "\n";
+        //std::cout << "Selected the following path of objects:\n";
+        //for(const auto& id: fSelectPath) std::cout << id << "\n";
 
         return true;
       }
