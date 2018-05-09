@@ -7,9 +7,9 @@ Drawers:
     VertexCamera:
     LinearTraj:
     EDepDEdx:
-#      dEdxScale:
-#        min: 0.
-#        max: 8.
+      dEdxScale:
+        min: 0.
+        max: 8.
 Services:
   Geo :
     fiducial: "volWorld"
