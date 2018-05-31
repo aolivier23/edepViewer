@@ -26,6 +26,19 @@
 //c++ includes
 #include <iostream>
 
+namespace
+{
+  glm::mat4 transposeRot(const glm::mat4& matrix)
+  {
+    auto result = matrix;
+    for(size_t col = 0; col < 3; ++col) //3 dimensions in a rotation
+    {
+      for(size_t row = 0; row < 3; ++row) result[col][row] = matrix[row][col];
+    }
+    return result;
+  }
+}
+
 namespace draw
 {
   DefaultGeo::DefaultGeo(const YAML::Node& config): GeoDrawer(config), fColor(new mygl::ColorIter()), fGeoRecord(new GeoRecord()), fMaxDepth(3)
@@ -34,7 +47,7 @@ namespace draw
   }
 
   void DefaultGeo::AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
-                                 TGeoNode* parentNode, TGeoMatrix& mat, size_t depth)
+                                 TGeoNode* parentNode, glm::mat4& mat, size_t depth)
   {
     auto children = parentNode->GetNodes();
     if(depth == fMaxDepth) return;
@@ -42,19 +55,26 @@ namespace draw
   }
 
   void DefaultGeo::AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, 
-                                             TGeoMatrix& mat, const mygl::TreeModel::iterator parent, size_t depth)
+                              glm::mat4& mat, const mygl::TreeModel::iterator parent, size_t depth)
   {
     //TODO: This is actually a pretty cool way to make a basic ASCII hierarchical representation.  Maybe enable it in DEBUG mode?
     //for(size_t tab = 0; tab < depth; ++tab) std::cout << "  ";
     //std::cout << "Appending node " << node->GetName() << "\n";
     
     //Get the model matrix for node using it's parent's matrix
-    TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
+    double matPtr[16] = {};
+    node->GetMatrix()->GetHomogenousMatrix(matPtr);
+    float floatPtr[16] = {}; //TODO: There has to be a better way to do this
+    for(size_t elem = 0; elem < 16; ++elem) floatPtr[elem] = matPtr[elem];
+
+    auto local = glm::make_mat4(floatPtr);
+    local = mat*::transposeRot(local);
+    /*TGeoHMatrix local(*(node->GetMatrix())); //Update TGeoMatrix for this node
     local.MultiplyLeft(&mat);
     double matPtr[16] = {};
-    local.GetHomogenousMatrix(matPtr);
+    local.GetHomogenousMatrix(matPtr);*/
 
-    auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, fDefaultDraw, glm::make_mat4(matPtr),
+    auto iter = scene.AddDrawable<mygl::PolyMesh>(nextID++, parent, fDefaultDraw, local,
                                                   node->GetVolume(), glm::vec4((glm::vec3)(*fColor), 0.2));
     auto& row = *iter;
 
@@ -71,16 +91,13 @@ namespace draw
     //TODO: Reset fColor here.  It probably needs to be a local variable instead of a member variable. 
     viewer.RemoveAll("Geometry");
 
-    auto id = new TGeoIdentity(); //This should be a memory leak in any reasonable framework, but TGeoIdentity registers itself
-                                  //with TGeoManager so that TGeoManager will try to delete it in ~TGeoManager().  Furthermore, 
-                                  //I have yet to find a way to unregister a TGeoMatrix.  So, it appears that there is no such 
-                                  //thing as a temporary TGeoIdentity.  Good job ROOT... :(
+    glm::mat4 id;
     auto& scene = viewer.GetScene("Geometry");
     auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;
     top[fGeoRecord->fName] = data.GetTitle();
     top[fGeoRecord->fMaterial] = "FIXME";
-    AppendNode(scene, nextID, data.GetTopNode(), *id, topIter, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
+    AppendNode(scene, nextID, data.GetTopNode(), id, topIter, 0); //TODO: Removing AppendNode() here removes unexpected GUI behavior
   }
 
   void DefaultGeo::doRequestScenes(mygl::Viewer& viewer)

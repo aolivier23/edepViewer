@@ -37,10 +37,10 @@ namespace draw
       virtual void doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;
 
       //Helper functions for drawing geometry volumes
-      virtual void AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, TGeoMatrix& mat, 
+      virtual void AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, glm::mat4& mat, 
                               const mygl::TreeModel::iterator parent, size_t depth);
       virtual void AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
-                                  TGeoNode* parentNode, TGeoMatrix& mat, size_t depth);
+                                  TGeoNode* parentNode, glm::mat4& mat, size_t depth);
 
       //Data needed when appending geometry nodes
       size_t fMaxDepth; //The maximum depth drawn in geometry hierarchy

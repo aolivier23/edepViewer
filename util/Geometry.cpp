@@ -98,11 +98,11 @@ namespace util
       void SetFiducial()
       {
         const auto top = fManager->GetTopNode();
-        auto id = new TGeoIdentity();
+        auto id = gGeoIdentity;
         if(!find_node(top, *id)) //TODO: Error handling?
         {
           fFiducialNode = top;
-          fFiducialMatrix = new TGeoIdentity();
+          fFiducialMatrix = gGeoIdentity;
         }
       }
   };
