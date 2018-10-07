@@ -34,6 +34,8 @@ namespace mygl
       MCHitContrib(const YAML::Node& config);
       virtual ~MCHitContrib() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
       virtual void ConnectTree(TTreeReader& reader) override;
 
       virtual void Render() override;

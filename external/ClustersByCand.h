@@ -36,6 +36,9 @@ namespace mygl
 
       virtual void ConnectTree(TTreeReader& reader) override;
 
+      virtual void RemoveAll(mygl::Viewer& viewre) override;
+
+      //TODO: Why is this public?
       class MCClusterRecord: public ColRecord
       {
         public:

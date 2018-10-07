@@ -34,6 +34,8 @@ namespace draw
       EDepContributor(const YAML::Node& config);
       virtual ~EDepContributor() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
       virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 

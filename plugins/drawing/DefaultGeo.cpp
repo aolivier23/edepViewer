@@ -46,6 +46,11 @@ namespace draw
     if(config["MaxDepth"]) fMaxDepth = config["MaxDepth"].as<unsigned int>();
   }
 
+  void DefaultGeo::RemoveAll(mygl::Viewer& viewer)
+  {
+    viewer.RemoveAll("Geometry");
+  }
+
   void DefaultGeo::AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
                                  TGeoNode* parentNode, glm::mat4& mat, size_t depth)
   {
@@ -89,7 +94,6 @@ namespace draw
   void DefaultGeo::doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID)
   {
     //TODO: Reset fColor here.  It probably needs to be a local variable instead of a member variable. 
-    viewer.RemoveAll("Geometry");
 
     glm::mat4 id;
     auto& scene = viewer.GetScene("Geometry");

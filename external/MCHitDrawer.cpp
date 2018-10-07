@@ -25,6 +25,12 @@ namespace mygl
     if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
+  void MCHitDrawer::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& scene = viewer.GetScene(fHitName);
+    scene.RemoveAll();
+  }
+
   void MCHitDrawer::ConnectTree(TTreeReader& reader)
   {
     std::cout << "Connecting MCHitsDrawer to TTreeReader.\n";
@@ -42,7 +48,6 @@ namespace mygl
   void MCHitDrawer::doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services)
   {
     auto& scene = viewer.GetScene(fHitName);
-    scene.RemoveAll();
 
     auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;

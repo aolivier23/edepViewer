@@ -24,6 +24,11 @@ namespace mygl
     if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
+  void MCHitCamera::RemoveAll(mygl::Viewer& /*viewer*/)
+  {
+    //Do nothing
+  }
+
   void MCHitCamera::ConnectTree(TTreeReader& reader)
   {
     std::cout << "Connecting MCHitsDrawer to TTreeReader.\n";

@@ -32,6 +32,8 @@ namespace draw
       Grids(const YAML::Node& config); //Configure a new Grids
       virtual ~Grids() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all Grids here.

@@ -31,7 +31,7 @@ namespace draw
       {
         if(config["Draw"]) fDefaultDraw = config["Draw"].as<bool>();
       }
-                          //TODO: Standardized configuration based on XML
+                          
       virtual ~EventDrawer() = default;
 
       virtual void RequestScenes(mygl::Viewer& viewer) //Request the needed Scene(s) from the Viewer
@@ -39,11 +39,14 @@ namespace draw
         doRequestScenes(viewer);
       }
 
+      //Draw new objects for this EventDrawer's Scene(s)
       void DrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
-      //Remove old objects and draw new ones
       {
         doDrawEvent(data, viewer, nextID, services);
       }
+
+      //Remove old objects from this EventDrawer's Scene(s), if any
+      virtual void RemoveAll(mygl::Viewer& viewer) = 0;
 
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 

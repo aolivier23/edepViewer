@@ -27,6 +27,12 @@ namespace mygl
     if(config["ClusterName"]) fClusterName = config["ClusterName"].as<std::string>();
   }
 
+  void MCClusterDrawer::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& scene = viewer.GetScene(fClusterName);
+    scene.RemoveAll();
+  }
+
   void MCClusterDrawer::ConnectTree(TTreeReader& reader)
   {
     std::cout << "Connecting MCClustersDrawer to TTreeReader.\n";
@@ -43,7 +49,6 @@ namespace mygl
     mygl::ColorIter color; //unique color for each cluster
 
     auto& scene = viewer.GetScene(fClusterName);
-    scene.RemoveAll();
 
     auto topIter = scene.NewTopLevelNode();
     auto& top = *topIter;

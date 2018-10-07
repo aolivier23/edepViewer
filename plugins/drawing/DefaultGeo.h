@@ -32,6 +32,8 @@ namespace draw
       DefaultGeo(const YAML::Node& config);
       virtual ~DefaultGeo() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
       virtual void doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;

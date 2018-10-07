@@ -36,6 +36,8 @@ namespace mygl
 
       virtual void ConnectTree(TTreeReader& reader) override;
 
+      virtual void RemoveAll(mygl::Viewer& /*viewer*/) override;
+
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
       virtual void doDrawEvent(const TG4Event& event, mygl::Viewer& viewer, mygl::VisID& nextID, draw::Services& services) override;

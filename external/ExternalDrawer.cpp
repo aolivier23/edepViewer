@@ -48,6 +48,8 @@ namespace draw
         doDrawEvent(event, viewer, nextID, services);
       }
 
+      virtual void RemoveAll(mygl::Viewer& viewer) = 0;
+
       virtual void Render() {} //User handle for a time to draw in each event loop
 
     protected:

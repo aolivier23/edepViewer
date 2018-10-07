@@ -34,6 +34,8 @@ namespace mygl
       MCHitDrawer(const YAML::Node& config);
       virtual ~MCHitDrawer() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
       virtual void ConnectTree(TTreeReader& reader) override;
 
       class MCHitRecord: public ColRecord

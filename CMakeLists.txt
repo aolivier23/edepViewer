@@ -83,15 +83,15 @@ set(EXTERNAL_HEADERS "")
 set(EXTERNAL_LIBS "")
 
 #Adding support for external plugins that need my EdepNeutrons package.
-if(DEFINED EDEPNEUTRONS_DIR)
+if(DEFINED 3DSTNEUTRONS_DIR)
   list(APPEND EXTERNAL_SOURCE MCHitDrawer.cpp MCHitContrib.cpp MCClusterDrawer.cpp MCHitCamera.cpp ClustersByCand.cpp)
   list(APPEND EXTERNAL_HEADERS MCHitDrawer.h MCHitContrib.h MCClusterDrawer.h MCHitCamera.h ClustersByCand.h)
   list(APPEND EXTERNAL_LIBS persistency)
 
-  #Find EDepNeutrons directory
-  message("Building external plugins for EDepNeutrons with installation at path ${EDEPNEUTRONS_DIR}")
-  include_directories( "${EDEPNEUTRONS_DIR}/include" )
-  link_directories( "${EDEPNEUTRONS_DIR}/lib" )
+  #Find 3DSTNeutrons directory
+  message("Building external plugins for 3DSTNeutrons with installation at path ${3DSTNEUTRONS_DIR}")
+  include_directories( "${3DSTNEUTRONS_DIR}/include" )
+  link_directories( "${3DSTNEUTRONS_DIR}/lib" )
 endif()
 
 add_subdirectory(config)

@@ -134,6 +134,11 @@ namespace mygl
 
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
+
+    //First, remove all old scenes
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->RemoveAll(fViewer);
+
+    //Next, do "drawing", which really makes no OpenGL calls, in parallel
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
 
     std::cout << "Done drawing the geometry.\n";
@@ -142,8 +147,14 @@ namespace mygl
   void EvdWindow::ReadEvent()
   { 
     std::cout << "Going to next event.\n";
+    //First, remove all objects from last event
+    for(const auto& drawPts: fEventDrawers) drawPts->RemoveAll(fViewer);
+    for(const auto& drawer: fExtDrawers) drawer->RemoveAll(fViewer);
+
+    //Now, DrawEvents(), which makes no OpenGL calls, can be run in parallel.  
     mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
     const auto& evt = fSource->Event();
+
     for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(evt, fViewer, id, fServices);
     std::cout << "Done with event drawers.\n";
 

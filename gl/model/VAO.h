@@ -28,7 +28,7 @@
 
 namespace mygl
 {
-class VAO
+  class VAO
   {
     public:
       VAO(); //Allocate OpenGL resources, but no vertices to bind yet.

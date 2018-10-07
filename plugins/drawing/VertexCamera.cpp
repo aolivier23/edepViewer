@@ -27,6 +27,11 @@ namespace draw
     //TODO: Configuration?    
   }
 
+  void VertexCamera::RemoveAll(mygl::Viewer& /*viewer*/)
+  {
+    //Do nothing
+  }
+
   void VertexCamera::doRequestScenes(mygl::Viewer& viewer)
   {
     //Nothing to do here?

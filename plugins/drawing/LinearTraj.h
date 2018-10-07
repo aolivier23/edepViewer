@@ -32,6 +32,8 @@ namespace draw
       LinearTraj(const YAML::Node& config);
       virtual ~LinearTraj() = default;
 
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
+
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;
       virtual void doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, 

@@ -41,6 +41,12 @@ namespace draw
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
     if(config["MinLength"]) fMinLength = config["MinLength"].as<float>();    
   }
+  
+  void EDepDEdx::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& scene = viewer.GetScene("EDepDEdx");
+    scene.RemoveAll();
+  }
 
   void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
   {
@@ -52,9 +58,6 @@ namespace draw
   void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
   {
     auto& scene = viewer.GetScene("EDepDEdx");
-
-    //Remove old drawing elements
-    scene.RemoveAll();
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition

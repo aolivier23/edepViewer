@@ -48,6 +48,12 @@ namespace mygl
     if(config["HitName"]) fHitName = config["HitName"].as<std::string>();
   }
 
+  void MCHitContrib::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& scene = viewer.GetScene(fHitName);
+    scene.RemoveAll();
+  }
+
   void MCHitContrib::ConnectTree(TTreeReader& reader)
   {
     std::cout << "Connecting MCHitsDrawer to TTreeReader.\n";
@@ -67,7 +73,6 @@ namespace mygl
     mygl::ColorIter color;
 
     auto& scene = viewer.GetScene(fHitName);
-    scene.RemoveAll();
     fContribToColor.clear();
 
     auto topIter = scene.NewTopLevelNode();

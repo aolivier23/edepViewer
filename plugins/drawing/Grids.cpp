@@ -30,6 +30,12 @@ namespace draw
     }
   }
 
+  void Grids::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& scene = viewer.GetScene("Grids");
+    scene.RemoveAll();
+  }
+
   void Grids::doRequestScenes(mygl::Viewer& viewer)
   {
     viewer.MakeScene("Grids", fGuideRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/HUD.vert", INSTALL_GLSL_DIR "/wideLine.geom");
@@ -40,7 +46,6 @@ namespace draw
   void Grids::doDrawEvent(const TGeoManager& /*man*/, mygl::Viewer& viewer, mygl::VisID& nextID)
   {
     auto& scene = viewer.GetScene("Grids");
-    scene.RemoveAll();
 
     auto rootIter = scene.NewTopLevelNode();
     auto& root = *rootIter;

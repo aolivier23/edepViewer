@@ -31,6 +31,12 @@ namespace draw
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
   }
 
+  void LinearTraj::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& trajScene = viewer.GetScene("Trajectories");
+    trajScene.RemoveAll();
+  }
+
   void LinearTraj::doRequestScenes(mygl::Viewer& viewer) 
   {
     //Configure trajectory Scene
@@ -42,9 +48,7 @@ namespace draw
 
   void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
   {
-    //First, clear the scenes I plan to draw on
     auto& trajScene = viewer.GetScene("Trajectories");
-    trajScene.RemoveAll();
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;

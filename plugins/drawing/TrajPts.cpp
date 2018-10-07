@@ -84,6 +84,12 @@ namespace draw
     if(config["PointRad"]) fPointRad = config["PointRad"].as<float>();
   }
 
+  void TrajPts::RemoveAll(mygl::Viewer& viewer)
+  {
+    auto& ptScene = viewer.GetScene("TrajPts");
+    ptScene.RemoveAll();
+  }
+
   void TrajPts::doRequestScenes(mygl::Viewer& viewer) 
   {
     //Configure Trajectory Point Scene
@@ -98,7 +104,6 @@ namespace draw
   {
     //Get the TrajPt Scene and remove trajectory points from last event
     auto& ptScene = viewer.GetScene("TrajPts");
-    ptScene.RemoveAll();
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;

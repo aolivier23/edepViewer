@@ -42,6 +42,8 @@ namespace draw
         doDrawEvent(man, viewer, nextID);
       }
 
+      virtual void RemoveAll(mygl::Viewer& viewer) = 0; 
+
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all GeoDrawers here.
