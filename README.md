@@ -19,7 +19,7 @@ how edepsim objects are interpretted.
    automatically detected by CMake if they are installed in a root-user-owned directory.  
 4. "make install" this package.  Currently, gcc and Clang 5.0 compilers are supported on Linux systems, and Clang 
    (version?) is supported on OS X.  
-5. You are ready to run edepViewer with "[CMAKE_INSTALL_PREFIX/bin/]EdepApp".  You will need to set up edepsim 
+5. You are ready to run edepViewer with "[CMAKE_INSTALL_PREFIX/bin/]GLFWApp".  You will need to set up edepsim 
    with its' setup.sh script every time you want to run edepViewer.  
 
 ## Using the Viewer:
