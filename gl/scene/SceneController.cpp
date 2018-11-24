@@ -110,17 +110,14 @@ namespace ctrl
     {
       for(auto& top: fCurrentModel->fTopLevelNodes) 
       {
-        size_t depth = 1; //depth started at 1 in the old implementation of this functionality.  
-        top.walkIf([this, &depth](auto& node)
+        top.walkIf([this](auto& node)
                    {
                      if(this->DrawNodeData(node))
                      {
-                       ++depth; //I used depth+1 everywhere in the function I'm replacing, so just increment depth 
-                                //before I use it.   
                        //Make sure column is wide enough for checkboxes
-                       if(ImGui::GetColumnWidth() < ImGui::GetTreeNodeToLabelSpacing()*(depth))
+                       if(ImGui::GetColumnWidth() < ImGui::GetTreeNodeToLabelSpacing())
                        {
-                         ImGui::SetColumnWidth(-1, ImGui::GetTreeNodeToLabelSpacing()*(depth)); //Leave extra space for the checkbox
+                         ImGui::SetColumnWidth(-1, ImGui::GetTreeNodeToLabelSpacing());
                        }
 
                        return true;

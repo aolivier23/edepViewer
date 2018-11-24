@@ -214,9 +214,9 @@ namespace mygl
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
       //Check whether all Drawers have finished
-      std::cout << "Threads are running!  Popping up progress bar...\n";
       ImGui::Begin("Loading");
       ImGui::Text("Loading, next event and/or file...");
+      //TODO: Progress bar
       //ImGui::ProgressBar((geoPos)/1., ImVec2(0.0f, 0.0f));
       //if(geoReady) ImGui::Text("Geometry ready!");
       //if(eventReady) ImGui::Text("Edep-sim ready!");
