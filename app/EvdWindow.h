@@ -6,10 +6,11 @@
 
 //Plugin includes
 #include "plugins/drawing/geometry/GeoController.cpp"
-//#include "plugins/drawing/event/EventDrawer.cpp"
+#include "plugins/drawing/event/EventController.cpp"
 //#include "plugins/drawing/camera/CameraConfig.cpp"
 #include "external/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
+#include "plugins/drawing/ForceDependencyOnLibraries.h"
 
 //local includes
 #include "app/FileChoose.h"
@@ -101,7 +102,7 @@ namespace mygl
       //      Then, ReadGeo() and ReadEvent() would probably become methods of EvdController as well.  
       //plugins
       std::vector<std::unique_ptr<draw::GeoControllerBase>> fGlobalDrawers;
-      //std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
+      std::vector<std::unique_ptr<draw::EventControllerBase>> fEventDrawers;
       //std::vector<std::unique_ptr<draw::CameraConfig>> fCameraConfigs;
       //std::vector<std::unique_ptr<draw::ExternalDrawer>> fExtDrawers;
 

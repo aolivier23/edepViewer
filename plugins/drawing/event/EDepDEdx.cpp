@@ -6,29 +6,21 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //plugin includes
-#include "plugins/drawing/EDepDEdx.h"
-#include "plugins/Factory.cpp"
+#include "EDepDEdx.h"
 
 //gl includes
-#include "gl/VisID.h"
-#include "gl/Viewer.h"
 #include "gl/model/Path.h"
-
-//ROOT includes
-#include "TGeoManager.h"
+#include "gl/model/Noop.h"
 
 //edepsim includes
 #include "TG4Event.h"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 namespace draw
 {
-  EDepDEdx::EDepDEdx(const YAML::Node& config): EventDrawer(config), fPalette(config["dEdxScale"]["min"].as<float>(), 
-                                                                              config["dEdxScale"]["max"].as<float>()), 
-                                                fLineWidth(0.008), 
-                                                fMinLength(1.0), fEDepRecord(new EDepRecord())
+  EDepDEdx::EDepDEdx(const YAML::Node& config): fPalette(config["dEdxScale"]["min"].as<float>(), 
+                                                         config["dEdxScale"]["max"].as<float>()), 
+                                                fLineWidth(0.008), fMinLength(1.0), fDefaultDraw(false),
+                                                fEDepRecord(new EDepRecord())
   {
     /*auto dEdxScale = std::make_pair(0.f, 8.f);
     if(config["dEdxScale"])
@@ -40,24 +32,20 @@ namespace draw
 
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
     if(config["MinLength"]) fMinLength = config["MinLength"].as<float>();    
+    if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<bool>();
   }
   
-  void EDepDEdx::RemoveAll(mygl::Viewer& viewer)
-  {
-    auto& scene = viewer.GetScene("EDepDEdx");
-    scene.RemoveAll();
-  }
-
-  void EDepDEdx::doRequestScenes(mygl::Viewer& viewer)
+  legacy::scene_t& EDepDEdx::doRequestScene(mygl::Viewer& viewer)
   {
     //Configure energy deposit Scene
-    viewer.MakeScene("EDepDEdx", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
-                     INSTALL_GLSL_DIR "/wideLine.geom");
+    return viewer.MakeScene("EDepDEdx", fEDepRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", 
+                            INSTALL_GLSL_DIR "/wideLine.geom");
   }
 
-  void EDepDEdx::doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services)
+  std::unique_ptr<legacy::model_t> EDepDEdx::doDraw(const TG4Event& data, Services& services)
   {
-    auto& scene = viewer.GetScene("EDepDEdx");
+    auto model = std::make_unique<legacy::model_t>(fEDepRecord);
+    auto& scene = *model;
 
     //Draw true energy deposits color-coded by dE/dx
     auto edepToDet = data.SegmentDetectors; //A map from sensitive volume to energy deposition
@@ -65,8 +53,7 @@ namespace draw
     for(auto& det: edepToDet)
     {
       auto detName = det.first;
-      auto detIter = scene.NewTopLevelNode();
-      auto& detRow = *detIter;
+      auto detRow = scene.emplace(fDefaultDraw);
       auto edeps = det.second;
 
       detRow[fEDepRecord->fPrimName] = detName;
@@ -77,8 +64,8 @@ namespace draw
       //      do not have the "properties" I plan to include in the energy deposition tree. I will just cut out energy depositions 
       //      in volumes by setting the frustrum box from the camera API (hopefully).   
       double sumE = 0., sumScintE = 0., minT = 1e10;                                                                                                        
-      //Produce a map of true trajectory to TreeModel::iterator
-      std::map<int, mygl::TreeModel::iterator> idToIter;
+      //Produce a map of true trajectory to model_t::view
+      std::map<int, legacy::model_t::view> idToIter;
 
       //Get minimum energy, maximum energy, and mean energy in this event for deciding on palette
       //TODO: Do I want a palette that is fixed per event instead?  This algorithm seems designed to 
@@ -162,10 +149,8 @@ namespace draw
         auto found = idToIter.find(id);
         if(found == idToIter.end())
         {
-          found = idToIter.emplace(std::make_pair(id, scene.NewNode(detIter))).first;
-          auto& row = *(found->second);
-          row[fEDepRecord->fVisID] = nextID;
-          ++nextID;
+          found = idToIter.emplace(std::make_pair(id, detRow.emplace<mygl::Noop>(true))).first;
+          auto row = found->second;
           row[fEDepRecord->fScintE] = 0;
           #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
           row[fEDepRecord->fEnergy] = data.Trajectories[id].GetInitialMomentum().E();
@@ -183,11 +168,10 @@ namespace draw
           row[fEDepRecord->fPrimName] = data.Trajectories[id].Name;
           #endif
         }
-        auto parent = found->second;
 
-        auto iter = scene.AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
-                                                  glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
-        auto& row = *iter;
+        auto parent = found->second;
+        auto row = parent.emplace<mygl::Path>(true, glm::mat4(), std::vector<glm::vec3>{firstPos, lastPos}, 
+                                              glm::vec4(fPalette(dEdx), 1.0), fLineWidth);
         //fPalette(dEdx), 1.0));
         //fPDGToColor[(*fCurrentEvt)->Trajectories[edep.PrimaryId].PDGCode], 1.0));
         //palette(std::log10(dEdx)), 1.0));
@@ -208,7 +192,6 @@ namespace draw
         #else
         row[fEDepRecord->fPrimName] = data.Trajectories[id].Name;
         #endif
-        ++nextID;
 
         //(*parent)[fEDepRecord->fScintE] += edep.SecondaryDeposit;
 
@@ -217,7 +200,8 @@ namespace draw
         if(start.T() < minT) minT = start.T();
       }
     }
+    return model;
   }
 
-  REGISTER_PLUGIN(EDepDEdx, EventDrawer);
+  REGISTER_EVENT(EDepDEdx);
 }

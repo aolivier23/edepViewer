@@ -3,52 +3,38 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //draw includes
-#include "plugins/drawing/LinearTraj.h"
+#include "LinearTraj.h"
 
 //gl includes
 #include "gl/model/Path.h"
-#include "gl/model/Point.h"
-
-//plugin factory for macro
-#include "plugins/Factory.cpp"
-
-//ROOT includes
-#include "TDatabasePDG.h"
 
 //edepsim includes
 #include "TG4Event.h" 
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
+//ROOT includes
+#include "TDatabasePDG.h"
 
 //c++ includes
 #include <regex>
 
 namespace draw
 {
-  LinearTraj::LinearTraj(const YAML::Node& config): EventDrawer(config), fTrajRecord(new TrajRecord()), fLineWidth(0.008)
+  LinearTraj::LinearTraj(const YAML::Node& config): fLineWidth(0.008), fDefaultDraw(false), fTrajRecord(new TrajRecord())
   {
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
+    if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<float>();
   }
 
-  void LinearTraj::RemoveAll(mygl::Viewer& viewer)
-  {
-    auto& trajScene = viewer.GetScene("Trajectories");
-    trajScene.RemoveAll();
-  }
-
-  void LinearTraj::doRequestScenes(mygl::Viewer& viewer) 
+  legacy::scene_t& LinearTraj::doRequestScene(mygl::Viewer& viewer) 
   {
     //Configure trajectory Scene
-    viewer.MakeScene("Trajectories", fTrajRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/wideLine.geom");
-    //trajTree.append_column("Particle Type", fTrajRecord.fPartName);
-    //trajTree.insert_column_with_data_func(-1, "Particle", fPartNameRender, sigc::mem_fun(*this, &EvdWindow::ColToColor));
-    //trajTree.append_column("KE [MeV]", fTrajRecord.fEnergy);
+    return viewer.MakeScene("Trajectories", fTrajRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/wideLine.geom");
   }
 
-  void LinearTraj::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
+  std::unique_ptr<legacy::model_t> LinearTraj::doDraw(const TG4Event& evt, Services& services) 
   {
-    auto& trajScene = viewer.GetScene("Trajectories");
+    auto model = std::make_unique<legacy::model_t>(fTrajRecord);
+    auto& trajScene = *model;
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -66,13 +52,12 @@ namespace draw
     auto& primaries = evt.Primaries;
     for(auto& prim: primaries)
     {
-      auto iter = trajScene.NewTopLevelNode();
-      auto& row = *iter;
+      auto row = trajScene.emplace(fDefaultDraw);
         
       //Turn GENIE's interaction string into something easier to read
       std::smatch match;
       std::string nu;
-      int pdg;
+      //int pdg;
        
       #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
       const std::string reaction = prim.GetReaction();
@@ -92,35 +77,28 @@ namespace draw
         }*/
 
         //Add this interaction vertex to the scene of trajectory points
-        pdg = std::stoi(match[1].str());
+        //pdg = std::stoi(match[1].str());
       }
       else
       {
         std::cerr << "WARNING: Got interaction string from GENIE that does not match what I expect:\n"
                   << reaction << "\n";
         nu = reaction;
-        pdg = 0; //Supposed to be a "Geantino" to indicate that something is wrong
+        //pdg = 0; //Supposed to be a "Geantino" to indicate that something is wrong
       }
 
       row[fTrajRecord->fPartName] = nu+" "+match[5].str()+" "+match[6].str();//+" on "/*+nucleus+" "*/+nucleon;
       row[fTrajRecord->fEnergy] = -1; //TODO: Get this from updated TG4PrimaryVertex?
 
-      #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
-      const auto ptPos = prim.GetPosition();
-      #else
-      const auto ptPos = prim.Position;
-      #endif
-      const auto color = (*(services.fPDGToColor))[pdg];
-
       const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajectory(viewer, nextID, iter, child, parentID, services);
+      for(const auto& child: children) AppendTrajectory(row, child, parentID, services);
     }
+    return model;
   }
 
   //Helper functions for drawing trajectories and trajectory points
-  void LinearTraj::AppendTrajectory(mygl::Viewer& viewer, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
-                                    const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                                    Services& services)
+  void LinearTraj::AppendTrajectory(legacy::model_t::view& parent, const TG4Trajectory& traj, 
+                                    std::map<int, std::vector<TG4Trajectory>>& parentToTraj, Services& services)
   {
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
     const int pdg = traj.GetPDGCode();
@@ -175,9 +153,8 @@ namespace draw
       }
     }
 
-    auto iter = viewer.GetScene("Trajectories").AddDrawable<mygl::Path>(nextID, parent, fDefaultDraw, glm::mat4(), vertices, 
-                                                                        glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
-    auto& row = *iter;
+    auto row = parent.emplace<mygl::Path>(true, glm::mat4(), vertices, 
+                                          glm::vec4((glm::vec3)color, 1.0), fLineWidth); 
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
     row[fTrajRecord->fPartName] = traj.GetName();
     auto p = traj.GetInitialMomentum();
@@ -189,7 +166,6 @@ namespace draw
                                                                        //photons because of floating point precision behavior.  Never trust a computer to 
                                                                        //calculate 0...
     row[fTrajRecord->fEnergy] = p.E()-invariantMass; //Kinetic energy
-    ++nextID;
 
     //Second pass over trajectory points to find starting points of children.
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
@@ -217,14 +193,13 @@ namespace draw
       
     for(auto ptIt = points.begin(); ptIt != points.end(); ++ptIt)
     {
-      const auto& point = *ptIt;
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
-        AppendTrajectory(viewer, nextID, iter, child, parentToTraj, services);
+        AppendTrajectory(row, child, parentToTraj, services);
       }
     }
   }
 
-  REGISTER_PLUGIN(LinearTraj, EventDrawer)
+  REGISTER_EVENT(LinearTraj);
 }

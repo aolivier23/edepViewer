@@ -11,25 +11,25 @@ add_definitions(-DFONT_DIR="${IMGUI_DIR}/misc/fonts")
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Libraries for final EDepSim visualization window
-add_library( GUI FileChoose.cpp )
+add_library( GUI SHARED FileChoose.cpp )
 target_link_libraries( GUI imgui )
 install( TARGETS GUI DESTINATION lib )
 
-add_library( Source Source.cpp )
-target_link_libraries( Source LINK_PUBLIC ${ROOT_LIBRARIES} ${EDepSimIO} )
+add_library( Source SHARED Source.cpp )
+target_link_libraries( Source ${ROOT_LIBRARIES} ${EDepSimIO} )
 install( TARGETS Source DESTINATION lib )
 
-add_library( EvdWindow EvdWindow.cpp )
-target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             ${EDepSimIO} Factory GeoDrawers yaml-cpp GUI Geometry Source Tree ${EXTERNAL_LIBS} ) #external)
+add_library( EvdWindow SHARED EvdWindow.cpp )
+target_link_libraries( EvdWindow PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} ${EDepSimIO} yaml-cpp GUI Geometry 
+                       Source Node ${EXTERNAL_LIBS} Viewer EventDrawers GeoDrawers ) #external)
 install( TARGETS EvdWindow DESTINATION lib )
 
-add_library( CmdLine CmdLine.cpp )
-target_link_libraries( CmdLine LINK_PUBLIC yaml-cpp Source )
+add_library( CmdLine SHARED CmdLine.cpp )
+target_link_libraries( CmdLine yaml-cpp Source )
 install( TARGETS CmdLine DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw Tree CmdLine ${EDepSimIO})
+target_link_libraries( GLFWApp ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw CmdLine ${EDepSimIO})
 
 install( TARGETS GLFWApp DESTINATION bin )
 

@@ -49,7 +49,7 @@ namespace
       {
         auto drawer = factory.Get(plugin->first.as<std::string>(), plugin->second);
         if(drawer != nullptr) plugins.push_back(std::move(drawer));
-        else std::cerr << "Failed to get event plugin named " << plugin->first << "(end)\n";
+        else std::cerr << "Failed to get " << name << " plugin named " << plugin->first << "(end)\n";
       }
     }
     else throw std::runtime_error("Failed to get an element named "+name+" from config.yaml.\n");
@@ -81,38 +81,15 @@ namespace mygl
       //TODO: There is supposed to be a YAML TAG structure to handle "native" types.  Can I exploit it here?
 
       //Load global plugins
-      //auto& geoFactory = plgn::Factory<draw::GeoDrawerBase>::instance();
-
       const auto& top = *fConfig;
       const auto& drawers = top["Drawers"];
       ::loadPlugins(drawers, "Global", fGlobalDrawers); //TODO: If this works, replace all other plugin-loading loops
-      /*if(drawers["Global"])
-      {
-        for(auto plugin = drawers["Global"].begin(); plugin != drawers["Global"].end(); ++plugin)
-        {
-          auto drawer = geoFactory.Get(plugin->first.as<std::string>(), plugin->second);
-          if(drawer != nullptr) fGlobalDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get global plugin named " << plugin->first << "(end)\n";
-        }
-      }
-      else throw std::runtime_error("Failed to get an element named Global from config.yaml.\n");*/
 
       //Load event plugins
-      /*auto& evtFactory = plgn::Factory<draw::EventDrawerBase>::instance();
-      if(drawers["Event"])
-      {
-        const auto& eventConfig = drawers["Event"];
-        for(auto plugin = eventConfig.begin(); plugin != eventConfig.end(); ++plugin)
-        {
-          auto drawer = evtFactory.Get(plugin->first.as<std::string>(), plugin->second);
-          if(drawer != nullptr) fEventDrawers.push_back(std::move(drawer));
-          else std::cerr << "Failed to get event plugin named " << plugin->first << "(end)\n";
-        }
-      }
-      else throw std::runtime_error("Failed to get an element named Event from config.yaml.\n");
-
+      ::loadPlugins(drawers, "Event", fEventDrawers);
+      
       //Load camera config plugins
-      auto camFactory = plgn::Factory<draw::CameraConfigBase>::instance();
+      /*auto camFactory = plgn::Factory<draw::CameraConfigBase>::instance();
       if(drawers["Camera"])
       {
         const auto& camConfig = drawers["Camera"];
@@ -183,14 +160,11 @@ namespace mygl
                        //TODO: A "real" state machine would call some function that implicitly makes the transition to a new state
     //TODO: Rewrite this as just a loop over calling fEventDrawers' and fExtDrawers' Draw() functions.
     //Now, DrawEvents(), which makes no OpenGL calls, can be run in parallel.  
-    /*const auto& evt = fSource->Event();
+    const auto& evt = fSource->Event();
 
-    fEventFuture = std::async(std::launch::async, [this, &evt, &id]() 
-                                                  {
-                                                    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(evt, fViewer, id, fServices);
-                                                  });
+    for(const auto& drawer: fEventDrawers) drawer->Draw(evt, fServices);
 
-    fExternalFuture = std::async(std::launch::async, [this, &evt, &id]()
+    /*fExternalFuture = std::async(std::launch::async, [this, &evt, &id]()
                                                      {
                                                        for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
                                                      });*/
@@ -204,11 +178,10 @@ namespace mygl
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScene(fViewer);    
 
     //Configure Event Scenes
-    //TODO: Put fEventDrawers back when fGlobalDrawers works
-    /*for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScene(fViewer);
+    for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScene(fViewer);
 
     //Configure External Scenes
-    for(const auto& extPtr: fExtDrawers) extPtr->RequestScene(fViewer);*/
+    /*for(const auto& extPtr: fExtDrawers) extPtr->RequestScene(fViewer);*/
   }
   
   void EvdWindow::Print(const int width, const int height)
@@ -264,6 +237,7 @@ namespace mygl
         }
                                                                    //      the geometry when the event drawers are ready.
         //TODO: UpdateScene for external drawers, event drawers, and camera config as well.
+        for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
 
         fIsWaiting = false;
       }
@@ -370,6 +344,8 @@ namespace mygl
 
   void EvdWindow::goto_event(const int evt)
   {
+    //TODO: Clear() all Drawers' caches somewhere near here
+    //TODO: Put at least the ReadEvent() call into a thread
     std::cout << "Calling function EvdWindow::goto_event()\n";
     if(fSource->GoTo(evt)) 
     {
@@ -380,6 +356,8 @@ namespace mygl
 
   void EvdWindow::goto_id(const int run, const int evt)
   {
+    //TODO: Clear() all Drawers' caches somewhere near here
+    //TODO: Put at least the ReadEvent() call into a thread
     if(fSource->GoTo(run, evt))
     {
       ReadEvent();

@@ -3,7 +3,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //draw includes
-#include "plugins/drawing/TrajPts.h"
+#include "TrajPts.h"
 
 //gl includes
 #include "gl/model/Path.h"
@@ -79,31 +79,23 @@ namespace
 
 namespace draw
 {
-  TrajPts::TrajPts(const YAML::Node& config): EventDrawer(config), fTrajPtRecord(new TrajPtRecord), fPointRad(0.010)
+  TrajPts::TrajPts(const YAML::Node& config): fPointRad(0.010), fDefaultDraw(false), fTrajPtRecord(new TrajPtRecord)
   {
     if(config["PointRad"]) fPointRad = config["PointRad"].as<float>();
+    if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<bool>();
   }
 
-  void TrajPts::RemoveAll(mygl::Viewer& viewer)
-  {
-    auto& ptScene = viewer.GetScene("TrajPts");
-    ptScene.RemoveAll();
-  }
-
-  void TrajPts::doRequestScenes(mygl::Viewer& viewer) 
+  legacy::scene_t& TrajPts::doRequestScene(mygl::Viewer& viewer) 
   {
     //Configure Trajectory Point Scene
-    viewer.MakeScene("TrajPts", fTrajPtRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/widePoint.geom");
-    /*ptTree.append_column("Particle Type", fTrajPtRecord.fParticle);
-    ptTree.append_column("Process", fTrajPtRecord.fProcess);
-    ptTree.append_column("Momentum [MeV/c]", fTrajPtRecord.fMomMag);
-    ptTree.append_column("Time", fTrajPtRecord.fTime);*/
+    return viewer.MakeScene("TrajPts", fTrajPtRecord, INSTALL_GLSL_DIR "/colorPerVertex.frag", INSTALL_GLSL_DIR "/colorPerVertex.vert", INSTALL_GLSL_DIR "/widePoint.geom");
   }
 
-  void TrajPts::doDrawEvent(const TG4Event& evt, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
+  std::unique_ptr<legacy::model_t> TrajPts::doDraw(const TG4Event& evt, Services& services) 
   {
     //Get the TrajPt Scene and remove trajectory points from last event
-    auto& ptScene = viewer.GetScene("TrajPts");
+    auto model = std::make_unique<legacy::model_t>(fTrajPtRecord);
+    auto& ptScene = *model;
 
     //Next, make maps of trackID to particle and parent ID to particle
     std::map<int, std::vector<TG4Trajectory>> parentID;
@@ -151,24 +143,22 @@ namespace draw
       const auto color = (*(services.fPDGToColor))[pdg];
 
       //TODO: Function in Scene/Viewer to add a new Drawable with a new top-level TreeRow
-      auto ptIter = ptScene.AddDrawable<mygl::Point>(nextID++, 
-                                                     ptScene.NewTopLevelNode(), fDefaultDraw, 
-                                                     glm::mat4(), glm::vec3(ptPos.X(), ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
-      auto& ptRow = *ptIter;
+      auto ptRow = ptScene.emplace(fDefaultDraw).emplace<mygl::Point>(true, glm::mat4(), glm::vec3(ptPos.X(), 
+                                                                      ptPos.Y(), ptPos.Z()), glm::vec4(color, 1.0), fPointRad);
       ptRow[fTrajPtRecord->fMomMag] = -1.; //TODO: Get primary momentum
       ptRow[fTrajPtRecord->fTime] = ptPos.T();
       ptRow[fTrajPtRecord->fProcess] = nu+" "+match[5].str()+" "+match[6].str();
       ptRow[fTrajPtRecord->fParticle] = nu;
 
       const auto& children = parentID[-1];
-      for(const auto& child: children) AppendTrajPts(viewer, nextID, child, parentID, ptIter, services);
+      for(const auto& child: children) AppendTrajPts(ptRow, child, parentID, services);
     }
+    return model;
   }
 
   //Helper functions for drawing trajectories and trajectory points
-  void TrajPts::AppendTrajPts(mygl::Viewer& viewer, mygl::VisID& nextID,
-                                 const TG4Trajectory& traj, std::map<int, std::vector<TG4Trajectory>>& parentToTraj, 
-                                 const mygl::TreeModel::iterator parentPt, Services& services)
+  void TrajPts::AppendTrajPts(legacy::model_t::view& parent, const TG4Trajectory& traj, 
+                              std::map<int, std::vector<TG4Trajectory>>& parentToTraj, Services& services)
   {
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
     const int pdg = traj.GetPDGCode();
@@ -211,17 +201,17 @@ namespace draw
       #else
       const std::string name = traj.Name;
       #endif
-      auto ptIter = AddTrajPt(viewer, nextID, name, point, parentPt, glm::vec4(color, 1.0));
+      auto ptRow = AddTrajPt(parent, name, point, glm::vec4(color, 1.0));
       const auto& subChildren = ptToTraj[ptIt];
       for(const auto& child: subChildren)
       {
-        AppendTrajPts(viewer, nextID, child, parentToTraj, ptIter, services);
+        AppendTrajPts(ptRow, child, parentToTraj, services);
       }
     }
   }
 
-  mygl::TreeModel::iterator TrajPts::AddTrajPt(mygl::Viewer& viewer, mygl::VisID& nextID, const std::string& particle, 
-                                                  const TG4TrajectoryPoint& pt, const mygl::TreeModel::iterator parent, const glm::vec4& color)
+  legacy::model_t::view TrajPts::AddTrajPt(legacy::model_t::view& parent, const std::string& particle, 
+                                           const TG4TrajectoryPoint& pt, const glm::vec4& color)
   {
     //Add Trajectory Point
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
@@ -229,10 +219,8 @@ namespace draw
     #else
     const auto pos = pt.Position;
     #endif
-    auto ptIter = viewer.GetScene("TrajPts").AddDrawable<mygl::Point>(nextID++,
-                                                                      parent, true,
-                                                                      glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
-    auto& ptRow = *ptIter;
+    auto ptRow = parent.emplace<mygl::Point>(true, glm::mat4(), glm::vec3(pos.X(), pos.Y(), pos.Z()), color, fPointRad);
+
     #ifdef EDEPSIM_FORCE_PRIVATE_FIELDS
     ptRow[fTrajPtRecord->fMomMag] = pt.GetMomentum().Mag();
     #else
@@ -242,8 +230,8 @@ namespace draw
     ptRow[fTrajPtRecord->fProcess] = ::ProcStr(pt); //TODO: Convert Geant process codes to string
     ptRow[fTrajPtRecord->fParticle] = particle;
   
-    return ptIter;
+    return ptRow;
   }
 
-  REGISTER_PLUGIN(TrajPts, EventDrawer)
+  REGISTER_EVENT(TrajPts);
 }

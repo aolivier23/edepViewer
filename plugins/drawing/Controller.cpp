@@ -18,6 +18,7 @@
 
 //c++ includes
 #include <queue>
+#include <iostream>
 
 #ifndef DRAW_DETAIL_DRAWER_CPP
 #define DRAW_DETAIL_DRAWER_CPP

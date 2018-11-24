@@ -6,49 +6,38 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //plugin includes
-#include "EventDrawer.cpp"
+#include "EventController.cpp"
 
 //util includes
 #include "util/Palette.cpp"
-
-//gl includes
-#include "gl/VisID.h"
-#include "gl/Viewer.h"
 
 #ifndef DRAW_EDEPDEDX_CPP
 #define DRAW_EDEPDEDX_CPP
 
 class TG4Event;
 
-namespace mygl
-{
-  class TreeModel;
-}
-
 namespace draw
 {
-  class EDepDEdx: public EventDrawer
+  class EDepDEdx
   {
     public:
       EDepDEdx(const YAML::Node& config);
       virtual ~EDepDEdx() = default;
 
-      virtual void RemoveAll(mygl::Viewer& viewer) override;
+      legacy::scene_t& doRequestScene(mygl::Viewer& viewer);
+      std::unique_ptr<legacy::model_t> doDraw(const TG4Event& data, Services& services);
 
-    protected:
-      virtual void doRequestScenes(mygl::Viewer& viewer);
-      virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
-                               mygl::VisID& nextID, Services& services);
-
+    private:
       //Drawing data
       mygl::Palette fPalette; //Mapping from dE/dx to color
       float fLineWidth; //The width of lines to be drawn for energy deposits
       float fMinLength; //Hit segments with length less than this value will not be drawn
+      bool fDefaultDraw; //Draw this Scene by default?
 
-      class EDepRecord: public mygl::ColRecord
+      class EDepRecord: public ctrl::ColumnModel
       {
         public:
-          EDepRecord(): ColRecord(), fPrimName("Primary"), fEnergy("Energy [MeV]"), fdEdx("dE/dx"), fT0("T0 [ns]"), 
+          EDepRecord(): ColumnModel(), fPrimName("Primary"), fEnergy("Energy [MeV]"), fdEdx("dE/dx"), fT0("T0 [ns]"), 
                         fScintE("Scintillation E [MeV]")
           {
             Add(fPrimName);
@@ -59,11 +48,11 @@ namespace draw
             //TODO: Is it fair to call energy/length dE/dx?  
           }
 
-          mygl::TreeModel::Column<double>      fEnergy;
-          mygl::TreeModel::Column<std::string> fPrimName;
-          mygl::TreeModel::Column<double>      fT0;
-          mygl::TreeModel::Column<double>      fScintE;
-          mygl::TreeModel::Column<double>      fdEdx;
+          ctrl::Column<std::string> fPrimName;
+          ctrl::Column<double>      fEnergy;
+          ctrl::Column<double>      fdEdx;
+          ctrl::Column<double>      fT0;
+          ctrl::Column<double>      fScintE;
       };
       std::shared_ptr<EDepRecord> fEDepRecord;
   };

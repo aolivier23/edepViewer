@@ -8,6 +8,9 @@
 //                     be used to create a drawing HANDLE.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+#ifndef CTRL_SCENEMODEL_CPP
+#define CTRL_SCENEMODEL_CPP
+
 //local includes
 #include "gl/metadata/TreeNode.cpp"
 #include "gl/metadata/Column.cpp"
@@ -76,4 +79,6 @@ namespace ctrl
       mygl::VAO::model fVAO; //List of vertices that fDrawables need to access for rendering
       std::shared_ptr<ColumnModel> fCols; //Reference to ColumnModel used to construct children
   };
-} 
+}
+
+#endif //CTRL_SCENEMODEL_CPP 

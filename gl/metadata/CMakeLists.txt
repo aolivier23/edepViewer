@@ -10,8 +10,8 @@ add_library( Row Data.cpp Column.cpp Row.cpp )
 target_link_libraries( Row )
 install( TARGETS Row DESTINATION lib )
 
-add_library(Tree TreeNode.cpp)
-target_link_libraries(Tree Row)
-install(TARGETS Tree DESTINATION lib)
+add_library(Node TreeNode.cpp)
+target_link_libraries(Node Row)
+install(TARGETS Node DESTINATION lib)
 
 install( FILES Data.cpp Column.cpp Row.h TreeNode.cpp DESTINATION include/gl/tree )

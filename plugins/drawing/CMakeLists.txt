@@ -21,8 +21,8 @@ target_link_libraries( Controller )
 install( TARGETS Controller DESTINATION lib)
 
 #install headers
-install( FILES Services.cpp Controller.cpp DESTINATION include/plugins/drawing )
+install( FILES Services.cpp Controller.cpp ForceDependencyOnLibraries.h DESTINATION include/plugins/drawing )
 
 add_subdirectory(geometry)
-#add_subdirectory(event)
+add_subdirectory(event)
 #add_subdirectory(camera)
