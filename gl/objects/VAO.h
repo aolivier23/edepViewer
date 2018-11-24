@@ -34,28 +34,40 @@ namespace mygl
       VAO(); //Allocate OpenGL resources, but no vertices to bind yet.
       virtual ~VAO(); //Deallocate all OpenGL resources managed
 
-      //Interfaces between Drawables and a VAO
-      unsigned int Register(const std::vector<Drawable::Vertex>& vertices); //Register vertices only to be used with glDrawArrays()
-      unsigned int Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices); //Register vertices and indices to 
-                                                                                                            //be used with glDrawElements()
+      class model
+      {
+        public:
+          model() = default;
+          virtual ~model() = default;
+  
+          //Interfaces between Drawables and a VAO
+          unsigned int Register(const std::vector<Drawable::Vertex>& vertices); //Register vertices only to be used with glDrawArrays()
+          unsigned int Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices); //Register vertices and indices to 
+                                                                                                              //be used with glDrawElements()
 
-      void Use(); //Bind managed OpenGL resources for use during drawing.  The first time this is called, send OpenGL resources to the GPU.
+          friend class VAO; //Allow only VAO to access the data in a VAO::model
+
+        protected:
+          std::vector<Drawable::Vertex> fVertices; //vertices for drawing
+          std::vector<unsigned int> fIndices; //indices to specify when to draw each vertex
+      };
+
+      void Load(const model& data); //Upload the vertices in a model to the GPU
+
+      //Bind a VAO as long as this object is in scope
+      struct sentry
+      {
+        sentry(unsigned int vao);
+        ~sentry();
+      };
+ 
+      sentry Use(); //Assume that this VAO needs to be bound.  Will rebind if already bound.  
 
     private:
       //"Names" of OpenGL resources managed
       unsigned int fVAO; //The index of the OpenGL VAO managed
       unsigned int fVBO; //The index of the OpenGL Vertex Buffer Object (VBO) managed
       unsigned int fEBO; //The index of the OpenGL Element Buffer Object (EBO) of indices managed
-
-      //Data from Drawables that needs to be sent to the GPU.  It will all be sent at once, then deleted from here
-      std::vector<Drawable::Vertex> fVertices; //Vertices
-      std::vector<unsigned int> fIndices; //Indices
-
-      //Internal flag since structure is weird
-      bool fUploadData; //Should I upload data to the GPU?
-
-      //Internal helper functions to encapsulate specific actions
-      void Upload(); //Upload data to the GPU
   };
 }
 

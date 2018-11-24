@@ -4,8 +4,9 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //gl includes
-#include "gl/UserCut.h"
+#include "UserCut.h"
 #include "util/GenException.h"
+#include "gl/metadata/Row.h"
 
 //c++ includes
 #include <string>
@@ -14,14 +15,13 @@
 
 namespace mygl
 {
-  UserCut::UserCut(const size_t nCols): fNCols(nCols), fInput({'t', 'r', 'u', 'e'})
+  UserCut::UserCut(const size_t nCols): fInput({'t', 'r', 'u', 'e'}), fNCols(nCols)
   {   
   }
 
-  bool UserCut::do_filter(const TreeModel::iterator& iter) 
+  bool UserCut::do_filter(const ctrl::Row& row) 
   {
     std::string copy(fInput.data());
-    auto& row = *iter;
 
     //First, substitute in variables
     for(size_t pos = 2; pos < fNCols; ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 

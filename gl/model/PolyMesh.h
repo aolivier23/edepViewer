@@ -8,7 +8,7 @@
 #define MYGL_POLYMESH_H
 
 //model includes
-#include "gl/model/VAO.h"
+#include "gl/objects/VAO.h"
 
 //c++ includes
 #include <vector>
@@ -32,14 +32,14 @@ namespace mygl
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
-      PolyMesh(VAO& vao, const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
+      PolyMesh(VAO::model& vao, const glm::mat4& model, const CONTAINER& vertices, const INDICES& indices, 
                const glm::vec4& color): Drawable(model), fNVertices(), fIndexOffsets(1, nullptr)
       {
         Init(vao, vertices, indices, color);
       }
 
-      PolyMesh(VAO& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
-      PolyMesh(VAO& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color);
+      PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color);
+      PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color);
 
       virtual ~PolyMesh(); //To allow derived classes to override
       
@@ -53,7 +53,7 @@ namespace mygl
       template <class CONTAINER, class INDICES> //CONTAINER is any container with begin() and end() members
                                                 //INDICES is any container with begin() and end() members 
                                                 //whose elements ALSO have begin() and end() members
-      void Init(VAO& vao, const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
+      void Init(VAO::model& vao, const CONTAINER& vertices, const INDICES& indices, const glm::vec4& color)
       {
         std::vector<Vertex> vertexData;
         for(const auto& vertex: vertices)

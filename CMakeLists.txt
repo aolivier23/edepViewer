@@ -95,7 +95,7 @@ if(DEFINED 3DSTNEUTRONS_DIR)
 endif()
 
 add_subdirectory(config)
-add_subdirectory(external)
+#add_subdirectory(external)
 add_subdirectory(util)
 add_subdirectory(gl)
 add_subdirectory(app)

@@ -24,7 +24,7 @@ namespace cmd
     }
 
     if(rootFiles.empty()) return std::unique_ptr<src::Source>(nullptr);
-    return std::unique_ptr<src::Source>(new src::Source(rootFiles));
+    return std::unique_ptr<src::Source>(new src::Source(rootFiles)); //TODO: This line reads a TGeoManager, so I think it blocks
   }
 
   //TODO: This function needs to change when I switch to yaml

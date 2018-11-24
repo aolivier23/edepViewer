@@ -8,7 +8,6 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //gl includes
-#include "gl/VisID.h"
 #include "gl/Viewer.h"
 
 //yaml-cpp includes
@@ -26,6 +25,9 @@ namespace draw
 {
   class EventDrawer
   {
+    protected:
+      using model_t = ctrl::SceneModel<std::unique_ptr<mygl::Drawable>>;
+
     public:
       EventDrawer(const YAML::Node& config): fDefaultDraw(true)
       {
@@ -39,21 +41,17 @@ namespace draw
         doRequestScenes(viewer);
       }
 
-      //Draw new objects for this EventDrawer's Scene(s)
-      void DrawEvent(const TG4Event& data, mygl::Viewer& viewer, mygl::VisID& nextID, Services& services) 
+      //Produce a mapping from 3D objects to metadata for this event
+      std::unique_ptr<model_t> DrawEvent(const TG4Event& evt, Services& services) 
       {
-        doDrawEvent(data, viewer, nextID, services);
+        return doDrawEvent(evt, services);
       }
-
-      //Remove old objects from this EventDrawer's Scene(s), if any
-      virtual void RemoveAll(mygl::Viewer& viewer) = 0;
 
     protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all EventDrawers here.
       virtual void doRequestScenes(mygl::Viewer& viewer) = 0;
-      virtual void doDrawEvent(const TG4Event& data, mygl::Viewer& viewer, 
-                               mygl::VisID& nextID, Services& services) = 0;
+      virtual std::unique_ptr<model_t> doDrawEvent(const TG4Event& evt, Services& services) = 0;
 
       //Disable drawing of a Scene by default
       bool fDefaultDraw;

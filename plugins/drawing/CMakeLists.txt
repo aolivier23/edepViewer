@@ -12,13 +12,17 @@ link_directories( /usr/local/lib )
 include_directories( "${PROJECT_SOURCE_DIR}" )
 
 #Add libraries of plugins
-add_library( Drawers SHARED GeoDrawer.cpp DefaultGeo.cpp Services.cpp EventDrawer.cpp
-                            LinearTraj.cpp EDepDEdx.cpp EDepContributor.cpp Grids.cpp 
-                            VertexCamera.cpp TrajPts.cpp )
-target_link_libraries( Drawers Scene ${ROOT_LIBRARIES} Color Drawable PolyMesh Point Path Grid Viewer 
-                       Factory tinyxml2 Geometry ${EDepSimIO} imgui )
-install( TARGETS Drawers DESTINATION lib )
+add_library( Services SHARED Services.cpp )
+target_link_libraries( Services ${ROOT_LIBRARIES} Color imgui )
+install( TARGETS Services DESTINATION lib )
+
+add_library( Controller SHARED Controller.cpp )
+target_link_libraries( Controller )
+install( TARGETS Controller DESTINATION lib)
 
 #install headers
-install( FILES DefaultGeo.h LinearTraj.h EDepDEdx.h EDepContributor.h Grids.h VertexCamera.h TrajPts.h
-         DESTINATION include/plugins/drawing )
+install( FILES Services.cpp Controller.cpp DESTINATION include/plugins/drawing )
+
+add_subdirectory(geometry)
+#add_subdirectory(event)
+#add_subdirectory(camera)

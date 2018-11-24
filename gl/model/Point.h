@@ -8,6 +8,7 @@
 //model includes
 #include "gl/model/Drawable.h"
 #include "gl/objects/ShaderProg.h"
+#include "gl/objects/VAO.h"
 
 //c++ includes
 #include <vector>
@@ -17,12 +18,10 @@
 
 namespace mygl
 {
-  class VAO;
-
   class Point: public Drawable //A Point is a Drawable
   {
     public:
-      Point(VAO& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
+      Point(VAO::model& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
       virtual ~Point();
 
       virtual void DoDraw(mygl::ShaderProg& shader);

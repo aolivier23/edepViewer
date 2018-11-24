@@ -5,11 +5,9 @@
 
 //c++ includes
 #include <memory> //for std::unique_ptr
-#include <type_traits> //for std::true_type and std::false_type
 
 //local includes
 #include "gl/Viewer.h"
-#include "gl/UserCut.h"
 #include "gl/camera/Camera.h"
 
 //imgui includes
@@ -19,7 +17,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //c++ includes
-#include <iostream>
 #include <sstream>
 #include <utility> //For std::piecewise_construct shenanigans
 #include <tuple> //For std::forward_as_tuple
@@ -30,12 +27,13 @@ namespace mygl
 {
   Viewer::Viewer(std::unique_ptr<Camera>&& cam, const float xPerPixel, const float yPerPixel, const float zPerPixel):
                 fSceneMap(), 
+                fCurrentScene(fSceneMap.end()),
+                fBackgroundColor(0., 0., 0.),
                 fCameras(), 
-                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel), fCurrentScene(fSceneMap.end()), 
-                fBackgroundColor(0., 0., 0.)
+                fXPerPixel(xPerPixel), fYPerPixel(yPerPixel), fZPerPixel(zPerPixel)
   {
-    fCameras.emplace("Default", std::unique_ptr<Camera>(cam.release()));
-    fCurrentCamera = fCameras.begin();
+    fDefaultCamera = std::move(cam);
+    LoadCameras(); 
 
     //fSignalSelection.connect(sigc::mem_fun(*this, &Viewer::on_selection));
 
@@ -89,7 +87,7 @@ namespace mygl
       }
 
       //Render camera controls
-      fCurrentCamera->second->render(); 
+      GetCurrentCamera()->render(); 
 
       //Render overall Viewer controls
       ImGui::Separator();
@@ -101,7 +99,7 @@ namespace mygl
     ImGui::End();    
 
     //Send mouse and keyboard events to the current Camera
-    fCurrentCamera->second->update(ioState);
+    GetCurrentCamera()->update(ioState);
 
     //TODO: Dont' adjust camera if handled a click here
     if(!ioState.WantCaptureMouse && ImGui::IsMouseClicked(0)) on_click(0, ioState.MousePos.x, ioState.MousePos.y, width, height);
@@ -109,22 +107,25 @@ namespace mygl
     render(width, height);
   }
 
-  //TODO: Return some sort of TreeView configuration
-  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc, 
+  //TODO: The next two functions move to the .h file when this becomes a function template
+  ctrl::SceneController& Viewer::MakeScene(const std::string& name, std::shared_ptr<ctrl::ColumnModel> cols, const std::string& fragSrc, const std::string& vertSrc, 
                          std::unique_ptr<SceneConfig>&& config)
   {
     PrepareToAddScene(name);
-    ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name), 
-                      std::forward_as_tuple(name, fragSrc, vertSrc, cols, std::move(config))).first->second, *cols); //lol
+    auto& scene = fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                      std::forward_as_tuple(fragSrc, vertSrc, cols, std::move(config))).first->second;
+    ConfigureNewScene(name, scene, *cols); //lol
+    return scene;
   }
  
-  //TODO: Return some sort of TreeView configuration
-  void Viewer::MakeScene(const std::string& name, std::shared_ptr<mygl::ColRecord> cols, const std::string& fragSrc, const std::string& vertSrc, 
+  ctrl::SceneController& Viewer::MakeScene(const std::string& name, std::shared_ptr<ctrl::ColumnModel> cols, const std::string& fragSrc, const std::string& vertSrc, 
                          const std::string& geomSrc, std::unique_ptr<SceneConfig>&& config)
   {
     PrepareToAddScene(name);
-    ConfigureNewScene(name, fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                      std::forward_as_tuple(name, fragSrc, vertSrc, geomSrc, cols, std::move(config))).first->second, *cols); //lol
+    auto& scene = fSceneMap.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                                    std::forward_as_tuple(fragSrc, vertSrc, geomSrc, cols, std::move(config))).first->second;
+    ConfigureNewScene(name, scene, *cols); 
+    return scene;
   }
 
   void Viewer::PrepareToAddScene(const std::string& name)
@@ -136,8 +137,7 @@ namespace mygl
     }
   }
 
-  //TODO: Return some sort of TreeView configuration
-  void Viewer::ConfigureNewScene(const std::string& name, mygl::Scene& scene, mygl::ColRecord& cols)
+  void Viewer::ConfigureNewScene(const std::string& name, ctrl::SceneController& scene, ctrl::ColumnModel& cols)
   {
     //Now, tell this Viewer's GUI about the Scene's GUI
   }
@@ -154,74 +154,28 @@ namespace mygl
 
   void Viewer::render(const int width, const int height) 
   {
-    if(fCurrentCamera->second == nullptr) std::cerr << "fCurrentCamera is not set!\n";
+    assert(GetCurrentCamera() != nullptr);
 
     glClearColor(fBackgroundColor.x, fBackgroundColor.y, fBackgroundColor.z, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for(auto& scenePair: fSceneMap)
     {
-      const auto view = fCurrentCamera->second->GetView();
-
-      scenePair.second.Render(view, fCurrentCamera->second->GetPerspective(width, height)); //glm::scale(fCurrentCamera->second->GetPerspective(width, height), 
-                                    //           glm::vec3(1.f/fXPerPixel, 1.f/fYPerPixel, 1.f/fZPerPixel)));
+      const auto view = GetCurrentCamera()->GetView();
+      scenePair.second.Render(view, GetCurrentCamera()->GetPerspective(width, height));
     }
   }
   
-  void Viewer::set_background()
+  void Viewer::LoadCameras(std::map<std::string, std::unique_ptr<mygl::Camera>>&& cameraToName)
   {
-    /*fBackgroundColor = fBackgroundButton.get_rgba();
-    fBackgroundColor.set_alpha(0.0);
-    //ignore alpha
-    fArea.queue_render();*/
+    fCameras = std::move(cameraToName);
+    fCurrentCamera = fCameras.begin();
   }
 
-  //TODO: This Camera interface, especially RemoveCamera, seems very clunky.  I don't want to give the user an iterator to a camera because 
-  //      multiple plugins could be adding and/or removing Cameras.  
-  void Viewer::AddCamera(const std::string& name, std::unique_ptr<Camera>&& camera)
+  std::unique_ptr<Camera>& Viewer::GetCurrentCamera()
   {
-    //fCameras.add(*(camera.release()), name, name);
-    fCameras.emplace(name, std::unique_ptr<Camera>(camera.release()));
-    //TODO: Set current Camera to added camera?
-  }
-
-  void Viewer::MakeCameraCurrent(const std::string& name)
-  {
-    auto found = fCameras.find(name);
-    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::MakeCameraCurrent() does not exist.\n";
-    fCurrentCamera = found;
-  }
-
-  Camera& Viewer::GetCamera(const std::string& name)
-  {
-    auto found = fCameras.find(name);
-    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::GetCamera() does not exist.\n";
-    return *(found->second);
-  }
-
-  void Viewer::RemoveCamera(const std::string& name)
-  {
-    if(fCameras.size() == 1) throw util::GenException("Removing Last Camera") << "Trying to remove the last Camera named " << name << ".  This will cause chaos.\n";
-    auto found = fCameras.find(name);
-    if(found == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named " << name << " requested in Viewer::RemoveCamera() does not exist.\n";
-    if(found == fCurrentCamera)
-    {
-      auto foundDefault = fCameras.find("Default");
-      if(foundDefault == fCameras.end()) throw util::GenException("Camera Does Not Exist") << "Camera named Default requested in Viewer::RemoveCamera() does not exist.\n";
-      fCurrentCamera = foundDefault;
-    }
-    fCameras.erase(found);
-  }
-
-  //TODO: ClearCameras() that removes all Cameras except Default?  Maybe I want CameraSets instead that can each be managed by a plugin?  This all 
-  //      seems far too complicated for what I want to accomplish, but might be the best approach if I ever move to giving EventDrawers a Scene instead 
-  //      of a Viewer.
-
-  void Viewer::camera_change()
-  {
-    //fCurrentCamera = ((Camera*)(fCameras.get_visible_child()));
-    //fCurrentCamera->ConnectSignals(fArea);
-    //fArea.queue_render();
+    if(fCurrentCamera == fCameras.end()) return fDefaultCamera;
+    return fCurrentCamera->second;
   }
 
   bool Viewer::on_click(const int button, const float x, const float y, const int width, const int height)
@@ -236,10 +190,10 @@ namespace mygl
  
     for(auto& scenePair: fSceneMap)
     {
-      const auto view = fCurrentCamera->second->GetView();
+      const auto view = GetCurrentCamera()->GetView();
  
       //TODO: It would be great to be able to change out this selection algorithm.  
-      scenePair.second.RenderSelection(view, fCurrentCamera->second->GetPerspective(width, height));
+      scenePair.second.RenderSelection(view, GetCurrentCamera()->GetPerspective(width, height));
       //I am not requesting a render here because I want to wait until reacting to the user's selection before rendering.  
     }
     glFlush();
@@ -275,21 +229,5 @@ namespace mygl
     {
       if(scenePair->second.SelectID(id)) fCurrentScene = scenePair; 
     }
-  }
-
-  void Viewer::RemoveAll(const std::string& sceneName)
-  {
-    //TODO: Error handling when sceneName is not found?  Really, this, along with AddDrawable, reveals that my Viewer/Scene system 
-    //      would benefit from a redesign.  
-    auto found = fSceneMap.find(sceneName);
-    if(found != fSceneMap.end()) found->second.RemoveAll();
-    else throw util::GenException("Scene Not Found") << "Could not find Scene named " << sceneName << " in Viewer::RemoveAll().\n";
-  }
-
-  Scene& Viewer::GetScene(const std::string& name)
-  {
-    auto found = fSceneMap.find(name);
-    if(found != fSceneMap.end()) return found->second;
-    else throw util::GenException("Scene Not Found") << "Could not find Scene named " << name << " in Viewer::GetScene().\n";
   }
 }

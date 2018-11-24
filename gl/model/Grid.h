@@ -7,18 +7,17 @@
 //model includes
 #include "gl/model/Drawable.h"
 #include "gl/objects/ShaderProg.h"
+#include "gl/objects/VAO.h"
 
 #ifndef MYGL_GRID_H
 #define MYGL_GRID_H
 
 namespace mygl
 {
-  class VAO;
-
   class Grid: public Drawable //A Grid is a Drawable
   {
     public:
-      Grid(VAO& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
+      Grid(VAO::model& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
            const glm::vec4& color, const float lineWidth);
       virtual ~Grid();
 

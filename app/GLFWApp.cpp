@@ -67,10 +67,32 @@ int main(const int argc, const char** argv)
 
   //Parse the command line to configure evd window
   evd.reconfigure(cmd::FindConfig(argc, argv));
-  evd.SetSource(cmd::FindSource(argc, argv));
-  
-  //evd.make_scenes();
 
+  //Getting the first TGeoManager seems to take a long time, so display a "splash screen" while waiting
+  //Alternatively, I think I could just initialize GLFW and evd after getting things from the command line.
+  std::future<std::unique_ptr<src::Source>> source = std::async(std::launch::async, cmd::FindSource, argc, argv);
+  while(source.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout && !glfwWindowShouldClose(window))
+  {
+    glClearColor(0., 0., 0., 1.);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glfwPollEvents(); //TODO: Since this is an event viewer rather than a game, use glfwWaitEvents() instead?
+    ImGui_ImplGlfwGL3_NewFrame();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+
+    ImGui::Begin("Splash Screen");
+    ImGui::Text("Loading first event...");
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(window);
+  }
+  evd.SetSource(source.get());
+  
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
   while (!glfwWindowShouldClose(window))
   {
@@ -88,10 +110,10 @@ int main(const int argc, const char** argv)
   
     evd.Render(display_w, display_h, io);
  
-    //#if defined(DEBUG) //TODO: Does this work with non-GCC compilers?
+    #ifndef NDEBUG
     bool showMetrics = true;
     ImGui::ShowMetricsWindow(&showMetrics);
-    //#endif
+    #endif
   
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());

@@ -3,57 +3,46 @@
 //       Scene names from a Viewer.  Then, the main window tells the input provider to give the Grids a source of data 
 //       to draw, and the Grids is given a chance to remove old objects and add new objects to its Scene(s).  
 //       Grids is the abstract base class for all plugins that can be used with the edepsim event display. 
-//TODO: Make a Grids responsible for exactly one Scene?  This would mean separate loops for trajectory point 
-//      and trajectory drawing with my current design. 
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Base class
-#include "plugins/drawing/GeoDrawer.cpp"
-
-//gl includes
-#include "gl/VisID.h"
-#include "gl/Viewer.h"
+#include "GeoController.cpp"
 
 #ifndef DRAW_GRIDS_H
 #define DRAW_GRIDS_H
 
 class TGeoManager;
 
-namespace mygl
-{
-  class TreeModel;
-}
-
 namespace draw
 {
-  class Grids: public GeoDrawer
+  class Grids
   {
     public:
       Grids(const YAML::Node& config); //Configure a new Grids
       virtual ~Grids() = default;
 
-      virtual void RemoveAll(mygl::Viewer& viewer) override;
-
-    protected:
       //Provide a public interface, but call protected interface functions so that I can add 
       //behavior common to all Grids here.
-      virtual void doRequestScenes(mygl::Viewer& viewer);
-      virtual void doDrawEvent(const TGeoManager& man, mygl::Viewer& viewer, mygl::VisID& nextID);
+      virtual legacy::scene_t& doRequestScene(mygl::Viewer& viewer);
+      virtual std::unique_ptr<legacy::model_t> doDraw(const TGeoManager& man, Services& /*services*/);
 
-      float fLineWidth;
-
-      class GuideRecord: public mygl::ColRecord
+    private:
+      class GuideRecord: public ctrl::ColumnModel
       {
         public:
-          GuideRecord(): ColRecord(), fName("Name")
+          GuideRecord(): ColumnModel(), fName("Name")
           {
             Add(fName);
           }
 
-          mygl::TreeModel::Column<std::string> fName;
+          ctrl::Column<std::string> fName;
       };
 
       std::shared_ptr<GuideRecord> fGuideRecord;
+
+      //Drawing configuration
+      float fLineWidth; //Width of grid lines
+      bool fDefaultDraw; //Draw all objects by default
   };
 }
 

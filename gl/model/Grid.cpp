@@ -7,11 +7,10 @@
 
 //model includes
 #include "gl/model/Grid.h"
-#include "gl/model/VAO.h"
 
 namespace mygl
 {
-  Grid::Grid(VAO& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace,
+  Grid::Grid(VAO::model& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace,
              const glm::vec4& color, const float lineWidth): Drawable(model), fWidth(width), fHorizSpace(horizSpace), 
                                                              fHeight(height), fVertSpace(vertSpace), fLineWidth(lineWidth)
   {

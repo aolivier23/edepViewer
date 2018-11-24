@@ -8,14 +8,13 @@
 
 //model includes
 #include "gl/model/Point.h"
-#include "gl/model/VAO.h"
 
 //c++ includes
 #include <iostream>
 
 namespace mygl
 {
-  Point::Point(VAO& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius): Drawable(model), fNVertices(1), 
+  Point::Point(VAO::model& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius): Drawable(model), fNVertices(1), 
                                                                                                                       fRadius(radius)
   {
     Vertex vert;

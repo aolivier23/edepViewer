@@ -21,7 +21,7 @@ install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow EvdWindow.cpp )
 target_link_libraries( EvdWindow LINK_PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} Viewer PolyMesh Path Grid Point
-                                             ${EDepSimIO} Factory Drawers yaml-cpp GUI Geometry Source TreeModel ${EXTERNAL_LIBS} external)
+                                             ${EDepSimIO} Factory GeoDrawers yaml-cpp GUI Geometry Source Tree ${EXTERNAL_LIBS} ) #external)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine CmdLine.cpp )
@@ -29,7 +29,7 @@ target_link_libraries( CmdLine LINK_PUBLIC yaml-cpp Source )
 install( TARGETS CmdLine DESTINATION lib )
 
 add_executable( GLFWApp GLFWApp.cpp )
-target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw TreeModel CmdLine ${EDepSimIO})
+target_link_libraries( GLFWApp LINK_PUBLIC ${ROOT_LIBRARIES} EvdWindow glfw imgui imgui_glfw Tree CmdLine ${EDepSimIO})
 
 install( TARGETS GLFWApp DESTINATION bin )
 

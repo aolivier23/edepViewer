@@ -5,8 +5,9 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //Plugin includes
-#include "plugins/drawing/GeoDrawer.cpp"
-#include "plugins/drawing/EventDrawer.cpp"
+#include "plugins/drawing/geometry/GeoController.cpp"
+//#include "plugins/drawing/event/EventDrawer.cpp"
+//#include "plugins/drawing/camera/CameraConfig.cpp"
 #include "external/ExternalDrawer.cpp"
 #include "plugins/drawing/Services.cpp"
 
@@ -15,8 +16,7 @@
 
 //gl includes
 #include "gl/Viewer.h"
-#include "gl/Scene.h"
-#include "gl/ColRecord.cpp"
+#include "gl/metadata/Column.cpp"
 
 //ROOT includes
 #include "TFile.h"
@@ -25,12 +25,15 @@
 #include "TDatabasePDG.h"
 #include "TSystemDirectory.h"
 
-//Tinyxml include
+//yaml-cpp include
 #include "yaml-cpp/yaml.h"
 
 //TODO: move EDepSim dependence out of this file
 //EDepSim includes
 #include "TG4Event.h" 
+
+//c++ includes
+#include <future>
 
 #ifndef EVD_EVDWINDOW
 #define EVD_EVDWINDOW
@@ -82,7 +85,6 @@ namespace mygl
       void ReadGeo();
       void ReadEvent();
 
-      mygl::VisID fNextID;
       draw::Services fServices;
 
       //Negotiate with the Source to find the right event 
@@ -95,14 +97,36 @@ namespace mygl
       file::FileChoose fChoose;
       std::unique_ptr<TSystemDirectory> fPwd; //Current ROOT directory used by file selector
 
+      //TODO: Separate event processing details from GUI drawing.  Maybe encapsulate the below objects in EvdController?
+      //      Then, ReadGeo() and ReadEvent() would probably become methods of EvdController as well.  
       //plugins
-      std::vector<std::unique_ptr<draw::GeoDrawer>> fGlobalDrawers;
-      std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
-      std::vector<std::unique_ptr<draw::ExternalDrawer>> fExtDrawers;
+      std::vector<std::unique_ptr<draw::GeoControllerBase>> fGlobalDrawers;
+      //std::vector<std::unique_ptr<draw::EventDrawer>> fEventDrawers;
+      //std::vector<std::unique_ptr<draw::CameraConfig>> fCameraConfigs;
+      //std::vector<std::unique_ptr<draw::ExternalDrawer>> fExtDrawers;
 
-      //OpenGL data for printing 
-      //mygl::Framebuffer fPrintBuffer; //The framebuffer I will render to for printing
-      //std::unique_ptr<mygl::Texture2D> fPrintTexture; //The texture I will print to
+      //Keep track of processing of each event. 
+      //TODO: Thread spaghetti:
+      //      Ultimately, I want to be processing as many events as possible at once.  I should probably place some upper limit on 
+      //      the number of events cached.  Retrieving an event from file can also block for a while (think of UChicago wifi), so 
+      //      I think I want to retrieve each event to process in a thread that isn't drawing the GUI.  If I can make a copy of each 
+      //      event I get, I could send that copy to its own thread and process events in parallel.  
+      //
+      //      Currently, I'm thinking about creating fSource in its own thread.  The EvdWindow can interact with fSource by telling it 
+      //      to stop processing events or asking it for a new event.  Really, whatever runs the Controllers above needs to control fSource.  
+      //      When the "master controller" is asked for a new event, it first looks through its cache.  If the next event isn't cached, 
+      //      then the "master controller" should tell EvdWindow to wait for the next event to be processed, and the EvdWindow should 
+      //      probably poll the "master controller" for status every frame.  
+      //
+      //      After the "master controller" updates EvdWindow's Viewer, it should try to cache as many events as it can.  Events probably 
+      //      have to be loaded in series, so something that is not blocking EvdWindow should start a loop up to the cache size limit that 
+      //      takes a copy of an event and dispatches processing of that event to its own thread.
+
+      //For now, I'm just going to process the "next event" in a new thread and wait for it to finish before updating any Scenes.  
+      //std::queue<std::future<void>> fEventStatuses; //Status of each thread that is processing an event
+      bool fIsWaiting; //Is the application waiting for the current event to be processed?
+      bool fHasNewGeom; //TODO: Replace this hack by rethinking my scene update logic
+      std::future<void> fNextEvent; //When this future is ready, the next event is ready.  
   };
 }
 

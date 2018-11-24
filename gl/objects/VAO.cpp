@@ -4,7 +4,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //model includes
-#include "gl/model/VAO.h"
+#include "VAO.h"
 
 //glad includes
 #include "glad/include/glad/glad.h" //For OpenGL functions and enums
@@ -15,7 +15,7 @@
 namespace mygl
 {
   //Get handles to OpenGL resources that I will upload later.
-  VAO::VAO(): fUploadData(true)
+  VAO::VAO()
   {
     glGenVertexArrays(1, &fVAO);
     glBindVertexArray(fVAO);
@@ -44,15 +44,25 @@ namespace mygl
     glDeleteBuffers(1, &fEBO);
   }
 
+  VAO::sentry::sentry(unsigned int vao) 
+  { 
+    glBindVertexArray(vao); 
+  }
+
+  VAO::sentry::~sentry()
+  {
+    glBindVertexArray(0);
+  }
+
   //Interface between Drawables and VAO.  Return the offset to the first index for this Drawable.
-  unsigned int VAO::Register(const std::vector<Drawable::Vertex>& vertices)
+  unsigned int VAO::model::Register(const std::vector<Drawable::Vertex>& vertices)
   { 
     const auto result = fVertices.size();
     fVertices.insert(fVertices.end(), vertices.begin(), vertices.end());
     return result;
   }
 
-  unsigned int VAO::Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices)
+  unsigned int VAO::model::Register(const std::vector<Drawable::Vertex>& vertices, const std::vector<unsigned int>& indices)
   {
     const auto vertOffset = fVertices.size();
     const auto indOffset = fIndices.size();
@@ -61,34 +71,22 @@ namespace mygl
     return indOffset;
   }
 
-  void VAO::Use()
+  VAO::sentry VAO::Use()
   {
-    if(fUploadData) //Upload data to the GPU once ever?
-    {
-      Upload();
-      fUploadData = false;
-    }
-
-    glBindVertexArray(fVAO);
+    return sentry(fVAO);
   }
 
   //Send managed data to the GPU
-  void VAO::Upload()
+  void VAO::Load(const model& data)
   {
-    glBindVertexArray(fVAO);
+    auto bound = Use();
 
     //Send indices to the GPU
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, fIndices.size()*sizeof(unsigned int), &fIndices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.fIndices.size()*sizeof(unsigned int), &data.fIndices[0], GL_STATIC_DRAW);
 
     //Send vertices to the GPU
     glBindBuffer(GL_ARRAY_BUFFER, fVBO);
-    glBufferData(GL_ARRAY_BUFFER, fVertices.size()*sizeof(Drawable::Vertex), &fVertices[0], GL_STATIC_DRAW);
-
-    glBindVertexArray(0); //Put current vertex array in unbound state to detect error more easily
-
-    //Free up memory that is not used anymore?  If I plan to call Upload() multiple times with the same data, don't do this!
-    fVertices.clear();
-    fIndices.clear(); 
+    glBufferData(GL_ARRAY_BUFFER, data.fVertices.size()*sizeof(Drawable::Vertex), &data.fVertices[0], GL_STATIC_DRAW);
   }
 } 

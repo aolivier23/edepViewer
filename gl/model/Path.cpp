@@ -7,19 +7,18 @@
 
 //model includes
 #include "gl/model/Path.h"
-#include "gl/model/VAO.h"
 
 //c++ includes
 #include <iostream>
 
 namespace mygl
 {
-  Path::Path(VAO& vao, const glm::mat4& model, const std::vector<Vertex>& points, const float width): Drawable(model), fNVertices(points.size()+2), fWidth(width)
+  Path::Path(VAO::model& vao, const glm::mat4& model, const std::vector<Vertex>& points, const float width): Drawable(model), fNVertices(points.size()+2), fWidth(width)
   {
     Init(vao, points);
   }
 
-  Path::Path(VAO& vao, const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, 
+  Path::Path(VAO::model& vao, const glm::mat4& model, const std::vector<glm::vec3>& points, const glm::vec4& color, 
              const float width): Drawable(model), fNVertices(points.size()+2), fWidth(width)
   {
     std::vector<Vertex> vertices;
@@ -40,7 +39,7 @@ namespace mygl
     glDrawArrays(GL_LINE_STRIP_ADJACENCY, fOffset, fNVertices);
   }
 
-  void Path::Init(VAO& vao, std::vector<Vertex> points)
+  void Path::Init(VAO::model& vao, std::vector<Vertex> points)
   {
     //Add one extra vertex on each end of points to provide adjacency information
     points.insert(points.begin(), points.front());

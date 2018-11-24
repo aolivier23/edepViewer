@@ -4,13 +4,10 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //gl includes
-#include "gl/SceneConfig.cpp"
+#include "gl/scene/SceneConfig.cpp"
 
 //draw includes
-#include "plugins/drawing/GeoDrawer.cpp"
-
-//ROOT includes
-#include "TGeoManager.h" //For data
+#include "GeoController.cpp"
 
 //yaml-cpp include for configuration
 #include "yaml-cpp/yaml.h"
@@ -26,40 +23,37 @@ namespace mygl
 
 namespace draw
 {
-  class DefaultGeo: public GeoDrawer
+  class DefaultGeo
   {
     public:
       DefaultGeo(const YAML::Node& config);
       virtual ~DefaultGeo() = default;
 
-      virtual void RemoveAll(mygl::Viewer& viewer) override;
+      virtual legacy::scene_t& doRequestScene(mygl::Viewer& viewer);
+      virtual std::unique_ptr<legacy::model_t> doDraw(const TGeoManager& data, Services& /*services*/);
 
-    protected:
-      virtual void doRequestScenes(mygl::Viewer& viewer) override;
-      virtual void doDrawEvent(const TGeoManager& data, mygl::Viewer& viewer, mygl::VisID& nextID) override;
-
+    private:
       //Helper functions for drawing geometry volumes
-      virtual void AppendNode(mygl::Scene& scene, mygl::VisID& nextID, TGeoNode* node, glm::mat4& mat, 
-                              const mygl::TreeModel::iterator parent, size_t depth);
-      virtual void AppendChildren(mygl::Scene& scene, mygl::VisID& nextID, const mygl::TreeModel::iterator parent, 
-                                  TGeoNode* parentNode, glm::mat4& mat, size_t depth);
+      virtual void AppendNode(legacy::model_t::view& parent, TGeoNode* node, glm::mat4& mat, size_t depth);
+      virtual void AppendChildren(legacy::model_t::view& parent, TGeoNode* parentNode, glm::mat4& mat, size_t depth);
 
       //Data needed when appending geometry nodes
       size_t fMaxDepth; //The maximum depth drawn in geometry hierarchy
-      std::unique_ptr<mygl::ColorIter> fColor;
+      bool fDefaultDraw; //Whether to draw all geometry nodes by default
+      std::unique_ptr<mygl::ColorIter> fColor; //TODO: Use some Service here instead?
 
       //ColRecord-derived classes to make unique TreeViews for geometry and trajectories
-      class GeoRecord: public mygl::ColRecord
+      class GeoRecord: public ctrl::ColumnModel
       {
         public:
-          GeoRecord(): ColRecord(), fName("Name"), fMaterial("Material")
+          GeoRecord(): ColumnModel(), fName("Name"), fMaterial("Material")
           {
             Add(fName);
             Add(fMaterial);
           }
 
-          mygl::TreeModel::Column<std::string> fName;
-          mygl::TreeModel::Column<std::string> fMaterial;
+          ctrl::Column<std::string> fName;
+          ctrl::Column<std::string> fMaterial;
       };
 
       std::shared_ptr<GeoRecord> fGeoRecord;

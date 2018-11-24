@@ -25,15 +25,17 @@
 //       first && second || third: True if first and second are true OR third is true
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//gl includes
-#include "TreeModel.h"
-
 //c++ includes
 #include <string>
 #include <array>
 
 #ifndef MYGL_USERCUT_H
 #define MYGL_USERCUT_H
+
+namespace ctrl
+{
+  class Row;
+}
 
 namespace mygl
 {
@@ -43,7 +45,7 @@ namespace mygl
       UserCut(const size_t nCols);
       virtual ~UserCut() = default;
 
-      bool do_filter(const TreeModel::iterator& iter);
+      bool do_filter(const ctrl::Row& row);
 
       std::array<char, 256> fInput; //User-supplied text to cut based on
     

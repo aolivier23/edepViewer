@@ -3,7 +3,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //gl includes
-#include "gl/VisID.h"
+#include "VisID.h"
 #include "util/GenException.h"
 
 namespace mygl

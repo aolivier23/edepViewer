@@ -35,11 +35,11 @@ namespace
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(VAO& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): PolyMesh(vao, model, vol->GetShape(), color)
+  PolyMesh::PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): PolyMesh(vao, model, vol->GetShape(), color)
   {
   }
 
-  PolyMesh::PolyMesh(VAO& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
+  PolyMesh::PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
   {
     if(shape == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = shape->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);

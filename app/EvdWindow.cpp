@@ -36,12 +36,32 @@
 //c++ includes
 #include <regex>
 
+namespace
+{
+  template <class BASE>
+  void loadPlugins(const YAML::Node& pluginConfig, const std::string& name, std::vector<std::unique_ptr<BASE>>& plugins)
+  {
+    auto& factory = plgn::Factory<BASE>::instance();
+    if(pluginConfig[name])
+    {
+      const auto& config = pluginConfig[name];
+      for(auto plugin = config.begin(); plugin != config.end(); ++plugin)
+      {
+        auto drawer = factory.Get(plugin->first.as<std::string>(), plugin->second);
+        if(drawer != nullptr) plugins.push_back(std::move(drawer));
+        else std::cerr << "Failed to get event plugin named " << plugin->first << "(end)\n";
+      }
+    }
+    else throw std::runtime_error("Failed to get an element named "+name+" from config.yaml.\n");
+  }
+}
+
 namespace mygl
 {
-  EvdWindow::EvdWindow(): 
+  EvdWindow::EvdWindow(): fConfig(new YAML::Node()),
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fNextID(0, 0, 0), fServices(), fConfig(new YAML::Node()), fSource()//, fPrintTexture(nullptr)
+    fSource(), fServices(), fIsWaiting(true), fHasNewGeom(true)//, fPrintTexture(nullptr)
   {
   }
 
@@ -61,11 +81,12 @@ namespace mygl
       //TODO: There is supposed to be a YAML TAG structure to handle "native" types.  Can I exploit it here?
 
       //Load global plugins
-      auto& geoFactory = plgn::Factory<draw::GeoDrawer>::instance();
+      //auto& geoFactory = plgn::Factory<draw::GeoDrawerBase>::instance();
 
       const auto& top = *fConfig;
       const auto& drawers = top["Drawers"];
-      if(drawers["Global"])
+      ::loadPlugins(drawers, "Global", fGlobalDrawers); //TODO: If this works, replace all other plugin-loading loops
+      /*if(drawers["Global"])
       {
         for(auto plugin = drawers["Global"].begin(); plugin != drawers["Global"].end(); ++plugin)
         {
@@ -74,10 +95,10 @@ namespace mygl
           else std::cerr << "Failed to get global plugin named " << plugin->first << "(end)\n";
         }
       }
-      else throw std::runtime_error("Failed to get an element named Global from config.yaml.\n");
+      else throw std::runtime_error("Failed to get an element named Global from config.yaml.\n");*/
 
       //Load event plugins
-      auto& evtFactory = plgn::Factory<draw::EventDrawer>::instance();
+      /*auto& evtFactory = plgn::Factory<draw::EventDrawerBase>::instance();
       if(drawers["Event"])
       {
         const auto& eventConfig = drawers["Event"];
@@ -90,6 +111,14 @@ namespace mygl
       }
       else throw std::runtime_error("Failed to get an element named Event from config.yaml.\n");
 
+      //Load camera config plugins
+      auto camFactory = plgn::Factory<draw::CameraConfigBase>::instance();
+      if(drawers["Camera"])
+      {
+        const auto& camConfig = drawers["Camera"];
+        for(auto plugin = camConfig.begin(); plugin != cam
+      }
+
       //Load external plugins
       auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
       if(drawers["External"])
@@ -100,31 +129,37 @@ namespace mygl
           if(drawer != nullptr) fExtDrawers.push_back(std::move(drawer));
           else std::cerr << "Failed to get external plugin named " << plugin->first << "\n";
         }
-      }
+      }*/
       make_scenes();
     }
   }
 
   EvdWindow::~EvdWindow() {}
 
+  //TODO: Maybe defer setting TGeoManager in Source to NextFile() and call NextFile() here.  
   void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
-    fSource.reset(source.release()); //= std::move(source);
+    fSource.reset(source.release());
     //ReadGeo is called when the current file changes, so make sure external drawers are aware of the file change.
     //TODO: I should probably relabel this FileChange() and/or make the negotiation with Source a state machine.
     //TODO: Rethink how Source interacts with ExternalDrawers.  
     if(fSource)
     { 
-      for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
+      //for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
       fSource->Next();
-      ReadGeo();
-      ReadEvent();
+      fNextEvent = std::async(std::launch::async, 
+                              [this]()
+                              {
+                                ReadGeo();
+                                ReadEvent();
+                              });
     }
   }
 
   void EvdWindow::ReadGeo()
   {
-    fNextID = mygl::VisID();
+    fIsWaiting = true; //Go to the waiting state if not already there
+    fHasNewGeom = true;
     
     //Load service information
     const auto& serviceConfig = (*fConfig)["Services"]; 
@@ -135,50 +170,30 @@ namespace mygl
     fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
     auto man = fSource->Geo();
 
-    //First, remove all old scenes
-    for(const auto& drawPtr: fGlobalDrawers) drawPtr->RemoveAll(fViewer);
+    //Next, create threads to do "drawing".  These functions shouldn't modify OpenGL state.  
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->Draw(*man, fServices);
 
-    //Next, do "drawing", which really makes no OpenGL calls, in parallel
-    for(const auto& drawPtr: fGlobalDrawers) drawPtr->DrawEvent(*man, fViewer, fNextID);
-
-    std::cout << "Done drawing the geometry.\n";
+    std::cout << "Started drawing the geometry.\n";
   }
 
   void EvdWindow::ReadEvent()
   { 
     std::cout << "Going to next event.\n";
-    //First, remove all objects from last event
-    for(const auto& drawPts: fEventDrawers) drawPts->RemoveAll(fViewer);
-    for(const auto& drawer: fExtDrawers) drawer->RemoveAll(fViewer);
-
+    fIsWaiting = true; //Go to the waiting state if not already there
+                       //TODO: A "real" state machine would call some function that implicitly makes the transition to a new state
+    //TODO: Rewrite this as just a loop over calling fEventDrawers' and fExtDrawers' Draw() functions.
     //Now, DrawEvents(), which makes no OpenGL calls, can be run in parallel.  
-    mygl::VisID id = fNextID; //id gets updated before being passed to the next drawer, but fNextID is only set by the geometry drawer(s)
-    const auto& evt = fSource->Event();
+    /*const auto& evt = fSource->Event();
 
-    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(evt, fViewer, id, fServices);
-    std::cout << "Done with event drawers.\n";
+    fEventFuture = std::async(std::launch::async, [this, &evt, &id]() 
+                                                  {
+                                                    for(const auto& drawPts: fEventDrawers) drawPts->DrawEvent(evt, fViewer, id, fServices);
+                                                  });
 
-    for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
-
-    //Last, set current event number for GUI
-    //fEvtNum.set_text(std::to_string(fSource->Entry())); //TODO: Does ImGui do this?  
-
-    /*std::vector<LegendView::Row> rows;
-    auto db = TDatabasePDG::Instance();
-    for(const auto& pdg: *(fServices.fPDGToColor))
-    {
-      const auto particle = db->GetParticle(pdg.first);
-      std::string name;
-      if(particle) name = particle->GetName();
-      else name = std::to_string(pdg.first);
-      Gdk::RGBA color;
-      color.set_rgba(pdg.second.r, pdg.second.g, pdg.second.b, 1.0);
-      rows.emplace_back(name, color);
-    }
-    fLegend.reset(new LegendView(*this, std::move(rows)));
-    //TODO: Not even close to portable
-    fLegend->move(150, 150); //The fact that I specified this in pixels should indicate how frustrated I am...
-    fLegend->show();*/
+    fExternalFuture = std::async(std::launch::async, [this, &evt, &id]()
+                                                     {
+                                                       for(const auto& drawer: fExtDrawers) drawer->DrawEvent(evt, fViewer, id, fServices);
+                                                     });*/
   }
   
   void EvdWindow::make_scenes()
@@ -186,16 +201,14 @@ namespace mygl
     std::cout << "Calling function EvdWindow::make_scenes()\n";
 
     //Configure Geometry Scenes
-    for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScenes(fViewer);    
+    for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScene(fViewer);    
 
     //Configure Event Scenes
-    for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScenes(fViewer);
+    //TODO: Put fEventDrawers back when fGlobalDrawers works
+    /*for(const auto& drawPtr: fEventDrawers) drawPtr->RequestScene(fViewer);
 
     //Configure External Scenes
-    for(const auto& extPtr: fExtDrawers) extPtr->RequestScenes(fViewer);
-
-    //ReadGeo();
-    //ReadEvent();
+    for(const auto& extPtr: fExtDrawers) extPtr->RequestScene(fViewer);*/
   }
   
   void EvdWindow::Print(const int width, const int height)
@@ -224,53 +237,85 @@ namespace mygl
 
   void EvdWindow::Render(const int width, const int height, const ImGuiIO& ioState)
   {
-    //Pop up file selection GUI and call reconfigure()
-    if(!fConfig) 
+    //Render Viewer if not currently loading an event.  Otherwise, render a splash screen with a progress bar.  
+    if(fIsWaiting) //If in the "waiting for event processing" state
     {
-      auto file = fChoose.Render(".xml");
-      if(file)
-      {
-        std::string name(file->GetTitle());
-        name += "/";
-        name += file->GetName();
-        std::ifstream file(name);
-        std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(file)));
-        if(doc) reconfigure(std::move(doc));
-        else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
-      }
-    }
+      //Check whether all Drawers have finished
 
-    //Pop up file selection GUI and call SetSource()
-    if(!fSource)
-    {
-      choose_file();
-    }
-
-    if(fSource && fConfig)
-    {
-      //Pop up legend of particle colors used
-      auto db = TDatabasePDG::Instance();
-      //ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
-      ImGui::Begin("Legend");
-      for(auto& pdg: *(fServices.fPDGToColor))
-      {
-        const auto particle = db->GetParticle(pdg.first);
-        std::string name;
-        if(particle) name = particle->GetName();
-        else name = std::to_string(pdg.first);
-        
-        ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pdg.second), ImGuiColorEditFlags_NoInputs);
-      }
+      std::cout << "Threads are running!  Popping up progress bar...\n";
+      ImGui::Begin("Loading");
+      ImGui::Text("Loading, next event and/or file...");
+      //ImGui::ProgressBar((geoPos)/1., ImVec2(0.0f, 0.0f));
+      //if(geoReady) ImGui::Text("Geometry ready!");
+      //if(eventReady) ImGui::Text("Edep-sim ready!");
+      //if(extReady) ImGui::Text("External ready!");
       ImGui::End();
 
-      RenderControlBar(width, height);
+      if(fNextEvent.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) 
+      {
+        mygl::VisID id(0, 0, 0);
+        if(fHasNewGeom)
+        {
+          for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id); //TODO: I don't always want to call UpdateScene for 
+          fHasNewGeom = false;
+        }
+                                                                   //      the geometry when the event drawers are ready.
+        //TODO: UpdateScene for external drawers, event drawers, and camera config as well.
 
-      //TODO: Allow Drawers to Render() here?  Really, I think I want to move the PDGToColor service to a 
-      //      more generic color mapping service, implement named service instantiations, and Render() 
-      //      services so that they can use IMGUI.   
-      for(const auto& drawer: fExtDrawers) drawer->Render();
+        fIsWaiting = false;
+      }
     }
-    fViewer.Render(width, height, ioState);
+    else //Otherwise, we can render the current event.  We might still be processing future events in another thread.  
+    {
+      //Pop up file selection GUI and call reconfigure()
+      if(!fConfig) 
+      {
+        auto file = fChoose.Render(".yaml");
+        if(file)
+        {
+          std::string name(file->GetTitle());
+          name += "/";
+          name += file->GetName();
+          std::ifstream file(name);
+          std::unique_ptr<YAML::Node> doc(new YAML::Node(YAML::Load(file)));
+          if(doc) reconfigure(std::move(doc));
+          else throw std::runtime_error("Syntax error in configuration file "+name+"\n");
+        }
+      }
+
+      //Pop up file selection GUI and call SetSource()
+      if(!fSource)
+      {
+        choose_file();
+      }
+
+      if(fSource && fConfig)
+      {
+        //Pop up legend of particle colors used
+        auto db = TDatabasePDG::Instance();
+        //ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
+        ImGui::Begin("Legend");
+        for(auto& pdg: *(fServices.fPDGToColor))
+        {
+          const auto particle = db->GetParticle(pdg.first);
+          std::string name;
+          if(particle) name = particle->GetName();
+          else name = std::to_string(pdg.first);
+          
+          ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pdg.second), ImGuiColorEditFlags_NoInputs);
+        }
+        ImGui::End();
+
+        RenderControlBar(width, height); //TODO: If RenderControlBar did something, return immediately (or else check threads)
+
+        //TODO: Allow Drawers to Render() here?  Really, I think I want to move the PDGToColor service to a 
+        //      more generic color mapping service, implement named service instantiations, and Render() 
+        //      services so that they can use IMGUI.   
+        //for(const auto& drawer: fExtDrawers) drawer->Render();
+
+        fViewer.Render(width, height, ioState);
+      }
+    }
   }
 
   void EvdWindow::RenderControlBar(const int width, const int height)
@@ -299,7 +344,7 @@ namespace mygl
 
       if(ImGui::Button("Next")) next_event(); //TODO: Make goto_event() able to detect the end of a file like next_event()
       ImGui::SameLine();
-      if(ImGui::Button("Reload")) ReadEvent();
+      if(ImGui::Button("Reload")) ReadEvent(); //fNextEvent = std::async(std::launch::async, this->ReadEvent);
       ImGui::SameLine();
       if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
                                                         //GUI to pop up in next loop.
@@ -344,6 +389,7 @@ namespace mygl
     std::cout << "Calling function EvdWindow::next_event()\n";
     if(!fSource->Next()) //If this is the end of the current file
     {
+      //TODO: NextFile() and/or Next() in a thread?
       if(!fSource->NextFile()) //If this is the end of the last file in the Source
       {
         std::cerr << "Reached last event in input files.\n";
@@ -351,14 +397,18 @@ namespace mygl
       else 
       {
         std::cout << "Reading from file " << fSource->GetFile() << "\n";
-        ReadGeo();
-        ReadEvent();
+        fNextEvent = std::async(std::launch::async, 
+                                [this]()
+                                {
+                                  ReadGeo();
+                                  ReadEvent(); 
+                                });
       }
     }
     else 
     {
       std::cout << "Reading from file " << fSource->GetFile() << "\n";
-      ReadEvent();
+      fNextEvent = std::async(std::launch::async, [this](){ ReadEvent(); }); 
     }
   }
 }
