@@ -35,7 +35,7 @@ namespace draw
 
   std::unique_ptr<legacy::model_t> Grids::doDraw(const TGeoManager& /*man*/, Services& /*services*/)
   {
-    auto scene = std::make_unique<legacy::model_t>(*fGuideRecord);
+    auto scene = std::make_unique<legacy::model_t>(fGuideRecord);
     auto root = scene->emplace(fDefaultDraw);
     root[fGuideRecord->fName] = "Measurement Objects";
 

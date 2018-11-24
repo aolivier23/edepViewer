@@ -78,7 +78,7 @@ namespace draw
   {
     //TODO: Reset fColor here.  It probably needs to be a local variable instead of a member variable. 
     glm::mat4 id;
-    auto scene = std::make_unique<legacy::model_t>(*fGeoRecord);
+    auto scene = std::make_unique<legacy::model_t>(fGeoRecord);
     auto top = scene->emplace(fDefaultDraw);
     top[fGeoRecord->fName] = data.GetTitle();
     top[fGeoRecord->fMaterial] = "FIXME";

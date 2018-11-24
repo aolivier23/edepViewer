@@ -19,7 +19,7 @@ namespace ctrl
   class SceneModel
   {
     public:
-      SceneModel(ColumnModel& cols): fTopLevelNodes(), fVAO(), fCols(cols)
+      SceneModel(std::shared_ptr<ColumnModel> cols): fTopLevelNodes(), fVAO(), fCols(cols)
       {
       }
 
@@ -61,10 +61,10 @@ namespace ctrl
       //Drawable-controlling TreeNodes.  
       view emplace(const bool drawByDefault)
       {
-        fTopLevelNodes.emplace_back(nullptr, fCols);
+        fTopLevelNodes.emplace_back(nullptr, *fCols);
         auto& node = fTopLevelNodes.back();
         node.fVisible = drawByDefault;
-        return view(node, fCols, fVAO);
+        return view(node, *fCols, fVAO);
       }
 
       friend class SceneController; //Allow SceneController to access protected members of SceneModel so that 
@@ -74,6 +74,6 @@ namespace ctrl
       std::list<TreeNode<std::unique_ptr<HANDLE>>> fTopLevelNodes; //Top-level Nodes
       //TODO: The type of vertex in VAO should depend on HANDLE.  So, make VAO a class template.  
       mygl::VAO::model fVAO; //List of vertices that fDrawables need to access for rendering
-      ColumnModel& fCols; //Reference to ColumnModel used to construct children
+      std::shared_ptr<ColumnModel> fCols; //Reference to ColumnModel used to construct children
   };
 } 

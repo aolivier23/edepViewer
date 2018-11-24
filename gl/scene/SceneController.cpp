@@ -149,14 +149,17 @@ namespace ctrl
     for(auto& top: fCurrentModel->fTopLevelNodes) 
     {
       //top-level nodes have special meaning.  Don't try to Draw() their handles.  
-      for(auto& child: top.children)
+      if(top.fVisible)
       {
-        child.walkIf([this](auto& node)
-                     {
-                       if(!node.fVisible) return false;
-                       node.handle->Draw(fShader);
-                       return true;
-                     });
+        for(auto& child: top.children)
+        {
+          child.walkIf([this](auto& node)
+                       {
+                         if(!node.fVisible) return false;
+                         node.handle->Draw(fShader);
+                         return true;
+                       });
+        }
       }
     }
     fConfig->AfterRender();
@@ -175,21 +178,22 @@ namespace ctrl
 
     for(auto& top: fCurrentModel->fTopLevelNodes)
     {
-      for(auto& child: top.children)
+      if(top.fVisible)
       {
-        child.walkIf([this](auto& node) 
-                     {
-                       if(!node.fVisible) return false;
-                       fSelectionShader.SetUniform("idColor", node.fVisID); //Each VisID is a unique color that can be drawn by opengl.  
-                                                                            //So, draw this object with that color so that its' color 
-                                                                            //can be mapped back to its' VisID if the user clicks on it.
-                       node.handle->Draw(fSelectionShader);
-                       return true;
-                     });
+        for(auto& child: top.children)
+        {
+          child.walkIf([this](auto& node) 
+                       {
+                         if(!node.fVisible) return false;
+                         fSelectionShader.SetUniform("idColor", node.fVisID); //Each VisID is a unique color that can be drawn by opengl.  
+                                                                              //So, draw this object with that color so that its' color 
+                                                                              //can be mapped back to its' VisID if the user clicks on it.
+                         node.handle->Draw(fSelectionShader);
+                         return true;
+                       });
+        }
       }
     }
-
-    glBindVertexArray(0);
   }
 
   //TODO: Tell other SceneControllers that this VisID has been selected
