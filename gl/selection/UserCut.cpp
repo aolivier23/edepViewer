@@ -24,7 +24,7 @@ namespace mygl
     std::string copy(fInput.data());
 
     //First, substitute in variables
-    for(size_t pos = 2; pos < fNCols; ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
+    for(size_t pos = 0; pos < fNCols; ++pos) //Starting at column 2 because column 0 is a custom type that is related to picking and column 1 is whether an 
                                                     //object is visible.
     {
       if(copy.find("@"+std::to_string(pos)) != std::string::npos)

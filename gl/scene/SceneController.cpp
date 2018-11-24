@@ -65,14 +65,19 @@ namespace ctrl
         //Don't cut on top-level nodes because they're understood to be placeholders that aren't associated with Drawables anyway.  
         //TODO: The above comment seems to violate the idea of a tree model that I want users to work with.  Consider revising 
         //      the idea of "placeholder nodes".   
-        for(auto& top: fCurrentModel->fTopLevelNodes)
+        for(auto& top: fCurrentModel->fTopLevelNodes) //TODO: Checkbox to cut on top-level nodes?
+                                                      //TODO: Option for recursively applying cuts to children?
         {
           //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
           //visibility anymore to speed up cut bar processing.  
-          top.walkIf([this](auto& child)
-                     {
-                       return (child.fVisible = fCutBar.do_filter(child.row));
-                     });
+          for(auto& child: top.children)
+          {
+            child.walkIf([this](auto& node)
+                         {
+                           //if(!node.fVisible) return false;
+                           return (node.fVisible = fCutBar.do_filter(node.row));
+                         });
+          }
         }
       }
       catch(const util::GenException& e)
