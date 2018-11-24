@@ -154,10 +154,9 @@ namespace mygl
 
   void Viewer::render(const int width, const int height) 
   {
-    assert(GetCurrentCamera() != nullptr);
-
     glClearColor(fBackgroundColor.x, fBackgroundColor.y, fBackgroundColor.z, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    assert(GetCurrentCamera() != nullptr);
 
     for(auto& scenePair: fSceneMap)
     {

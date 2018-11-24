@@ -240,8 +240,11 @@ namespace mygl
     //Render Viewer if not currently loading an event.  Otherwise, render a splash screen with a progress bar.  
     if(fIsWaiting) //If in the "waiting for event processing" state
     {
-      //Check whether all Drawers have finished
+      //TODO: Just clear background in one place
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+      //Check whether all Drawers have finished
       std::cout << "Threads are running!  Popping up progress bar...\n";
       ImGui::Begin("Loading");
       ImGui::Text("Loading, next event and/or file...");
