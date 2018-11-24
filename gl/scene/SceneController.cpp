@@ -210,7 +210,7 @@ namespace ctrl
     mygl::VisID oldSelected;
     if(!fSelectPath.empty()) 
     {
-      oldSelected = fSelectPath.back(); 
+      oldSelected = fSelectPath.front(); 
       if(oldSelected == searchID) return true; //If the same object was selected twice in a row, we've found
                                                //and selected it with no effort!
     }
@@ -218,7 +218,7 @@ namespace ctrl
     auto& top = fCurrentModel->fTopLevelNodes;
     const auto compare = [](const auto& node, const auto& compareTo) { return node.fVisID < compareTo; };
     const auto parentOfOldSelected = std::lower_bound(top.begin(), top.end(), oldSelected, compare);
-    if(parentOfOldSelected != top.end())
+    if(parentOfOldSelected != top.begin())
     {
       //TODO: If selection is very slow, this is the first place to suspect.  A good 
       //      alternative would be caching a handle somehow.
@@ -234,29 +234,40 @@ namespace ctrl
                                              
     //Now, find the next object to be selected
     const auto parentOfSelected = std::lower_bound(top.begin(), top.end(), searchID, compare);
-    if(parentOfSelected == top.end()) return false;
+    if(parentOfSelected == top.begin()) 
+    {
+      return false;
+    }
 
     
     //Since fVisID assignment descends the list tree before going to the next node, all children of a given node are ordered by 
     //fVisID.  So, if I ever reach a point where walkWhileTrue() returns false, I've either found searchID, or it isn't in 
     //fCurrentModel at all.  
-    return std::prev(parentOfSelected)->walkWhileTrue([this, &searchID](const auto& node)
-                                                      {
-                                                        const auto& id = node.fVisID;
+    bool found = false; //TODO: This is inelegant.  
+    std::prev(parentOfSelected)->walkWhileTrue([this, &searchID, &found](const auto& node)
+                                               {
+                                                 const auto& id = node.fVisID;
                          
-                                                        //Next, find out whether this node has the VisID that was just selected. 
-                                                        if(id < searchID) 
-                                                        {
-                                                          fSelectPath.insert(fSelectPath.begin(), id);
-                                                          return true; //Keep searching
-                                                        }
-                                                        if(!(searchID < id)) //tests equality combined with return above
-                                                        {
-                                                          fSelectPath.insert(fSelectPath.begin(), id);
-                                                          node.handle->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
-                                                        }
-                                                        return false; //Either this node is searchID or searchID isn't in the current SceneModel.
-                                                      });
+                                                 //Next, find out whether this node has the VisID that was just selected. 
+                                                 if(id < searchID) 
+                                                 {
+                                                   fSelectPath.insert(fSelectPath.begin(), id);
+                                                   return true; //Keep searching
+                                                 }
+                                                 if(!(searchID < id)) //tests equality combined with return above
+                                                 { 
+                                                   found = true;
+                                                   fSelectPath.insert(fSelectPath.begin(), id);
+                                                   node.handle->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
+                                                  }
+                                                  return false; //Either this node is searchID or searchID isn't in the current SceneModel.
+                                                });
+    if(!found)
+    {
+      fSelectPath.clear();
+      return false;
+    }
+    return true;
   }
 
   bool SceneController::DrawNodeData(node_t& node)
@@ -270,7 +281,7 @@ namespace ctrl
     const auto idBase = ss.str();
 
     //If this Node's VisID is selected, highlight this line in the list tree
-    const bool selected = (!fSelectPath.empty()) && (id == fSelectPath.back()); 
+    const bool selected = (!fSelectPath.empty()) && (id == fSelectPath.front()); 
     bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
     if(node.children.size() == 0) node_flags |= ImGuiTreeNodeFlags_Leaf;

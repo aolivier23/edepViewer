@@ -79,7 +79,7 @@ namespace
 
 namespace draw
 {
-  TrajPts::TrajPts(const YAML::Node& config): fPointRad(0.010), fDefaultDraw(false), fTrajPtRecord(new TrajPtRecord)
+  TrajPts::TrajPts(const YAML::Node& config): fPointRad(0.010), fDefaultDraw(true), fTrajPtRecord(new TrajPtRecord)
   {
     if(config["PointRad"]) fPointRad = config["PointRad"].as<float>();
     if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<bool>();

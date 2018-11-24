@@ -20,7 +20,7 @@ namespace draw
   EDepContributor::EDepContributor(const YAML::Node& config): fPDGToColor(),
                                                               fLineWidth(0.008), 
                                                               fMinLength(1.0),
-                                                              fDefaultDraw(false),
+                                                              fDefaultDraw(true),
                                                               fEDepRecord(new EDepRecord())
   {    
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();

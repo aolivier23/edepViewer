@@ -19,7 +19,7 @@
 
 namespace draw
 {
-  LinearTraj::LinearTraj(const YAML::Node& config): fLineWidth(0.008), fDefaultDraw(false), fTrajRecord(new TrajRecord())
+  LinearTraj::LinearTraj(const YAML::Node& config): fLineWidth(0.008), fDefaultDraw(true), fTrajRecord(new TrajRecord())
   {
     if(config["LineWidth"]) fLineWidth = config["LineWidth"].as<float>();
     if(config["DefaultDraw"]) fDefaultDraw = config["DefaultDraw"].as<float>();

@@ -19,7 +19,7 @@ namespace draw
 {
   EDepDEdx::EDepDEdx(const YAML::Node& config): fPalette(config["dEdxScale"]["min"].as<float>(), 
                                                          config["dEdxScale"]["max"].as<float>()), 
-                                                fLineWidth(0.008), fMinLength(1.0), fDefaultDraw(false),
+                                                fLineWidth(0.008), fMinLength(1.0), fDefaultDraw(true),
                                                 fEDepRecord(new EDepRecord())
   {
     /*auto dEdxScale = std::make_pair(0.f, 8.f);
