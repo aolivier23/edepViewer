@@ -89,15 +89,10 @@ namespace mygl
       ::loadPlugins(drawers, "Event", fEventDrawers);
       
       //Load camera config plugins
-      /*auto camFactory = plgn::Factory<draw::CameraConfigBase>::instance();
-      if(drawers["Camera"])
-      {
-        const auto& camConfig = drawers["Camera"];
-        for(auto plugin = camConfig.begin(); plugin != cam
-      }
+      ::loadPlugins(drawers, "Camera", fCameraConfigs);
 
       //Load external plugins
-      auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
+      /*auto& extFactory = plgn::Factory<draw::ExternalDrawer>::instance();
       if(drawers["External"])
       {
         for(YAML::const_iterator plugin = drawers["External"].begin(); plugin != drawers["External"].end(); ++plugin)
@@ -163,6 +158,7 @@ namespace mygl
     const auto& evt = fSource->Event();
 
     for(const auto& drawer: fEventDrawers) drawer->Draw(evt, fServices);
+    for(const auto& config: fCameraConfigs) config->MakeCameras(evt, fServices);
 
     /*fExternalFuture = std::async(std::launch::async, [this, &evt, &id]()
                                                      {
@@ -232,12 +228,16 @@ namespace mygl
         mygl::VisID id(0, 0, 0);
         if(fHasNewGeom)
         {
-          for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id); //TODO: I don't always want to call UpdateScene for 
+          for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id);
           fHasNewGeom = false;
         }
-                                                                   //      the geometry when the event drawers are ready.
-        //TODO: UpdateScene for external drawers, event drawers, and camera config as well.
         for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
+        
+        std::map<std::string, std::unique_ptr<mygl::Camera>> cameras;
+        for(const auto& config: fCameraConfigs) config->AppendCameras(cameras);
+        fViewer.LoadCameras(std::move(cameras));
+
+        //TODO: UpdateScene() for ExternalDrawers as well
 
         fIsWaiting = false;
       }

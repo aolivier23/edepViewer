@@ -25,4 +25,4 @@ install( FILES Services.cpp Controller.cpp ForceDependencyOnLibraries.h DESTINAT
 
 add_subdirectory(geometry)
 add_subdirectory(event)
-#add_subdirectory(camera)
+add_subdirectory(camera)

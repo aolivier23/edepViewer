@@ -3,7 +3,7 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
 //plugin includes
-#include "plugins/drawing/VertexCamera.h"
+#include "VertexCamera.h"
 #include "plugins/Factory.cpp"
 
 //gl includes
@@ -27,7 +27,7 @@ namespace draw
     //TODO: Configuration?    
   }
 
-  std::map<std::string, std::unique_ptr<Camera>> VertexCamera::doMakeCameras(const TG4Event& data, Services& services)
+  VertexCamera::map_t VertexCamera::doMakeCameras(const TG4Event& data, Services& services)
   {
     TLorentzVector avgPos;
     for(const auto& vert: data.Primaries)
@@ -43,7 +43,10 @@ namespace draw
     const glm::vec3 dir(avgPos.X() - pos.x, avgPos.Y() - pos.y, avgPos.Z() - pos.z);
 
     //Center the default camera on average position of interaction vertices in each event
-    return {{"Interaction", std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(pos, glm::normalize(dir), glm::vec3(0.0, 1.0, 0.0), 10000., 100.))}};
+    map_t retVal;
+    retVal.emplace("Interaction", 
+                   std::unique_ptr<mygl::PlaneCam>(new mygl::PlaneCam(pos, glm::normalize(dir), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)));
+    return retVal;
   }
 
   REGISTER_PLUGIN(VertexCamera, CameraConfig);

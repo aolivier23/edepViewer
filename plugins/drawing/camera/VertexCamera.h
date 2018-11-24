@@ -27,7 +27,8 @@ namespace draw
       virtual ~VertexCamera() = default;
 
     protected:
-      virtual std::map<std::string, std::unique_ptr<Camera>> doMakeCameras(const TG4Event& evt, Services& services) = 0;
+      using CameraConfig::map_t;
+      virtual map_t doMakeCameras(const TG4Event& evt, Services& services) override;
   };
 }
 

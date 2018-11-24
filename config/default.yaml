@@ -4,12 +4,13 @@ Drawers:
     DefaultGeo:
       MaxDepth: 3
   Event:
-    VertexCamera:
     LinearTraj:
     EDepDEdx:
       dEdxScale:
         min: 0.
         max: 8.
+  Camera:
+    VertexCamera:
 Services:
   Geo :
     fiducial: "volWorld"

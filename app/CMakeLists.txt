@@ -21,7 +21,7 @@ install( TARGETS Source DESTINATION lib )
 
 add_library( EvdWindow SHARED EvdWindow.cpp )
 target_link_libraries( EvdWindow PUBLIC ${ROOT_LIBRARIES} ${OPENGL_LIBRARIES} ${EDepSimIO} yaml-cpp GUI Geometry 
-                       Source Node ${EXTERNAL_LIBS} Viewer EventDrawers GeoDrawers ) #external)
+                       Source Node ${EXTERNAL_LIBS} Viewer EventDrawers GeoDrawers CameraConfig ) #external)
 install( TARGETS EvdWindow DESTINATION lib )
 
 add_library( CmdLine SHARED CmdLine.cpp )

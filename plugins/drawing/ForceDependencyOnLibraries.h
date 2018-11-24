@@ -5,17 +5,18 @@
 #ifndef FORCEDEPENDENCYONLIBRARIES_H
 #define FORCEDEPENDENCYONLIBRARIES_H
 
-#include "plugins/drawing/geometry/GeoController.cpp"
 #include "plugins/drawing/geometry/DefaultGeo.h"
 
-#include "plugins/drawing/event/EventController.cpp"
 #include "plugins/drawing/event/LinearTraj.h"
+
+#include "plugins/drawing/camera/VertexCamera.h"
 
 namespace
 {
   YAML::Node node;
   static draw::DefaultGeo dummyGeo(node);
   static draw::LinearTraj traj(node);
+  static draw::VertexCamera config(node);
 }
 
 #endif //FORCEDEPENDENCYONLIBRARIES_H
