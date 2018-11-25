@@ -1,7 +1,3 @@
-#Include imgui
-include_directories( "${IMGUI_DIR}" )
-link_directories( "${IMGUI_DIR}" )
-
 #Make sure GLFW and friends can be found
 link_directories( /usr/local/lib )
 

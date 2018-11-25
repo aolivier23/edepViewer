@@ -2,9 +2,6 @@
 //Brief: A SceneController collects the resources to draw a group of related objects using opengl.   
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//imgui includes
-#include "imgui.h"
-
 //gl includes
 #include "SceneController.h"
 #include "gl/metadata/Column.cpp"
@@ -26,7 +23,7 @@ namespace ctrl
   SceneController::SceneController(const std::string& fragSrc, const std::string& vertSrc, 
                                    std::shared_ptr<ColumnModel>& cols, 
                                    std::unique_ptr<mygl::SceneConfig>&& config): 
-                                                      fCutBar(cols->size()), fBuffer(fCutBar.fInput), fCols(cols),
+                                                      fCutBar(cols->size()), fCols(cols),
                                                       fConfig(std::move(config)), fShader(fragSrc, vertSrc),
                                                       fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc)
   {
@@ -34,7 +31,7 @@ namespace ctrl
 
   SceneController::SceneController(const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                std::shared_ptr<ColumnModel>& cols, std::unique_ptr<mygl::SceneConfig>&& config): fCutBar(cols->size()), 
-               fBuffer(fCutBar.fInput), fCols(cols), fConfig(std::move(config)),
+               fCols(cols), fConfig(std::move(config)),
                fShader(fragSrc, vertSrc, geomSrc), fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc)
   {
   }
@@ -53,68 +50,8 @@ namespace ctrl
   //Call this before Render() to get updates from user interaction with list tree.  
   void SceneController::RenderGUI()
   {
-    //Cut bar
-    if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
-    //TODO: Help text about filter syntax
-    {
-      fCutBar.fInput = fBuffer;
+    fCutBar.Render(fCurrentModel->fTopLevelNodes);
 
-      //Turn off drawing for 3D objects whose metdata don't pass cut
-      try
-      {
-        //Don't cut on top-level nodes because they're understood to be placeholders that aren't associated with Drawables anyway.  
-        //TODO: The above comment seems to violate the idea of a tree model that I want users to work with.  Consider revising 
-        //      the idea of "placeholder nodes".   
-        for(auto& top: fCurrentModel->fTopLevelNodes) //TODO: Checkbox to cut on top-level nodes?
-                                                      //TODO: Option for recursively applying cuts to children?
-        {
-          //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
-          //visibility anymore to speed up cut bar processing.  
-          for(auto& child: top.children)
-          {
-            child.walkIf([this](auto& node)
-                         {
-                           //if(!node.fVisible) return false;
-                           return (node.fVisible = fCutBar.do_filter(node.row));
-                         });
-          }
-        }
-      }
-      catch(const util::GenException& e)
-      {
-        std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
-      }
-    }
-
-    if (ImGui::IsItemHovered())
-    {
-      ImGui::BeginTooltip();
-      ImGui::Text("Apply cuts based on metadata associated\n"
-                  "with each item in this list tree.");
-      ImGui::BulletText("1 row <=> 1 drawn object");
-      ImGui::BulletText("Refer to metadata rows with @<row number>.\n"
-                        "So, @0 refers to the names of objects in\n"
-                        "the Grids scene.");
-      ImGui::BulletText("Comparison operators < and > are allowed for\n"
-                        "numbers.  So, if the second row from the left\n"
-                        "of a scene is a number representing Energy,\n"
-                        "@1 < 100 would stop drawing all rows with less\n"
-                        "than 100 units of Energy.");
-      ImGui::BulletText("Only == and != are supported for strings.");
-      ImGui::BulletText("Please enclose sub-expressions in ().  You can\n"
-                        "combine subexpressions with && (and) and || (or),\n"
-                        "and you can even compare string comparisons with\n"
-                        "number comparisons like (@2 < 100) && (@1 == neutron)");
-      ImGui::BulletText("The expression compiler tries to automatically\n"
-                        "determine whether the LHS and RHS of each\n"
-                        "sub-expression are strings or numbers.  If\n"
-                        "you try to compare a string to a number, the\n"
-                        "cut bar will stop processing rows wherever it\n"
-                        "first encountered a problem and print an error\n"
-                        "message to STDOUT.");
-      ImGui::EndTooltip();
-    }
-    
     //Tree column labels
     //Calculate the total length of text I will want to display
     float width = 5.*ImGui::GetTreeNodeToLabelSpacing(); //Make space for 5 tree node opens

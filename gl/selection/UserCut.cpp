@@ -5,17 +5,15 @@
 
 //gl includes
 #include "UserCut.h"
-#include "util/GenException.h"
 #include "gl/metadata/Row.h"
 
 //c++ includes
 #include <string>
-#include <iostream>
 #include <regex>
 
 namespace mygl
 {
-  UserCut::UserCut(const size_t nCols): fInput({'t', 'r', 'u', 'e'}), fNCols(nCols)
+  UserCut::UserCut(const size_t nCols): fNCols(nCols), fInput({'t', 'r', 'u', 'e'}), fBuffer(fInput)
   {   
   }
 

@@ -65,6 +65,10 @@ install(FILES ${GLAD_HEADERS} DESTINATION include)
 
 add_subdirectory(imgui)
 
+#Include imgui
+include_directories( "${IMGUI_DIR}" )
+link_directories( "${IMGUI_DIR}" )
+
 #Stuff for Opengl
 find_package( OpenGL REQUIRED )
 

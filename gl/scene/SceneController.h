@@ -128,7 +128,6 @@ namespace ctrl
       //Data for GUI operations
       std::vector<mygl::VisID> fSelectPath; //The path to the currently-selected Node
       mygl::UserCut fCutBar; //Allows the user to perform cuts on visible data
-      std::array<char, 256> fBuffer; //Cut bar buffer
 
       //Data for working with current ColumnModel
       std::shared_ptr<ColumnModel> fCols; //Columns displayed by this Scene

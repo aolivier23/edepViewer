@@ -25,9 +25,17 @@
 //       first && second || third: True if first and second are true OR third is true
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
+//imgui includes
+#include "imgui.h"
+
+//util includes
+#include "util/GenException.h"
+
 //c++ includes
 #include <string>
 #include <array>
+#include <list>
+#include <iostream>
 
 #ifndef MYGL_USERCUT_H
 #define MYGL_USERCUT_H
@@ -45,17 +53,89 @@ namespace mygl
       UserCut(const size_t nCols);
       virtual ~UserCut() = default;
 
+      //Render this cut bar and apply its result
+      //to the tree that starts at this list of 
+      //root NODEs.  
+      template <class NODE> //NODE shall have members fVisible and row 
+      void Render(std::list<NODE>& root)
+      {
+        //Cut bar
+        if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
+        {
+          fInput = fBuffer; //TODO: Do I need to do this copy now that everything is local to UserCut?
+                                                                                                                                         
+          //Turn off drawing for 3D objects whose metdata don't pass cut
+          try
+          {
+            //Don't cut on top-level nodes because they're understood to be placeholders that aren't associated with Drawables anyway.  
+            //TODO: The above comment seems to violate the idea of a tree model that I want users to work with.  Consider revising 
+            //      the idea of "placeholder nodes".   
+            for(auto& top: root) //TODO: Checkbox to cut on top-level nodes?
+                                 //TODO: Option for recursively applying cuts to children?
+            {
+              //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
+              //visibility anymore to speed up cut bar processing.  
+              for(auto& child: top.children)
+              {
+                child.walkIf([this](auto& node)
+                             {
+                               //if(!node.fVisible) return false;
+                               return (node.fVisible = this->do_filter(node.row));
+                             });
+              }
+            }
+          }
+          catch(const util::GenException& e)
+          {
+            std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
+          }
+        }
+                                                                                                                                         
+        if(ImGui::IsItemHovered())
+        {
+          ImGui::BeginTooltip();
+          ImGui::Text("Apply cuts based on metadata associated\n"
+                      "with each item in this list tree.");
+          ImGui::BulletText("1 row <=> 1 drawn object");
+          ImGui::BulletText("Refer to metadata rows with @<row number>.\n"
+                            "So, @0 refers to the names of objects in\n"
+                            "the Grids scene.");
+          ImGui::BulletText("Comparison operators < and > are allowed for\n"
+                            "numbers.  So, if the second row from the left\n"
+                            "of a scene is a number representing Energy,\n"
+                            "@1 < 100 would stop drawing all rows with less\n"
+                            "than 100 units of Energy.");
+          ImGui::BulletText("Only == and != are supported for strings.");
+          ImGui::BulletText("Please enclose sub-expressions in ().  You can\n"
+                        "combine subexpressions with && (and) and || (or),\n"
+                        "and you can even compare string comparisons with\n"
+                        "number comparisons like (@2 < 100) && (@1 == neutron)");
+          ImGui::BulletText("The expression compiler tries to automatically\n"
+                            "determine whether the LHS and RHS of each\n"
+                            "sub-expression are strings or numbers.  If\n"
+                            "you try to compare a string to a number, the\n"
+                            "cut bar will stop processing rows wherever it\n"
+                            "first encountered a problem and print an error\n"
+                            "message to STDOUT.");
+          ImGui::EndTooltip();
+        }
+      }
+
+    protected:
       bool do_filter(const ctrl::Row& row);
 
-      std::array<char, 256> fInput; //User-supplied text to cut based on
-    
-    protected:
+      //Functions that implement cut
       bool ev(std::string expr);
       std::string subexpr(std::string expr);
       std::string strip_spaces(std::string expr);
 
       //Data accumulated by UserCut
       size_t fNCols; //Number of columns to process
+
+      //GUI data
+      static constexpr int fBufferDepth = 256;
+      std::array<char, fBufferDepth> fInput; //User-supplied text to cut based on
+      std::array<char, fBufferDepth> fBuffer; //Cut bar buffer
   };
 }
 
