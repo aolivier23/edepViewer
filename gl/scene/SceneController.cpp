@@ -53,6 +53,38 @@ namespace ctrl
   //Call this before Render() to get updates from user interaction with list tree.  
   void SceneController::RenderGUI()
   {
+    //Help text about cut bar
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::Text("Apply cuts based on metadata associated\n"
+                    "with each item in this list tree.");
+        ImGui::BulletText("1 row <=> 1 drawn object");
+        ImGui::BulletText("Refer to metadata rows with @<row number>.\n"
+                          "So, @0 refers to the names of objects in\n"
+                          "the Grids scene.");
+        ImGui::BulletText("Comparison operators < and > are allowed for\n"
+                          "numbers.  So, if the second row from the left\n"
+                          "of a scene is a number representing Energy,\n"
+                          "@1 < 100 would stop drawing all rows with less\n"
+                          "than 100 units of Energy.");
+        ImGui::BulletText("Only == and != are supported for strings.");
+        ImGui::BulletText("Please enclose sub-expressions in ().  You can\n"
+                          "combine subexpressions with && (and) and || (or),\n"
+                          "and you can even compare string comparisons with\n"
+                          "number comparisons like (@2 < 100) && (@1 == neutron)");
+        ImGui::BulletText("The expression compiler tries to automatically\n"
+                          "determine whether the LHS and RHS of each\n"
+                          "sub-expression are strings or numbers.  If\n"
+                          "you try to compare a string to a number, the\n"
+                          "cut bar will stop processing rows wherever it\n"
+                          "first encountered a problem and print an error\n"
+                          "message to STDOUT.");
+        ImGui::EndTooltip();
+    }
+    ImGui::SameLine();
+
     //Cut bar
     if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
     //TODO: Help text about filter syntax
@@ -85,7 +117,7 @@ namespace ctrl
         std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
       }
     }
-
+    
     //Tree column labels
     //Calculate the total length of text I will want to display
     float width = 5.*ImGui::GetTreeNodeToLabelSpacing(); //Make space for 5 tree node opens
