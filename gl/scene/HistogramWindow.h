@@ -134,11 +134,9 @@ namespace gui
       {
         bool open = true;
         ImGui::Begin(name.c_str(), &open);
-        if(!open) return false;
-
-        doDrawHistogram(std::move(model), name);
+        if(open) doDrawHistogram(std::move(model), name);
         ImGui::End();
-        return true;
+        return open;
       }
 
       //Actually draw the histogram here.

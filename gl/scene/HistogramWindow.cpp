@@ -24,28 +24,20 @@ namespace gui
     const auto unitsPerBin = model.unitsPerBin;
 
     //Render histogram the hard way
-    const auto label = name.c_str();
     ImVec2 graph_size(600, 400);
     const auto mostEntries = std::max_element(bins.begin(), bins.end());
-    const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:*mostEntries;
-    const int values_count = bins.size();
+    const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:*mostEntries; //y scale limits
+    const int values_count = bins.size(); //Numbers of bins for x axis
 
     auto& g = *ImGui::GetCurrentContext();
     const auto& style = g.Style;
-
-    const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
-    if (graph_size.x == 0.0f)
-        graph_size.x = ImGui::CalcItemWidth();
-    if (graph_size.y == 0.0f)
-        graph_size.y = label_size.y + (style.FramePadding.y * 2);
 
     const ImVec2 cursor(ImGui::GetCursorPos().x + ImGui::GetWindowPos().x, ImGui::GetCursorPos().y + ImGui::GetWindowPos().y);
     const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
     const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
                           ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
-    const ImRect total_bb(frame_bb.Min, frame_bb.Max);
-    ImGui::ItemSize(total_bb, style.FramePadding.y);
-    if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
+    ImGui::ItemSize(frame_bb, style.FramePadding.y);
+    if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
     {
         std::cout << "Returning early for weird ImGui reason that I don't understand.\n";
         return; //TODO: What to do here?

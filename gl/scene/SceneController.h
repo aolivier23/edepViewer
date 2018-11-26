@@ -125,9 +125,6 @@ namespace ctrl
       //Helper functions for drawing tree
       bool DrawNodeData(node_t& node);
 
-      //Histogram a column
-      void DrawHistogram(const size_t col);
-
     private: 
       //Data for GUI operations
       std::vector<mygl::VisID> fSelectPath; //The path to the currently-selected Node
