@@ -13,7 +13,7 @@
 
 //c++ includes
 #include <list>
-#include <set>
+#include <map>
 #include <vector>
 #include <cstdlib>
 #include <string>
@@ -65,16 +65,16 @@ namespace gui
      
     void operator()(const std::string& name)
     {
-      fBins.insert(name);
+      ++fBins[name];
     }
 
-    std::multiset<std::string> BinData() const
+    std::map<std::string, size_t> BinData() const
     {
       return fBins;
     }
 
     private:
-      std::multiset<std::string> fBins;
+      std::map<std::string, size_t> fBins;
   };
 
   class HistogramWindow
