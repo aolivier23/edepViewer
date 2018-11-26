@@ -48,11 +48,11 @@ namespace gui
     }
 
     COMPARABLE unitsPerBin;
+    COMPARABLE min;
+    COMPARABLE max;
 
     private:
       std::vector<float> values;
-      COMPARABLE min;
-      COMPARABLE max;
   };
 
   //Each unique string gets its own bin.
@@ -90,37 +90,65 @@ namespace gui
         try
         {
           //Get data to histogram
-          HistogramModel<float> model;
+          HistogramModel<float> model; 
+          //TODO: Those if() statements seem to significantly hurt performance of the application when I'm drawing a histogram.
+          //      Since I can't have interchangeable lambdas here, I should probably write some 
+          //      functor that does the model-filling and write versions with and without taking log.
+          auto fillFloat = [&model, &col, this](const auto& node)
+                           {
+                             if(!node.fVisible) return false; //Only plot visible nodes
+                             //TODO: Plot all nodes in another color
+
+                             const auto value = std::stof(node.row[col]);
+                             model(this->fLogX?log(value):value); //TODO: Handle negative values gracefully when in log mode
+                             return true;
+                           };
+
           for(const auto& top: nodes)
           {
-            top.walkWhileTrue([&model, &col](const auto& node)
-                              {
-                                if(!node.fVisible) return false; //Only plot visible nodes
-                                //TODO: Plot all nodes in another color
-                                
-                                model(std::stof(node.row[col]));              
-                                return true;
-                              });
+            if(fIncludeTopNodes)
+            {
+              top.walkWhileTrue(fillFloat);
+            }
+            else
+            {
+              for(const auto& child: top.children)
+              {
+                child.walkWhileTrue(fillFloat);
+              }
+            }
           }
 
           return DrawHistogram(std::move(model), name);
         }
         catch(const std::invalid_argument& e)
         {
-          std::cerr << "When trying to histogram " << name << ", got a value that is not convertible to float:\n"
-                    << e.what() << "\nTrying to plot strings instead.\n";
+          /*std::cerr << "When trying to histogram " << name << ", got a value that is not convertible to float:\n"
+                    << e.what() << "\nTrying to plot strings instead.\n";*/
 
           HistogramModel<std::string> model;
+          const auto fillString = [&model, &col](const auto& node)
+                                  {
+                                    if(!node.fVisible) return false; //Only plot visible nodes
+                                    //TODO: Plot all nodes in another color
+
+                                    model(node.row[col]);
+                                    return true;
+                                  };
+
           for(const auto& top: nodes)
           {
-            top.walkWhileTrue([&model, &col](const auto& node)
-                              {
-                                if(!node.fVisible) return false; //Only plot visible nodes
-                                //TODO: Plot all nodes in another color
-
-                                model(node.row[col]);
-                                return true;
-                              });
+            if(fIncludeTopNodes)
+            {
+              top.walkWhileTrue(fillString);
+            }
+            else
+            {
+              for(const auto& child: top.children)
+              {
+                child.walkWhileTrue(fillString);
+              }
+            }
           }
 
           return DrawHistogram(std::move(model), name);
@@ -135,6 +163,15 @@ namespace gui
         bool open = true;
         ImGui::Begin(name.c_str(), &open);
         if(open) doDrawHistogram(std::move(model), name);
+
+        //Drawing histogramming control GUI
+        ImGui::NewLine(); //TODO: Understand why axis labels aren't recognized as a line
+        ImGui::Checkbox("Include Top-level Nodes in Plots", &fIncludeTopNodes);
+        ImGui::SameLine();
+        ImGui::Checkbox("Log x axis", &fLogX);
+        ImGui::SameLine();
+        ImGui::Checkbox("Log y axis", &fLogY);
+
         ImGui::End();
         return open;
       }
@@ -144,6 +181,9 @@ namespace gui
       void doDrawHistogram(HistogramModel<std::string>&& model, const std::string& name);
 
       //Data for histogram options
+      bool fIncludeTopNodes; //Should top-level nodes be included in histograms?
+      bool fLogX; //Should the x axis have a log scale?
+      bool fLogY; //Should the y axis have a log scale?
   };
 }
 

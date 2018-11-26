@@ -11,19 +11,25 @@
 
 //c++ includes
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 namespace gui
 {
-  HistogramWindow::HistogramWindow() {}
+  HistogramWindow::HistogramWindow(): fIncludeTopNodes(false), fLogX(false), fLogY(false) {}
 
   void HistogramWindow::doDrawHistogram(HistogramModel<float>&& model, const std::string& name)
   {
     //Prepare data in bins that Dear ImGui can deal with
     constexpr auto nBins = 100;
-    const auto bins = model.BinData<nBins>();
+    auto bins = model.BinData<nBins>();
     const auto unitsPerBin = model.unitsPerBin;
+    const bool useScientific = (model.min < 1) || (model.max > 1e4);
+
+    if(fLogY) for(auto& bin: bins) bin = std::log(bin);
 
     //Render histogram the hard way
+    constexpr auto nTicks = 10; 
     ImVec2 graph_size(600, 400);
     const auto mostEntries = std::max_element(bins.begin(), bins.end());
     const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:*mostEntries; //y scale limits
@@ -36,8 +42,9 @@ namespace gui
     const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
     const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
                           ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
-    ImGui::ItemSize(frame_bb, style.FramePadding.y);
-    if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
+    const ImRect total_bb(frame_bb.Min, ImVec2(frame_bb.Max.x, frame_bb.Max.y + ImGui::GetTextLineHeight()));
+    ImGui::ItemSize(total_bb, style.FramePadding.y);
+    if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
     {
         std::cout << "Returning early for weird ImGui reason that I don't understand.\n";
         return; //TODO: What to do here?
@@ -90,6 +97,18 @@ namespace gui
                 pos1.x -= 1.0f;
             ImGui::GetWindowDrawList()->AddRectFilled(pos0, pos1, v_hovered == v1_idx ? col_hovered : col_base);
 
+            if(n % (nBins/nTicks) == 0)
+            {
+              //Draw x axis label
+              std::stringstream ss;
+              if(useScientific) ss << std::setprecision(2) << (v1_idx*unitsPerBin);
+              else ss << std::setprecision(0) << std::fixed << (v1_idx*unitsPerBin);
+              const auto label = ss.str();
+              const auto labelSize = ImGui::CalcTextSize(label.c_str());
+              ImGui::RenderText(ImVec2((pos0.x + pos1.x)/2.f - labelSize.x/2.f,
+                                       frame_bb.Max.y + ImGui::GetTextLineHeight()), label.c_str());
+            }
+
             t0 = t1;
             tp0 = tp1;
         }
@@ -102,7 +121,10 @@ namespace gui
 
   void HistogramWindow::doDrawHistogram(HistogramModel<std::string>&& model, const std::string& name)
   {
-    const auto bins = model.BinData();
+    auto bins = model.BinData();
+
+    if(fLogY) for(auto& bin: bins) bin.second = std::log(bin.second);
+    //Nothing to do for log x-axis with strings
 
     //Render histogram the hard way
     ImVec2 graph_size(600, 400);
@@ -119,8 +141,9 @@ namespace gui
     const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
     const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
                           ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
-    ImGui::ItemSize(frame_bb, style.FramePadding.y);
-    if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
+    const ImRect total_bb(frame_bb.Min, ImVec2(frame_bb.Max.x, frame_bb.Max.y + ImGui::GetTextLineHeight()));
+    ImGui::ItemSize(total_bb, style.FramePadding.y);
+    if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
     {
         std::cout << "Returning early for weird ImGui reason that I don't understand.\n";
         return; //TODO: What to do here?
@@ -165,7 +188,8 @@ namespace gui
             const float t1 = t0 + t_step;
             const int v1_idx = (int)(t0 * item_count + 0.5f);
             IM_ASSERT(v1_idx >= 0 && v1_idx < values_count);
-            const float v1 = std::next(currentBin)->second;
+            const auto binForNextValue = (std::next(currentBin) == bins.end())?bins.begin():std::next(currentBin); 
+            const float v1 = binForNextValue->second;
             const ImVec2 tp1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) * inv_scale) );
     
             // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower level to save a bit of CPU.
@@ -174,6 +198,11 @@ namespace gui
             if (pos1.x >= pos0.x + 2.0f)
                 pos1.x -= 1.0f;
             ImGui::GetWindowDrawList()->AddRectFilled(pos0, pos1, v_hovered == v1_idx ? col_hovered : col_base);
+
+            //Draw x axis label
+            const auto labelSize = ImGui::CalcTextSize(currentBin->first.c_str());
+            ImGui::RenderText(ImVec2((pos0.x + pos1.x)/2.f - labelSize.x/2.f, 
+                                     frame_bb.Max.y + ImGui::GetTextLineHeight()), currentBin->first.c_str());
 
             t0 = t1;
             tp0 = tp1;
