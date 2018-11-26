@@ -23,15 +23,15 @@ namespace ctrl
   SceneController::SceneController(const std::string& fragSrc, const std::string& vertSrc, 
                                    std::shared_ptr<ColumnModel>& cols, 
                                    std::unique_ptr<mygl::SceneConfig>&& config): 
-                                                      fCutBar(cols->size()), fCols(cols),
-                                                      fConfig(std::move(config)), fShader(fragSrc, vertSrc),
+                                                      fCutBar(cols->size()), fCols(cols), fSelectedColumn(std::numeric_limits<size_t>::max()),
+                                                      fHistWindow(), fConfig(std::move(config)), fShader(fragSrc, vertSrc),
                                                       fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc)
   {
   }
 
   SceneController::SceneController(const std::string& fragSrc, const std::string& vertSrc, const std::string& geomSrc, 
                std::shared_ptr<ColumnModel>& cols, std::unique_ptr<mygl::SceneConfig>&& config): fCutBar(cols->size()), 
-               fCols(cols), fConfig(std::move(config)),
+               fCols(cols), fSelectedColumn(std::numeric_limits<size_t>::max()), fHistWindow(), fConfig(std::move(config)),
                fShader(fragSrc, vertSrc, geomSrc), fSelectionShader(INSTALL_GLSL_DIR "/selection.frag", vertSrc, geomSrc)
   {
   }
@@ -45,6 +45,51 @@ namespace ctrl
     //Set VisIDs for the entire model in a predictable pattern. 
     for(auto& top: fCurrentModel->fTopLevelNodes) top.walk([this, &nextID](auto& child) { child.fVisID = nextID++; });
     fVAO.Load(fCurrentModel->fVAO);
+  }
+
+  void SceneController::DrawHistogram(const size_t col)
+  {
+    //TODO: ImGui::PlotEx() doesn't look too bad.  Try copying it to make histograms the way I want
+    //TODO: Allow user to make graphical cuts on histogram.  Then, apply those graphical cuts to 
+    //      the current event's model. 
+    std::vector<float> values;
+    float min = std::numeric_limits<float>::max(), max = std::numeric_limits<float>::min();                                                        
+    try
+    {
+      //Get data to histogram
+      for(const auto& top: fCurrentModel->fTopLevelNodes)
+      {
+        top.walkWhileTrue([&values, &min, &max, &col](const auto& node)
+                          {
+                            if(!node.fVisible) return false; //Only plot visible nodes
+                            //TODO: Plot all nodes in another color
+                            
+                            values.push_back(std::stof(node.row[col]));              
+                            if(values.back() < min) min = values.back();
+                            if(values.back() > max) max = values.back();                                           
+                            return true;
+                          });
+      }
+    }
+    catch(const std::invalid_argument& e)
+    {
+      std::cerr << "Got value that is not convertible to a number when plotting histogram for column " << fCols->Name(col)
+                << ".  Ignoring this column.\n";
+    }
+    
+    //Bin data
+    constexpr auto nBins = 100;
+    const auto binSize = (max-min)/nBins;
+    std::array<float, nBins> bins = {0};
+    for(const auto& value: values) ++bins[(value-min)/binSize];
+                                                                                                                                      
+    //Draw window with histogram
+    bool open = true;
+    ImGui::Begin(fCols->Name(col).c_str(), &open);
+    if(!open) fSelectedColumn = std::numeric_limits<size_t>::max();
+                                                                                                                            
+    ImGui::PlotHistogram(fCols->Name(col).c_str(), bins.data(), bins.size(), 0, "Overlay Test", 0.0f, FLT_MAX, ImVec2(600, 400));
+    ImGui::End();
   }
 
   //Call this before Render() to get updates from user interaction with list tree.  
@@ -65,9 +110,17 @@ namespace ctrl
     ImGui::Columns(fCols->size()+1);
     ImGui::Text("Visible?");
     ImGui::NextColumn();
+
+    bool selected = false;
     for(size_t col = 0; col < fCols->size(); ++col) 
     {
-      ImGui::Text(fCols->Name(col).c_str());
+      selected = (col == fSelectedColumn);
+      ImGui::Selectable(fCols->Name(col).c_str(), &selected);
+      if(selected)
+      {
+        fSelectedColumn = col;
+        fHistWindow.Render(fCurrentModel->fTopLevelNodes, col, fCols->Name(col));
+      }
       ImGui::NextColumn();
     }
     ImGui::Separator();

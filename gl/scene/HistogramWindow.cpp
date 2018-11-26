@@ -1,0 +1,115 @@
+//File: HistogramWindow.cpp
+//Brief: A HistogramWindow histograms the values in a column of a TreeNode<> hierarchy
+//       using Dear imgui.
+//Author: Andrew Olivier aolivier@ur.rochester.edu
+
+//local includes
+#include "HistogramWindow.h"
+
+//imgui includes
+#include "imgui_internal.h"
+
+//c++ includes
+#include <algorithm>
+
+namespace gui
+{
+  HistogramWindow::HistogramWindow() {}
+
+  void HistogramWindow::doDrawHistogram(HistogramModel<float>&& model, const std::string& name)
+  {
+    //Prepare data in bins that Dear ImGui can deal with
+    constexpr auto nBins = 100;
+    const auto bins = model.BinData<nBins>();
+    const auto unitsPerBin = model.unitsPerBin;
+
+    //Render histogram the hard way
+    const auto label = name.c_str();
+    ImVec2 graph_size(600, 400);
+    const auto mostEntries = std::max_element(bins.begin(), bins.end());
+    const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:*mostEntries;
+    const int values_count = bins.size();
+
+    auto& g = *ImGui::GetCurrentContext();
+    const auto& style = g.Style;
+
+    const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+    if (graph_size.x == 0.0f)
+        graph_size.x = ImGui::CalcItemWidth();
+    if (graph_size.y == 0.0f)
+        graph_size.y = label_size.y + (style.FramePadding.y * 2);
+
+    const ImVec2 cursor(ImGui::GetCursorPos().x + ImGui::GetWindowPos().x, ImGui::GetCursorPos().y + ImGui::GetWindowPos().y);
+    const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
+    const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
+                          ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
+    const ImRect total_bb(frame_bb.Min, frame_bb.Max);
+    ImGui::ItemSize(total_bb, style.FramePadding.y);
+    if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
+    {
+        std::cout << "Returning early for weird ImGui reason that I don't understand.\n";
+        return; //TODO: What to do here?
+    }
+    const bool hovered = ImGui::ItemHoverable(inner_bb, 0);
+
+    ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+
+    if (values_count > 0)
+    {
+        int res_w = ImMin((int)graph_size.x, values_count);
+        int item_count = values_count;
+
+        // Tooltip on hover
+        int v_hovered = -1;
+        if (hovered)
+        {
+            const float t = ImClamp((g.IO.MousePos.x - inner_bb.Min.x) / (inner_bb.Max.x - inner_bb.Min.x), 0.0f, 0.9999f);
+            const int v_idx = (int)(t * item_count);
+            IM_ASSERT(v_idx >= 0 && v_idx < values_count);
+    
+            const float v0 = bins[(v_idx) % values_count];
+            ImGui::SetTooltip("%d: %8.4g", (int)(v_idx*unitsPerBin), v0); //TODO: Change tooltip to bin lower limit
+            v_hovered = v_idx;
+        }
+    
+        const float t_step = 1.0f / (float)res_w;
+        const float inv_scale = (scale_min == scale_max) ? 0.0f : (1.0f / (scale_max - scale_min));
+    
+        float v0 = bins[0];
+        float t0 = 0.0f;
+        ImVec2 tp0 = ImVec2( t0, 1.0f - ImSaturate((v0 - scale_min) * inv_scale) );                       // Point in the normalized space of our target rectangle
+        float histogram_zero_line_t = (scale_min * scale_max < 0.0f) ? (-scale_min * inv_scale) : (scale_min < 0.0f ? 0.0f : 1.0f);   // Where does the zero line stands
+    
+        const ImU32 col_base = ImGui::GetColorU32(ImGuiCol_PlotHistogram);
+        const ImU32 col_hovered = ImGui::GetColorU32(ImGuiCol_PlotHistogramHovered);
+    
+        for (int n = 0; n < res_w; n++)
+        {
+            const float t1 = t0 + t_step;
+            const int v1_idx = (int)(t0 * item_count + 0.5f);
+            IM_ASSERT(v1_idx >= 0 && v1_idx < values_count);
+            const float v1 = bins[(v1_idx + 1)% values_count];
+            const ImVec2 tp1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) * inv_scale) );
+    
+            // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower level to save a bit of CPU.
+            ImVec2 pos0 = ImLerp(inner_bb.Min, inner_bb.Max, tp0);
+            ImVec2 pos1 = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(tp1.x, histogram_zero_line_t));
+            if (pos1.x >= pos0.x + 2.0f)
+                pos1.x -= 1.0f;
+            ImGui::GetWindowDrawList()->AddRectFilled(pos0, pos1, v_hovered == v1_idx ? col_hovered : col_base);
+
+            t0 = t1;
+            tp0 = tp1;
+        }
+    }
+
+    //TODO: Allow user to make graphical cuts on histogram.  Then, apply those graphical cuts to 
+    //      the current event's model.
+    //ImGui::PlotHistogram(name.c_str(), bins.data(), bins.size(), 0, "Overlay Test", 0.0f, FLT_MAX, ImVec2(600, 400));
+  }
+
+  void HistogramWindow::doDrawHistogram(HistogramModel<std::string>&& model, const std::string& name)
+  {
+    ImGui::Text("TODO: implement HistogramWindow::doDrawHistogram(const HistogramModel<std::string>&& model)");
+  }
+}

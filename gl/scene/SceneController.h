@@ -65,6 +65,7 @@
 #include "gl/selection/UserCut.h"
 #include "gl/objects/ShaderProg.h"
 #include "gl/objects/VAO.h"
+#include "gl/scene/HistogramWindow.h"
 
 //glm includes
 #include <glm/glm.hpp>
@@ -124,6 +125,9 @@ namespace ctrl
       //Helper functions for drawing tree
       bool DrawNodeData(node_t& node);
 
+      //Histogram a column
+      void DrawHistogram(const size_t col);
+
     private: 
       //Data for GUI operations
       std::vector<mygl::VisID> fSelectPath; //The path to the currently-selected Node
@@ -131,6 +135,8 @@ namespace ctrl
 
       //Data for working with current ColumnModel
       std::shared_ptr<ColumnModel> fCols; //Columns displayed by this Scene
+      size_t fSelectedColumn; //The column that is currently selected for histogramming if any
+      gui::HistogramWindow fHistWindow; //Histogram window for the currently selected column
 
       //OpenGL rendering data used for all events
       std::unique_ptr<mygl::SceneConfig> fConfig; //User handle to configure openGL just before and after rendering. 
