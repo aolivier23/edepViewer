@@ -34,15 +34,20 @@ namespace gui
     const auto mostEntries = std::max_element(bins.begin(), bins.end());
     const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:*mostEntries; //y scale limits
     const int values_count = bins.size(); //Numbers of bins for x axis
+    constexpr auto tickLength = 8.f;
 
     auto& g = *ImGui::GetCurrentContext();
     const auto& style = g.Style;
 
+    const auto maxLabel = std::to_string(scale_max);
+    const auto longestYLabel = ImGui::CalcTextSize(maxLabel.c_str()).x;
+    const auto xLabelSpace = ImGui::GetTextLineHeight();
     const ImVec2 cursor(ImGui::GetCursorPos().x + ImGui::GetWindowPos().x, ImGui::GetCursorPos().y + ImGui::GetWindowPos().y);
-    const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
+    const ImRect frame_bb(ImVec2(cursor.x + longestYLabel + tickLength, cursor.y - xLabelSpace*2 - tickLength), 
+                          ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
     const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
                           ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
-    const ImRect total_bb(frame_bb.Min, ImVec2(frame_bb.Max.x, frame_bb.Max.y + ImGui::GetTextLineHeight()));
+    const ImRect total_bb(ImVec2(frame_bb.Min.x + longestYLabel, frame_bb.Min.y), ImVec2(frame_bb.Max.x, frame_bb.Max.y - xLabelSpace));
     ImGui::ItemSize(total_bb, style.FramePadding.y);
     if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
     {
@@ -81,6 +86,7 @@ namespace gui
     
         const ImU32 col_base = ImGui::GetColorU32(ImGuiCol_PlotHistogram);
         const ImU32 col_hovered = ImGui::GetColorU32(ImGuiCol_PlotHistogramHovered);
+        const auto axis_color = ImGui::ColorConvertFloat4ToU32(ImVec4(0.f, 0.f, 0.f, 1.f));
     
         for (int n = 0; n < res_w; n++)
         {
@@ -106,11 +112,39 @@ namespace gui
               const auto label = ss.str();
               const auto labelSize = ImGui::CalcTextSize(label.c_str());
               ImGui::RenderText(ImVec2((pos0.x + pos1.x)/2.f - labelSize.x/2.f,
-                                       frame_bb.Max.y + ImGui::GetTextLineHeight()), label.c_str());
+                                       frame_bb.Max.y + ImGui::GetTextLineHeight()/2.f + tickLength), label.c_str());
+              
+              //Draw an x tick mark
+              ImGui::GetWindowDrawList()->AddLine(ImVec2((pos0.x + pos1.x)/2.f, inner_bb.Max.y - tickLength), 
+                                                  ImVec2(ImVec2((pos0.x + pos1.x)/2.f, inner_bb.Max.y + tickLength)),
+                                                  axis_color);
             }
 
             t0 = t1;
             tp0 = tp1;
+        }
+
+        //Draw x axis
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x, inner_bb.Max.y), inner_bb.Max, axis_color); //Axis
+        const auto nameLength = ImGui::CalcTextSize(name.c_str()).x; //Center text
+        ImGui::RenderText(ImVec2((inner_bb.Min.x + inner_bb.Max.x)/2. - nameLength/2.f,
+                                 inner_bb.Max.y + ImGui::GetTextLineHeight()*3.f/2.f + tickLength), name.c_str());//Label
+        
+        //Draw y axis
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x, inner_bb.Max.y), inner_bb.Min, axis_color);
+
+        //Draw y tick marks
+        const float step = (scale_max - scale_min)/nTicks;
+        for(size_t tick = 0; tick < nTicks; ++tick)
+        {
+          const ImVec2 pos = ImVec2( frame_bb.Min.x, 1.0f - ImSaturate((tick*step - scale_min) * inv_scale) );
+          const auto yPos = ImLerp(inner_bb.Min, inner_bb.Max, pos).y;
+
+          ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x - tickLength, yPos), ImVec2(inner_bb.Min.x + tickLength, yPos), axis_color);
+
+          const auto label = std::to_string(tick*step+scale_min);
+          const auto labelSize = ImGui::CalcTextSize(label.c_str());
+          ImGui::RenderText(ImVec2(inner_bb.Min.x - labelSize.x - tickLength, yPos), label.c_str());
         }
     }
 
@@ -133,15 +167,21 @@ namespace gui
                                               { return first.second < second.second; });
     const float scale_min = 0, scale_max = (mostEntries == bins.end())?0:mostEntries->second; //y scale limits
     const int values_count = bins.size(); //Numbers of bins for x axis
+    constexpr auto tickLength = 8.f;
+    const size_t nTicks = bins.size(); //One tick per label
 
     auto& g = *ImGui::GetCurrentContext();
     const auto& style = g.Style;
 
+    const auto maxLabel = std::to_string(scale_max);
+    const auto longestYLabel = ImGui::CalcTextSize(maxLabel.c_str()).x;
+    const auto xLabelSpace = ImGui::GetTextLineHeight();
     const ImVec2 cursor(ImGui::GetCursorPos().x + ImGui::GetWindowPos().x, ImGui::GetCursorPos().y + ImGui::GetWindowPos().y);
-    const ImRect frame_bb(cursor, ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
-    const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y), 
+    const ImRect frame_bb(ImVec2(cursor.x + longestYLabel + tickLength, cursor.y - xLabelSpace*2 - tickLength),
+                          ImVec2(cursor.x + graph_size.x, cursor.y + graph_size.y));
+    const ImRect inner_bb(ImVec2(frame_bb.Min.x + style.FramePadding.x, frame_bb.Min.y + style.FramePadding.y),
                           ImVec2(frame_bb.Max.x - style.FramePadding.x, frame_bb.Max.y - style.FramePadding.y));
-    const ImRect total_bb(frame_bb.Min, ImVec2(frame_bb.Max.x, frame_bb.Max.y + ImGui::GetTextLineHeight()));
+    const ImRect total_bb(ImVec2(frame_bb.Min.x + longestYLabel, frame_bb.Min.y), ImVec2(frame_bb.Max.x, frame_bb.Max.y - xLabelSpace));
     ImGui::ItemSize(total_bb, style.FramePadding.y);
     if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
     {
@@ -181,6 +221,7 @@ namespace gui
     
         const ImU32 col_base = ImGui::GetColorU32(ImGuiCol_PlotHistogram);
         const ImU32 col_hovered = ImGui::GetColorU32(ImGuiCol_PlotHistogramHovered);
+        const auto axis_color = ImGui::ColorConvertFloat4ToU32(ImVec4(0.f, 0.f, 0.f, 1.f));
     
         auto currentBin = bins.begin();
         for (int n = 0; n < res_w; n++)
@@ -202,11 +243,39 @@ namespace gui
             //Draw x axis label
             const auto labelSize = ImGui::CalcTextSize(currentBin->first.c_str());
             ImGui::RenderText(ImVec2((pos0.x + pos1.x)/2.f - labelSize.x/2.f, 
-                                     frame_bb.Max.y + ImGui::GetTextLineHeight()), currentBin->first.c_str());
+                                     inner_bb.Max.y + ImGui::GetTextLineHeight()), currentBin->first.c_str());
+
+            //Draw an x tick mark
+            ImGui::GetWindowDrawList()->AddLine(ImVec2((pos0.x + pos1.x)/2.f, inner_bb.Max.y - tickLength),
+                                                ImVec2(ImVec2((pos0.x + pos1.x)/2.f, inner_bb.Max.y + tickLength)),
+                                                axis_color);
 
             t0 = t1;
             tp0 = tp1;
             ++currentBin; //We should be protected from going past the end of bins by the condition on n
+        }
+
+        //Draw x axis
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x, inner_bb.Max.y), inner_bb.Max, axis_color); //Axis
+        const auto nameLength = ImGui::CalcTextSize(name.c_str()).x; //Center text
+        ImGui::RenderText(ImVec2((inner_bb.Min.x + inner_bb.Max.x)/2. - nameLength/2.f,
+                                 inner_bb.Max.y + ImGui::GetTextLineHeight()*3.f/2.f + tickLength), name.c_str());//Label
+
+        //Draw y axis
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x, inner_bb.Max.y), inner_bb.Min, axis_color);
+
+        //Draw y tick marks
+        const float step = (scale_max - scale_min)/nTicks;
+        for(size_t tick = 0; tick < nTicks; ++tick)
+        {
+          const ImVec2 pos = ImVec2( inner_bb.Min.x, 1.0f - ImSaturate((tick*step - scale_min) * inv_scale) );
+          const auto yPos = ImLerp(inner_bb.Min, inner_bb.Max, pos).y;
+
+          ImGui::GetWindowDrawList()->AddLine(ImVec2(inner_bb.Min.x - tickLength, yPos), ImVec2(inner_bb.Min.x + tickLength, yPos), axis_color);
+
+          const auto label = std::to_string(tick*step+scale_min);
+          const auto labelSize = ImGui::CalcTextSize(label.c_str());
+          ImGui::RenderText(ImVec2(inner_bb.Min.x - labelSize.x - tickLength, yPos), label.c_str());
         }
     }
   }
