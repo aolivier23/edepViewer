@@ -20,7 +20,7 @@
 #include <limits>
 #include <stdexcept>
 #include <iostream>
-#include <array>
+#include <cmath>
 
 namespace gui
 {
@@ -37,21 +37,39 @@ namespace gui
       if(value > max) max = value;
     }
 
-    template <int NBINS>
-    std::array<COMPARABLE, NBINS> BinData()
+    std::map<std::string, float> BinData(const size_t nBins)
     {
-      static_assert(NBINS > 0, "Requested negative number of bins in HistogramModel<>::BinData()");
-      unitsPerBin = max/(NBINS-1);
-      std::array<COMPARABLE, NBINS> bins = {0};
-      for(const auto& value: values) ++bins.at((value < 0)?0:(value/unitsPerBin)); 
-      return bins;
+      assert(nBins > 1);
+      assert(max > min); //This will also fail of values is empty
+      const auto unitsPerBin = (max-min)/(nBins-1);
+
+      //Set up bins based on requested number of bins and min, max
+      std::map<float, float> bins; 
+      for(size_t bin = 0; bin < nBins; ++bin)
+      {
+        bins[bin * unitsPerBin + min] = 0;
+      }
+
+      //Bin values
+      for(const auto& value: values) 
+      {
+        assert(bins.upper_bound(value) != bins.begin());
+        ++(std::prev(bins.upper_bound(value))->second); //Last bin also gets overflows
+      }
+
+      //Stringify bin lower bounds
+      std::map<std::string, float> result;
+      for(const auto& bin: bins)
+      {
+        result[std::to_string(bin.first)] = bin.second;
+      }
+
+      return result;
     }
 
-    COMPARABLE unitsPerBin;
-    COMPARABLE min;
-    COMPARABLE max;
-
     private:
+      COMPARABLE min;
+      COMPARABLE max;
       std::vector<float> values;
   };
 
@@ -68,13 +86,13 @@ namespace gui
       ++fBins[name];
     }
 
-    std::map<std::string, size_t> BinData() const
+    std::map<std::string, float> BinData(const size_t /*nBins*/) const
     {
       return fBins;
     }
 
     private:
-      std::map<std::string, size_t> fBins;
+      std::map<std::string, float> fBins;
   };
 
   class HistogramWindow
@@ -100,7 +118,15 @@ namespace gui
                              //TODO: Plot all nodes in another color
 
                              const auto value = std::stof(node.row[col]);
-                             model(this->fLogX?log(value):value); //TODO: Handle negative values gracefully when in log mode
+                             if(fLogX) 
+                             {
+                               if(value > 0) model(std::log10(value));
+                               else 
+                               {
+                                 std::cerr << "Suppressing value " << value << " that is <= 0 because drawing log(x axis).\n";
+                               }
+                             }
+                             else model(value); //TODO: Handle negative values gracefully when in log mode
                              return true;
                            };
 
@@ -162,7 +188,9 @@ namespace gui
       {
         bool open = true;
         ImGui::Begin(name.c_str(), &open);
-        if(open) doDrawHistogram(std::move(model), name);
+ 
+        constexpr size_t nBins = 100;
+        if(open) doDrawHistogram(model.BinData(nBins), name);
 
         //Drawing histogramming control GUI
         ImGui::NewLine(); //TODO: Understand why axis labels aren't recognized as a line
@@ -177,8 +205,7 @@ namespace gui
       }
 
       //Actually draw the histogram here.
-      void doDrawHistogram(HistogramModel<float>&& model, const std::string& name);
-      void doDrawHistogram(HistogramModel<std::string>&& model, const std::string& name);
+      void doDrawHistogram(std::map<std::string, float>&& bins, const std::string& name);
 
       //Data for histogram options
       bool fIncludeTopNodes; //Should top-level nodes be included in histograms?
