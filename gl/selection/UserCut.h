@@ -63,7 +63,7 @@ namespace mygl
         if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
         {
           fInput = fBuffer; //TODO: Do I need to do this copy now that everything is local to UserCut?
-                                                                                                                                         
+        }                                                                                                                                 
           //Turn off drawing for 3D objects whose metdata don't pass cut
           try
           {
@@ -89,7 +89,7 @@ namespace mygl
           {
             std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
           }
-        }
+        //}
                                                                                                                                          
         if(ImGui::IsItemHovered())
         {
