@@ -63,33 +63,8 @@ namespace mygl
         if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
         {
           fInput = fBuffer; //TODO: Do I need to do this copy now that everything is local to UserCut?
-        }                                                                                                                                 
-          //Turn off drawing for 3D objects whose metdata don't pass cut
-          try
-          {
-            //Don't cut on top-level nodes because they're understood to be placeholders that aren't associated with Drawables anyway.  
-            //TODO: The above comment seems to violate the idea of a tree model that I want users to work with.  Consider revising 
-            //      the idea of "placeholder nodes".   
-            for(auto& top: root) //TODO: Checkbox to cut on top-level nodes?
-                                 //TODO: Option for recursively applying cuts to children?
-            {
-              //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
-              //visibility anymore to speed up cut bar processing.  
-              for(auto& child: top.children)
-              {
-                child.walkIf([this](auto& node)
-                             {
-                               //if(!node.fVisible) return false;
-                               return (node.fVisible = this->do_filter(node.row));
-                             });
-              }
-            }
-          }
-          catch(const util::GenException& e)
-          {
-            std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
-          }
-        //}
+          ApplyCut(root);
+        }
                                                                                                                                          
         if(ImGui::IsItemHovered())
         {
@@ -118,6 +93,39 @@ namespace mygl
                             "first encountered a problem and print an error\n"
                             "message to STDOUT.");
           ImGui::EndTooltip();
+        }
+      }
+ 
+      //Just apply cuts, but don't render a GUI.  Publicly useful to "remember" cuts immediately 
+      //after loading a new event.  
+      template <class NODE>
+      void ApplyCut(std::list<NODE>& root)
+      {
+        //Turn off drawing for 3D objects whose metdata don't pass cut
+        try
+        {
+          //Don't cut on top-level nodes because they're understood to be placeholders that aren't associated with Drawables anyway.  
+          //TODO: The above comment seems to violate the idea of a tree model that I want users to work with.  Consider revising 
+          //      the idea of "placeholder nodes".  Just forcing the user to use Noop Drawable for placeholder nodes might be 
+          //      slightly better.
+          for(auto& top: root) //TODO: Checkbox to cut on top-level nodes?
+                               //TODO: Option for recursively applying cuts to children?
+          {
+            //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
+            //visibility anymore to speed up cut bar processing.  
+            for(auto& child: top.children)
+            {
+              child.walkIf([this](auto& node)
+                           {
+                             //if(!node.fVisible) return false;
+                             return (node.fVisible = this->do_filter(node.row));
+                           });
+            }
+          }
+        }
+        catch(const util::GenException& e)
+        {
+          std::cerr << "Caught exception during formula processing:\n" << e.what() << "\nIgnoring cuts for this SceneController.\n";
         }
       }
 

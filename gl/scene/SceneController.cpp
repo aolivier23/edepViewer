@@ -45,6 +45,9 @@ namespace ctrl
     //Set VisIDs for the entire model in a predictable pattern. 
     for(auto& top: fCurrentModel->fTopLevelNodes) top.walk([this, &nextID](auto& child) { child.fVisID = nextID++; });
     fVAO.Load(fCurrentModel->fVAO);
+
+    //"remember" cut settings from last event
+    fCutBar.ApplyCut(fCurrentModel->fTopLevelNodes);
   }
 
   //Call this before Render() to get updates from user interaction with list tree.  
