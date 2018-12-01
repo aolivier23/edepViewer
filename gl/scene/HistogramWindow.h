@@ -37,7 +37,7 @@ namespace gui
       if(value > max) max = value;
     }
 
-    std::map<std::string, float> BinData(const size_t nBins)
+    std::vector<std::pair<std::string, float>> BinData(const size_t nBins)
     {
       assert(nBins > 1);
       assert(max > min); //This will also fail of values is empty
@@ -58,10 +58,10 @@ namespace gui
       }
 
       //Stringify bin lower bounds
-      std::map<std::string, float> result;
+      std::vector<std::pair<std::string, float>> result;
       for(const auto& bin: bins)
       {
-        result[std::to_string(bin.first)] = bin.second;
+        result.emplace_back(std::to_string(bin.first), bin.second);
       }
 
       return result;
@@ -86,9 +86,11 @@ namespace gui
       ++fBins[name];
     }
 
-    std::map<std::string, float> BinData(const size_t /*nBins*/) const
+    std::vector<std::pair<std::string, float>> BinData(const size_t /*nBins*/) const
     {
-      return fBins;
+      std::vector<std::pair<std::string, float>> binView;
+      for(const auto& bin: fBins) binView.emplace_back(bin.first, bin.second);
+      return binView;
     }
 
     private:
@@ -205,7 +207,7 @@ namespace gui
       }
 
       //Actually draw the histogram here.
-      void doDrawHistogram(std::map<std::string, float>&& bins, const std::string& name);
+      void doDrawHistogram(std::vector<std::pair<std::string, float>>&& bins, const std::string& name);
 
       //Data for histogram options
       bool fIncludeTopNodes; //Should top-level nodes be included in histograms?

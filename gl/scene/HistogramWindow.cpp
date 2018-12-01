@@ -18,7 +18,7 @@ namespace gui
 {
   HistogramWindow::HistogramWindow(): fIncludeTopNodes(false), fLogX(false), fLogY(false) {}
 
-  void HistogramWindow::doDrawHistogram(std::map<std::string, float>&& bins, const std::string& name)
+  void HistogramWindow::doDrawHistogram(std::vector<std::pair<std::string, float>>&& bins, const std::string& name)
   {
     if(fLogY) for(auto& bin: bins) bin.second = (bin.second>0)?std::log10(bin.second):0; //Protection against log(0) and log(negative number)
     //Nothing to do for log x-axis with strings
