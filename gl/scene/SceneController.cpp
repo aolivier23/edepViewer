@@ -221,26 +221,11 @@ namespace ctrl
     //Since fVisID assignment descends the list tree before going to the next node, all children of a given node are ordered by 
     //fVisID.  So, if I ever reach a point where walkWhileTrue() returns false, I've either found searchID, or it isn't in 
     //fCurrentModel at all.  
-    bool found = false; //TODO: This is inelegant.  
-    std::prev(parentOfSelected)->walkWhileTrue([this, &searchID, &found](const auto& node)
-                                               {
-                                                 const auto& id = node.fVisID;
-                         
-                                                 //Next, find out whether this node has the VisID that was just selected. 
-                                                 if(id < searchID) 
-                                                 {
-                                                   fSelectPath.insert(fSelectPath.begin(), id);
-                                                   return true; //Keep searching
-                                                 }
-                                                 if(!(searchID < id)) //tests equality combined with return above
-                                                 { 
-                                                   found = true;
-                                                   fSelectPath.insert(fSelectPath.begin(), id);
-                                                   node.handle->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
-                                                  }
-                                                  return false; //Either this node is searchID or searchID isn't in the current SceneModel.
-                                                });
-    if(!found)
+    if(!std::prev(parentOfSelected)->search([this, &searchID](auto& node)
+                                            {
+                                              fSelectPath.push_back(node.fVisID);
+                                              if(node.fVisID == searchID) node.handle->SetBorder(0.1, glm::vec4(1., 0., 0., 1.));
+                                            }, searchID))
     {
       fSelectPath.clear();
       return false;
@@ -263,6 +248,9 @@ namespace ctrl
     bool open = false;
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;    
     if(node.children.size() == 0) node_flags |= ImGuiTreeNodeFlags_Leaf;
+    if(!selected && std::binary_search(fSelectPath.rbegin(), fSelectPath.rend(), id)) node_flags |= ImGuiTreeNodeFlags_DefaultOpen;
+    //if(std::find(fSelectPath.begin(), fSelectPath.end(), id) != fSelectPath.end()) node_flags |= ImGuiTreeNodeFlags_DefaultOpen;
+    //TODO: I know the top-level node whose child is selected, so I only need to do this for a very small number of nodes
     open = ImGui::TreeNodeEx(("##Node"+idBase).c_str(), node_flags);
 
     //Draw this Node's data

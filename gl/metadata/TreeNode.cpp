@@ -8,6 +8,7 @@
 
 //c++ includes
 #include <list>
+#include <algorithm>
 
 #ifndef MYGL_TREENODE_CPP
 #define MYGL_TREENODE_CPP
@@ -98,6 +99,59 @@ namespace ctrl
       if(!func(*this)) return false;
       for(const auto& child: children) if(!child.walkWhileTrue(func)) break;
       return true;
+    }
+
+    //Recursively perform a binary search for id, and call func() on anything that could be in the path to id.  
+    //Returns whether id was found.
+    template <class FUNC> //FUNC is any callable object whose return value is ignored
+    bool search(FUNC&& func, const mygl::VisID& id)
+    {
+      if(this->fVisID == id) //If this is the node we're searching for
+      {
+        func(*this);
+        return true;
+      }
+
+      //Search deeper
+      //TODO: Be careful, I'm allocating an object on the stack in a recusive function.  This memory could add up in deep recursion.
+      const auto lower = std::lower_bound(children.cbegin(), children.cend(), id, 
+                                          [](const auto& child, const mygl::VisID& id) { return child.fVisID < id; });
+
+      if(lower != children.cbegin()) //If lower == children.cend(), then one of the children of the last child of this node could still be a match
+      {
+        if(std::prev(lower)->search(func, id))
+        {
+          func(*this);
+          return true;
+        }
+      }
+      return false; 
+    }
+
+    //Same as search, but func() takes a const node.
+    template <class FUNC> //FUNC is any callable object whose return value is ignored
+    bool search(FUNC&& func, const mygl::VisID& id) const
+    {
+      if(this->fVisID == id) //If this is the node we're searching for
+      {
+        func(*this);
+        return true;
+      }
+
+      //Search deeper
+      //TODO: Be careful, I'm allocating an object on the stack in a recusive function.  This memory could add up in deep recursion.
+      const auto lower = std::lower_bound(children.cbegin(), children.cend(), id, 
+                                          [](const auto& child, const mygl::VisID& id) { return child.fVisID == id; });
+
+      if(lower != children.cbegin()) //If lower == children.cend(), then one of the children of the last child of this node could still be a match
+      {
+        if(std::prev(lower)->search(func, id))
+        {
+          func(*this);
+          return true;
+        }
+      }
+      return false;
     }
 
     //Interface that SceneController will use
