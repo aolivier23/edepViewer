@@ -20,6 +20,12 @@ namespace gui
 
   void HistogramWindow::doDrawHistogram(std::vector<std::pair<std::string, float>>&& bins, const std::string& name)
   {
+    if(bins.empty()) //For an empty set of bins, tell the user that there is no data
+    {
+      ImGui::Text("Empty Histogram");
+      return;
+    }
+
     if(fLogY) for(auto& bin: bins) bin.second = (bin.second>0)?std::log10(bin.second):0; //Protection against log(0) and log(negative number)
     //Nothing to do for log x-axis with strings
 

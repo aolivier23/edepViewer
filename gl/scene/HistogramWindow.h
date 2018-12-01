@@ -40,7 +40,7 @@ namespace gui
     std::vector<std::pair<std::string, float>> BinData(const size_t nBins)
     {
       assert(nBins > 1);
-      assert(max > min); //This will also fail of values is empty
+      if(max < min) return  std::vector<std::pair<std::string, float>>();
       const auto unitsPerBin = (max-min)/(nBins-1);
 
       //Set up bins based on requested number of bins and min, max
