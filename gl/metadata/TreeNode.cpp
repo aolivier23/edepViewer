@@ -10,6 +10,9 @@
 #include <list>
 #include <algorithm>
 
+//TODO: Remove me
+#include <iostream>
+
 #ifndef MYGL_TREENODE_CPP
 #define MYGL_TREENODE_CPP
 
@@ -106,25 +109,32 @@ namespace ctrl
     template <class FUNC> //FUNC is any callable object whose return value is ignored
     bool search(FUNC&& func, const mygl::VisID& id)
     {
+      std::cout << "Searching a node with VisID " << fVisID << " for VisID " << id << "\n";
       if(this->fVisID == id) //If this is the node we're searching for
       {
+        std::cout << "This is the node I'm looking for!\n";
         func(*this);
         return true;
       }
 
       //Search deeper
       //TODO: Be careful, I'm allocating an object on the stack in a recusive function.  This memory could add up in deep recursion.
-      const auto lower = std::lower_bound(children.cbegin(), children.cend(), id, 
-                                          [](const auto& child, const mygl::VisID& id) { return child.fVisID < id; });
+      const auto upper = std::upper_bound(children.begin(), children.end(), id, 
+                                          [](const mygl::VisID& id, const auto& child) { return id < child.fVisID; });
+      std::cout << "upper_bound is " << upper->fVisID << "\n";
 
-      if(lower != children.cbegin()) //If lower == children.cend(), then one of the children of the last child of this node could still be a match
+      if(upper != children.begin()) //If lower == children.cend(), then one of the children of the last child of this node could still be a match
       {
-        if(std::prev(lower)->search(func, id))
+        std::cout << "Searching deeper...\n";
+        if(std::prev(upper)->search(func, id))
         {
+          std::cout << "Looks like a child of " << fVisID << " was what I was looking for.  Calling func() here too.\n";
           func(*this);
           return true;
         }
+        else std::cout << "Couldn't find " << id << " among children of " << std::prev(upper)->fVisID << "\n";
       }
+      std::cout << "Search seems to have failed.  Try another branch besides the children of " << fVisID << "\n";
       return false; 
     }
 

@@ -48,6 +48,9 @@ namespace ctrl
 
     //"remember" cut settings from last event
     fCutBar.ApplyCut(fCurrentModel->fTopLevelNodes);
+
+    //Cache the last VisID in this scene for this event
+    fLastID = nextID;
   }
 
   //Call this before Render() to get updates from user interaction with list tree.  
@@ -177,8 +180,6 @@ namespace ctrl
   //TODO: Tell other SceneControllers that this VisID has been selected
   bool SceneController::SelectID(const mygl::VisID& searchID)
   {
-    //std::cout << "Trying to select object with VisID " << id << "\n";
-
     //TODO: Rewrite this function to take advantage of list model instead.  If an object isn't 
     //      visible, then no need to check whether its children are selected.  Furthermore, since 
     //      I set VisIDs, I can ensure that VisIDs between siblings are children of the "lhs".  
@@ -194,37 +195,39 @@ namespace ctrl
     }
     fSelectPath.clear();
     auto& top = fCurrentModel->fTopLevelNodes;
-    const auto compare = [](const auto& node, const auto& compareTo) { return node.fVisID < compareTo; };
-    const auto parentOfOldSelected = std::lower_bound(top.begin(), top.end(), oldSelected, compare);
+
+    const auto compare = [](const auto& compareTo, const auto& node) { return compareTo < node.fVisID; };
+    const auto parentOfOldSelected = std::upper_bound(top.begin(), top.end(), oldSelected, compare);
     if(parentOfOldSelected != top.begin())
     {
       //TODO: If selection is very slow, this is the first place to suspect.  A good 
       //      alternative would be caching a handle somehow.
-      //TODO: Binary search down entire tree structure.  
-      std::prev(parentOfOldSelected)->walkWhileTrue([this, &oldSelected](const auto& node)
-                                                    {
-                                                      const auto& id = node.fVisID;
-                                                      if(id < oldSelected) return true; //Keep searching
-                                                      if(node.handle && !(oldSelected < id)) node.handle->SetBorder(0., glm::vec4(1., 0., 0., 1.));                                                      
-                                                      return false; //Either oldSelected was found, or it isn't in the current SceneModel.
-                                                    });
+      std::prev(parentOfOldSelected)->search([this, &oldSelected](auto& node)
+                                             {
+                                               if(node.handle && node.fVisID == oldSelected) node.handle->SetBorder(0., glm::vec4(1., 0., 0., 1.));
+                                             }, oldSelected);
+    }
+
+    //If searchID can't possibly be in this scene, return now
+    if(!(searchID < fLastID))
+    {
+      return false;
     }
                                              
     //Now, find the next object to be selected
-    const auto parentOfSelected = std::lower_bound(top.begin(), top.end(), searchID, compare);
+    const auto parentOfSelected = std::upper_bound(top.begin(), top.end(), searchID, compare);
     if(parentOfSelected == top.begin()) 
     {
       return false;
     }
-
-    
+ 
     //Since fVisID assignment descends the list tree before going to the next node, all children of a given node are ordered by 
     //fVisID.  So, if I ever reach a point where walkWhileTrue() returns false, I've either found searchID, or it isn't in 
     //fCurrentModel at all.  
     if(!std::prev(parentOfSelected)->search([this, &searchID](auto& node)
                                             {
                                               fSelectPath.push_back(node.fVisID);
-                                              if(node.fVisID == searchID) node.handle->SetBorder(0.1, glm::vec4(1., 0., 0., 1.));
+                                              if(node.fVisID == searchID) node.handle->SetBorder(0.01, glm::vec4(1., 0., 0., 1.));
                                             }, searchID))
     {
       fSelectPath.clear();

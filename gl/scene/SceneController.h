@@ -145,6 +145,7 @@ namespace ctrl
 
       //Data specific to the current event
       std::unique_ptr<model_t> fCurrentModel; //The SceneModel that is currently being drawn
+      mygl::VisID fLastID; //Makes binary searches potentially faster
   };
 }
 
