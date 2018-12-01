@@ -60,12 +60,9 @@ namespace mygl
       void Render(std::list<NODE>& root)
       {
         //Cut bar
-        if(ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) 
-        {
-          fInput = fBuffer; //TODO: Do I need to do this copy now that everything is local to UserCut?
-          ApplyCut(root);
-        }
-                                                                                                                                         
+        const bool newCut = ImGui::InputText("##Cut", fBuffer.data(), fBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue);
+        if(newCut) fInput = fBuffer;
+
         if(ImGui::IsItemHovered())
         {
           ImGui::BeginTooltip();
@@ -94,6 +91,22 @@ namespace mygl
                             "message to STDOUT.");
           ImGui::EndTooltip();
         }
+
+        //Advanced settings
+        bool settingsChanged = false;
+        ImGui::SameLine();
+        if(ImGui::Button("Advanced")) fOptionsOpen = true; //But it stays true if the user didn't click in this frame
+
+        if(fOptionsOpen)
+        {
+          ImGui::Begin("Advanced Cut Options", &fOptionsOpen);
+          if(ImGui::Checkbox("Draw All Children", &fAllChildren)) settingsChanged = true;
+          if(ImGui::Checkbox("Draw All Parents", &fAllParents)) settingsChanged = true;
+          ImGui::End();
+        }
+
+        //Apply cut
+        if(newCut || settingsChanged) ApplyCut(root);
       }
  
       //Just apply cuts, but don't render a GUI.  Publicly useful to "remember" cuts immediately 
@@ -109,19 +122,47 @@ namespace mygl
           //      the idea of "placeholder nodes".  Just forcing the user to use Noop Drawable for placeholder nodes might be 
           //      slightly better.
           for(auto& top: root) //TODO: Checkbox to cut on top-level nodes?
-                               //TODO: Option for recursively applying cuts to children?
           {
             //The lambda function below does the job that apply_filter() used to do.  Nodes aren't reordered based on 
             //visibility anymore to speed up cut bar processing.  
             for(auto& child: top.children)
             {
-              child.walkIf([this](auto& node)
-                           {
-                             //if(!node.fVisible) return false;
-                             return (node.fVisible = this->do_filter(node.row));
-                           });
-            }
-          }
+              child.walk([this](auto& node)
+                         {
+                           return (node.fVisible = this->do_filter(node.row));
+                         });
+
+              if(fAllParents)
+              {
+                child.walkIf([](auto& /*node*/) { return true; },
+                             [](auto& node)
+                             {
+                               if(!node.fVisible)
+                               {
+                                 for(const auto& child: node.children) 
+                                 {
+                                   if(child.fVisible)
+                                   {
+                                     node.fVisible = true;
+                                     return;
+                                   }
+                                 }
+                               }
+                             }); 
+              } //if fAllParents
+
+              if(fAllChildren)
+              {
+                if(child.fVisible)
+                {
+                  child.walk([](auto& node) 
+                             {
+                               return (node.fVisible = true);
+                             });
+                } //if child.fVisible
+              } //if fAllChildren
+            } //for each child of a top node
+          } //for each top node
         }
         catch(const util::GenException& e)
         {
@@ -144,6 +185,11 @@ namespace mygl
       static constexpr int fBufferDepth = 256;
       std::array<char, fBufferDepth> fInput; //User-supplied text to cut based on
       std::array<char, fBufferDepth> fBuffer; //Cut bar buffer
+
+      //Data for advanced cut bar options.  Controlled by the user
+      bool fOptionsOpen; //Is the advanced options menu open?
+      bool fAllChildren; //Turn on all children of a node that passes cut
+      bool fAllParents; //Turn on parent of a node that passes cut
   };
 }
 

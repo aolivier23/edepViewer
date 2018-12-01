@@ -13,7 +13,8 @@
 
 namespace mygl
 {
-  UserCut::UserCut(const size_t nCols): fNCols(nCols), fInput({'t', 'r', 'u', 'e'}), fBuffer(fInput)
+  UserCut::UserCut(const size_t nCols): fNCols(nCols), fInput({'t', 'r', 'u', 'e'}), fBuffer(fInput), fOptionsOpen(false), 
+                                        fAllChildren(false), fAllParents(false)
   {   
   }
 
