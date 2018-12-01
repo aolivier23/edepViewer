@@ -270,7 +270,6 @@ namespace mygl
       {
         //Pop up legend of particle colors used
         auto db = TDatabasePDG::Instance();
-        //ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
         ImGui::Begin("Legend");
         for(auto& pdg: *(fServices.fPDGToColor))
         {
@@ -283,7 +282,7 @@ namespace mygl
         }
         ImGui::End();
 
-        RenderControlBar(width, height); //TODO: If RenderControlBar did something, return immediately (or else check threads)
+        RenderControlBar(width, height);
 
         //TODO: Allow Drawers to Render() here?  Really, I think I want to move the PDGToColor service to a 
         //      more generic color mapping service, implement named service instantiations, and Render() 
