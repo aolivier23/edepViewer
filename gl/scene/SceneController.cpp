@@ -132,12 +132,10 @@ namespace ctrl
       {
         for(auto& child: top.children)
         {
-          child.walkIf([this](auto& node)
-                       {
-                         if(!node.fVisible) return false;
-                         node.handle->Draw(fShader);
-                         return true;
-                       });
+          child.walk([this](auto& node)
+                     {
+                       if(node.fVisible) node.handle->Draw(fShader);
+                     });
         }
       }
     }
@@ -161,15 +159,16 @@ namespace ctrl
       {
         for(auto& child: top.children)
         {
-          child.walkIf([this](auto& node) 
+          child.walk([this](auto& node) 
+                     {
+                       if(node.fVisible)
                        {
-                         if(!node.fVisible) return false;
                          fSelectionShader.SetUniform("idColor", node.fVisID); //Each VisID is a unique color that can be drawn by opengl.  
                                                                               //So, draw this object with that color so that its' color 
                                                                               //can be mapped back to its' VisID if the user clicks on it.
                          node.handle->Draw(fSelectionShader);
-                         return true;
-                       });
+                       }
+                     });
         }
       }
     }
@@ -269,7 +268,11 @@ namespace ctrl
     //Draw this Node's data
     //Draw a checkbox for the first column
     ImGui::SameLine(); //Put the checkbox on the same line as the tree arrow
-    ImGui::Checkbox(("##Check"+idBase).c_str(), &(node.fVisible));
+    if(ImGui::Checkbox(("##Check"+idBase).c_str(), &(node.fVisible))) //If this node's visibility was toggled, toggle all children to the same
+    {
+      const bool visible = node.fVisible;
+      node.walk([&visible](auto& child) { child.fVisible = visible; });
+    }
     ImGui::NextColumn();
 
     for(size_t col = 0; col < fCols->size(); ++col)
