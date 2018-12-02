@@ -55,12 +55,15 @@ namespace
 
 namespace mygl
 {
-  EvdWindow::EvdWindow(): fConfig(new YAML::Node()),
+  EvdWindow::EvdWindow(std::unique_ptr<YAML::Node>&& config, std::unique_ptr<src::Source>&& source): fConfig(new YAML::Node()),
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fSource(), fServices(), fIsWaiting(true), fCurrentEvent(std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), "DEFAULT", false) 
+    fSource(), fServices(), fIsWaiting(true), fCurrentEvent(std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), "DEFAULT", false),
+    fBeforeFirstEvent(true)
     //, fPrintTexture(nullptr)
   {
+    reconfigure(std::move(config));
+    SetSource(std::move(source));
   }
 
   void EvdWindow::reconfigure(std::unique_ptr<YAML::Node>&& config)
@@ -240,9 +243,11 @@ namespace mygl
         //TODO: UpdateScene() for ExternalDrawers as well
 
         fIsWaiting = false;
+        fBeforeFirstEvent = false;
       }
-    }
-    else //Otherwise, we can render the current event.  We might still be processing future events in another thread.  
+    } //TODO: Detect loop before the first event is ready and display a splash screen
+
+    if(!fBeforeFirstEvent) //else //Otherwise, we can render the current event.  We might still be processing future events in another thread.  
     {
       //Pop up file selection GUI and call reconfigure()
       if(!fConfig) 

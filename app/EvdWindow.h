@@ -59,7 +59,7 @@ namespace mygl
   class EvdWindow
   {
     public: 
-      EvdWindow();
+      EvdWindow(std::unique_ptr<YAML::Node>&& config, std::unique_ptr<src::Source>&& source);
       virtual ~EvdWindow();
 
       void SetSource(std::unique_ptr<src::Source>&& source);
@@ -127,6 +127,7 @@ namespace mygl
       //For now, I'm just going to process the "next event" in a new thread and wait for it to finish before updating any Scenes.  
       //std::queue<std::future<void>> fEventStatuses; //Status of each thread that is processing an event
       bool fIsWaiting; //Is the application waiting for the current event to be processed?
+      bool fBeforeFirstEvent; //Do we have an event to show while waiting?
       std::future<src::Source::metadata> fNextEvent; //When this future is ready, the next event is ready.  
       src::Source::metadata fCurrentEvent; //Source state when current event was first processed
   };

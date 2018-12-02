@@ -23,6 +23,7 @@
 
 int main(const int argc, const char** argv)
 {
+  std::cout << "Start of main()\n";
   //glfwSetErrorCallback(error_callback); //TODO: Throw exception here?  
   if (!glfwInit())
       return 1;
@@ -37,9 +38,13 @@ int main(const int argc, const char** argv)
   glfwMakeContextCurrent(window); //One context to rule them all?
   glfwSwapInterval(1); // Enable vsync
 
+  std::cout << "Loading OpenGL extensions.\n";
+
   //Initialize glad to get opengl extensions.  
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
   gladLoadGL();
+
+  std::cout << "Setting up Dear IMGUI.\n";
 
   // Setup ImGui binding
   ImGui::CreateContext();
@@ -62,13 +67,12 @@ int main(const int argc, const char** argv)
   ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(209./255., 209./255., 209./255., 1));
   
   io.Fonts->AddFontFromFileTTF(FONT_DIR "/Roboto-Medium.ttf", 18.0f); //Because the default font is not as readable
-  
-  mygl::EvdWindow evd; //evd(argc, argv);
 
-  //Parse the command line to configure evd window
-  evd.reconfigure(cmd::FindConfig(argc, argv));
-  evd.SetSource(cmd::FindSource(argc, argv));
-  
+  std::cout << "About to create EvdWindow.\n";  
+  mygl::EvdWindow evd(cmd::FindConfig(argc, argv), cmd::FindSource(argc, argv)); //evd(argc, argv);
+
+  std::cout << "EvdWindow initialized.\n";
+
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
   while (!glfwWindowShouldClose(window))
   {
