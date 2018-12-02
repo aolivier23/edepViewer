@@ -19,9 +19,6 @@
 //glm includes
 #include <glm/gtc/type_ptr.hpp>
 
-//local includes
-#include "app/Source.h"
-
 //ROOT includes
 #include "TGeoManager.h"
 #include "TGeoNode.h"
@@ -61,7 +58,8 @@ namespace mygl
   EvdWindow::EvdWindow(): fConfig(new YAML::Node()),
     fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)),
             10., 10., 10.),
-    fSource(), fServices(), fIsWaiting(true), fHasNewGeom(true)//, fPrintTexture(nullptr)
+    fSource(), fServices(), fIsWaiting(true), fCurrentEvent(std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), "DEFAULT", false) 
+    //, fPrintTexture(nullptr)
   {
   }
 
@@ -108,7 +106,7 @@ namespace mygl
 
   EvdWindow::~EvdWindow() {}
 
-  //TODO: Maybe defer setting TGeoManager in Source to NextFile() and call NextFile() here.  
+  //TODO: Stop all threads before calling this!
   void EvdWindow::SetSource(std::unique_ptr<src::Source>&& source)
   {
     fSource.reset(source.release());
@@ -117,42 +115,44 @@ namespace mygl
     //TODO: Rethink how Source interacts with ExternalDrawers.  
     if(fSource)
     { 
+      std::cout << "Setting future because of a new Source.\n";
+      fIsWaiting = true;
+      //TODO: Clear all event caches here
       //for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
-      fSource->Next();
-      fNextEvent = std::async(std::launch::async, 
+      fNextEvent = std::async(std::launch::async,
                               [this]()
                               {
-                                ReadGeo();
+                                auto meta = fSource->Next();
+                                meta.newFile = true; //Any time we call ReadGeo(), newFile should be true.  
+                                                     //On the first event after loading, the source doesn't 
+                                                     //know that it has a new file because the first file is 
+                                                     //loaded in its constructor. 
+                                                     //TODO: Don't load the first file in Source::Source().  
+                                                     //      Let the first Next() call do that.   
+                                ReadGeo(); 
                                 ReadEvent();
+                                return meta;
                               });
     }
   }
 
   void EvdWindow::ReadGeo()
   {
-    fIsWaiting = true; //Go to the waiting state if not already there
-    fHasNewGeom = true;
-    
     //Load service information
     const auto& serviceConfig = (*fConfig)["Services"]; 
     if(!serviceConfig) std::cerr << "Couldn't find services block.\n";
     const auto& geoConfig = serviceConfig["Geo"];
     if(!geoConfig) std::cerr << "Couldn't find Geo service.\n";
 
-    fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo()));
+    fServices.fGeometry.reset(new util::Geometry(geoConfig, fSource->Geo())); //TODO: No one can be using the geometry when this happens!
     auto man = fSource->Geo();
 
     //Next, create threads to do "drawing".  These functions shouldn't modify OpenGL state.  
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->Draw(*man, fServices);
-
-    std::cout << "Started drawing the geometry.\n";
   }
 
   void EvdWindow::ReadEvent()
   { 
-    std::cout << "Going to next event.\n";
-    fIsWaiting = true; //Go to the waiting state if not already there
-                       //TODO: A "real" state machine would call some function that implicitly makes the transition to a new state
     //TODO: Rewrite this as just a loop over calling fEventDrawers' and fExtDrawers' Draw() functions.
     //Now, DrawEvents(), which makes no OpenGL calls, can be run in parallel.  
     const auto& evt = fSource->Event();
@@ -193,9 +193,9 @@ namespace mygl
     //have Emscripten support?
     TASImage screenshot;
     screenshot.FromGLBuffer(data, width, height);
-    const auto file = fSource->GetFile();
+    const auto file = fCurrentEvent.fileName;
     const std::string fileBase = file.substr(file.find_last_of("/")+1, file.find_first_of(".")-1);
-    screenshot.WriteImage((fileBase+"_run"+std::to_string(fSource->RunID())+"_evt"+std::to_string(fSource->EventID())+".png").c_str()); 
+    screenshot.WriteImage((fileBase+"_run"+std::to_string(fCurrentEvent.runID)+"_evt"+std::to_string(fCurrentEvent.eventID)+".png").c_str()); 
     //TODO: Let user pick name and image type
 
     delete[] data; //Free image data now that I am done with it
@@ -208,34 +208,43 @@ namespace mygl
   {
     //Render Viewer if not currently loading an event.  Otherwise, render a splash screen with a progress bar.  
     if(fIsWaiting) //If in the "waiting for event processing" state
+                   //TODO: Re-organize event processing yet again so that std::future<>::wait_for() is the only 
+                   //      state I need to query.
     {
       //TODO: Just clear background in one place
       glClearColor(0.0, 0.0, 0.0, 1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
       //Check whether all Drawers have finished
-      ImGui::Begin("Loading");
+      ImGui::Begin("Loading"); //TODO: Put this window off to the side, but keep it obvious
       ImGui::Text("Loading, next event and/or file...");
-      //TODO: Progress bar
-      //ImGui::ProgressBar((geoPos)/1., ImVec2(0.0f, 0.0f));
-      //if(geoReady) ImGui::Text("Geometry ready!");
-      //if(eventReady) ImGui::Text("Edep-sim ready!");
-      //if(extReady) ImGui::Text("External ready!");
       ImGui::End();
 
       if(fNextEvent.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) 
       {
-        mygl::VisID id(0, 0, 0);
-        if(fHasNewGeom)
+        std::cout << "Event is ready!\n";
+        try //Any exceptions from the thread where fNextEvent was "created" will be thrown when I 
+            //call fNextEvent.get().  I particularly want to react to no_more_files exceptions.  
+            //If I don't get a next event, don't load anything.
         {
-          for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id);
-          fHasNewGeom = false;
-        }
-        for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
+          const auto meta = fNextEvent.get();
+          fCurrentEvent = meta; //TODO: If meta is guaranteed never to be assigned if std::future<>::get() throws, then remove this line
+          mygl::VisID id(0, 0, 0);
+          if(fCurrentEvent.newFile)
+          {
+            for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id);
+          }
+          for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
         
-        std::map<std::string, std::unique_ptr<mygl::Camera>> cameras;
-        for(const auto& config: fCameraConfigs) config->AppendCameras(cameras);
-        fViewer.LoadCameras(std::move(cameras));
+          std::map<std::string, std::unique_ptr<mygl::Camera>> cameras;
+          for(const auto& config: fCameraConfigs) config->AppendCameras(cameras);
+          fViewer.LoadCameras(std::move(cameras));
+        }
+        catch(const src::Source::no_more_files& e)
+        {
+          std::cerr << e.what() << "\n"; //TODO: Put error message into a modal window
+          //TODO: Reload previous event?
+        }
 
         //TODO: UpdateScene() for ExternalDrawers as well
 
@@ -283,12 +292,6 @@ namespace mygl
         ImGui::End();
 
         RenderControlBar(width, height);
-
-        //TODO: Allow Drawers to Render() here?  Really, I think I want to move the PDGToColor service to a 
-        //      more generic color mapping service, implement named service instantiations, and Render() 
-        //      services so that they can use IMGUI.   
-        //for(const auto& drawer: fExtDrawers) drawer->Render();
-
         fViewer.Render(width, height, ioState);
       }
     }
@@ -306,12 +309,7 @@ namespace mygl
       } 
       ImGui::SameLine();
 
-      /*int entry = fSource->Entry();
-      if(ImGui::InputInt("TTree Entry", &entry))
-      {
-        goto_event(entry);
-      }*/
-      int ids[] = {fSource->RunID(), fSource->EventID()};
+      int ids[] = {fCurrentEvent.runID, fCurrentEvent.eventID}; //TODO: current event is different from next event
       if(ImGui::InputInt2("(Run, Event)", ids, ImGuiInputTextFlags_EnterReturnsTrue))
       {
         goto_id(ids[0], ids[1]);
@@ -324,6 +322,8 @@ namespace mygl
       ImGui::SameLine();
       if(ImGui::Button("File")) fSource.reset(nullptr); //Source reading has already happened, so reset fSource to cause a file chooser 
                                                         //GUI to pop up in next loop.
+                                                        //TODO: Stop all threads first?
+      //TODO: Status of event pre-loading?
     }
     ImGui::End();
   }
@@ -341,55 +341,30 @@ namespace mygl
     }
   }
 
-  void EvdWindow::goto_event(const int evt)
-  {
-    //TODO: Clear() all Drawers' caches somewhere near here
-    //TODO: Put at least the ReadEvent() call into a thread
-    std::cout << "Calling function EvdWindow::goto_event()\n";
-    if(fSource->GoTo(evt)) 
-    {
-      ReadEvent();
-    }
-    else std::cerr << "Failed to get event " << evt << " from file " << fSource->GetFile() << "\n";
-  }
-
   void EvdWindow::goto_id(const int run, const int evt)
   {
-    //TODO: Clear() all Drawers' caches somewhere near here
-    //TODO: Put at least the ReadEvent() call into a thread
-    if(fSource->GoTo(run, evt))
-    {
-      ReadEvent();
-    }
-    else std::cerr << "Failed to get event (" << run << ", " << evt << ") from file " << fSource->GetFile() << "\n";
+    fIsWaiting = true;
+    fNextEvent = std::async(std::launch::async,
+                               [this, &run, &evt]()
+                               {
+                                 const auto meta = fSource->GoTo(run, evt);
+                                 ReadEvent();
+                                 //TODO: Clear all Drawers' caches after loading this event?
+                                 return meta;
+                               });
   }
 
   void EvdWindow::next_event()
   {
-    std::cout << "Calling function EvdWindow::next_event()\n";
-    if(!fSource->Next()) //If this is the end of the current file
-    {
-      //TODO: NextFile() and/or Next() in a thread?
-      if(!fSource->NextFile()) //If this is the end of the last file in the Source
-      {
-        std::cerr << "Reached last event in input files.\n";
-      }
-      else 
-      {
-        std::cout << "Reading from file " << fSource->GetFile() << "\n";
-        fNextEvent = std::async(std::launch::async, 
-                                [this]()
-                                {
-                                  ReadGeo();
-                                  ReadEvent(); 
-                                });
-      }
-    }
-    else 
-    {
-      std::cout << "Reading from file " << fSource->GetFile() << "\n";
-      fNextEvent = std::async(std::launch::async, [this](){ ReadEvent(); }); 
-    }
+    fIsWaiting = true;
+    fNextEvent = std::async(std::launch::async,
+                            [this]()
+                            {
+                              const auto meta = fSource->Next();
+                              if(meta.newFile) ReadGeo();
+                              ReadEvent();
+                              return meta;
+                            });
   }
 }
 

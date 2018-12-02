@@ -14,6 +14,7 @@
 
 //local includes
 #include "app/FileChoose.h"
+#include "app/Source.h"
 
 //gl includes
 #include "gl/Viewer.h"
@@ -126,8 +127,8 @@ namespace mygl
       //For now, I'm just going to process the "next event" in a new thread and wait for it to finish before updating any Scenes.  
       //std::queue<std::future<void>> fEventStatuses; //Status of each thread that is processing an event
       bool fIsWaiting; //Is the application waiting for the current event to be processed?
-      bool fHasNewGeom; //TODO: Replace this hack by rethinking my scene update logic
-      std::future<void> fNextEvent; //When this future is ready, the next event is ready.  
+      std::future<src::Source::metadata> fNextEvent; //When this future is ready, the next event is ready.  
+      src::Source::metadata fCurrentEvent; //Source state when current event was first processed
   };
 }
 

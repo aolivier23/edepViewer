@@ -28,7 +28,6 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    //fReader.Next();
   }
 
   Source::Source(const std::string& file): fFileList({file}), fFilePos(fFileList.begin()), fFile(), fReader(), 
@@ -49,7 +48,6 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    //fReader.Next();
   }
 
   const TG4Event& Source::Event()
@@ -62,65 +60,52 @@ namespace src
     return fGeo;
   }
 
-  bool Source::Next()
+  Source::metadata Source::Next()
   {
-    const bool status = fReader.Next();
-    if(!status) 
+    bool fileChange = false;
+    do
     {
-      fReader.Restart(); //Make sure the TTreeReader keeps working even if this is the end of the file.  
-      fReader.Next();
-    }
-    return status;
-  }
+      if(fReader.Next()) return Meta(fileChange);
+    } 
+    while((fileChange = NextFile()));
 
-  //Go to event by entry number in TTree
-  bool Source::GoTo(const size_t evt)
-  {
-    //TODO: GoTo can't search over file boundaries.  Should GoTo have an argument for the file to process?
-    //      std::map::lower_bound could help me search for the right file based on starting entry numbers.  
-    if(fReader.GetEntryStatus() == TTreeReader::kEntryBeyondEnd) //"Recover" from reading trying to read the last entry of the current file
-    {
-      fReader.Restart();
-      fReader.Next();
-    }
-    return fReader.SetEntry(evt) == TTreeReader::kEntryValid;
+    //Make sure the TTreeReader keeps working even if this is the end of the file.  
+    fReader.Restart();
+    fReader.Next();
+
+    //If we get here, we're out of files
+    throw no_more_files(fFileList.back());
   }
 
   //Go to event by RunId and EventId
-  bool Source::GoTo(const int run, const int evt)
+  Source::metadata Source::GoTo(const int run, const int evt)
   {
+    //TODO: Do I still need this check?
     if(fReader.GetEntryStatus() == TTreeReader::kEntryBeyondEnd)
     {
       fReader.Restart();
       fReader.Next();
     }
-    auto index = fReader.GetTree()->GetEntryNumberWithBestIndex(run, evt);
-    return fReader.SetEntry(index) == TTreeReader::kEntryValid;
+
+    bool fileChange = false;
+    do
+    {
+      auto index = fReader.GetTree()->GetEntryNumberWithBestIndex(run, evt);
+      if(fReader.SetEntry(index) == TTreeReader::kEntryValid && NextFile()) return Meta(fileChange);
+    }
+    while((fileChange = NextFile()));
+
+    //If we get here, we're out of files.  
+    throw no_more_files(fFileList.back());
   }
 
-  const size_t Source::Entry()
+  Source::metadata Source::Meta(const bool fileChange)
   {
-    return fReader.GetCurrentEntry();
+    return metadata(fEvent->EventId, fEvent->RunId, fFile->GetName(), fileChange);
   }
 
-  const int Source::RunID()
-  {
-    return fEvent->RunId;
-  }
-  
-  const int Source::EventID()
-  {
-    return fEvent->EventId;
-  }
-
-  const std::string Source::GetFile()
-  {
-    return std::string(fFile->GetName());
-  }
-
-  //TODO: Expose an iterator to file name and beginning and end of list here?  This would allow me to GoTo a specific file and 
-  //      simplify the Source interface somewhat.  GetFile() wouldn't be necessary for example.
-  //TODO: Undefined behavior seems to happen when this function is called.  It may or may not be the cause.
+  //Try to go to the next file in fFileList.  Return false if there are no more files.  
+  //You must call fReader.Next() between using this function and dereferencing fEvent.
   bool Source::NextFile()
   {
     ++fFilePos;
@@ -137,7 +122,7 @@ namespace src
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    fReader.Next();
+    //fReader.Next(); //TODO: Do I need this anymore?
     return true;
   }
 }

@@ -33,20 +33,49 @@ namespace src
       virtual const TG4Event& Event();
       virtual TGeoManager* Geo();
 
-      virtual bool Next();
-      virtual bool GoTo(const size_t evt);
-      virtual bool GoTo(const int run, const int evt);
-      virtual bool NextFile();
+      //metadata for one event provided by this Source
+      struct metadata
+      {
+        metadata(const int event, const int run, const std::string& file, const bool fileChange): eventID(event), runID(run), 
+                                                                                                  fileName(file), newFile(fileChange) 
+        {
+        }
+                                                                                                                                      
+        int eventID; //Event number from a TG4Event
+        int runID; //Run number from a TG4Event
+        std::string fileName; //Name of the file used to produce this event
+        bool newFile; //Is this the first event in a new file?
+      };
 
-      virtual const std::string GetFile();
-      virtual const size_t Entry();
-      virtual const int EventID();
-      virtual const int RunID();
+      virtual metadata Next();
+      virtual metadata GoTo(const int run, const int evt);
 
-      //Don't make me regret making this public
-      TTreeReader fReader;
+      //exception to throw on failing to find the next file
+      class no_more_files
+      {
+        public:
+          no_more_files(const std::string& file) noexcept: fFile(file) {}
+          no_more_files(const no_more_files& other) noexcept: fFile(other.fFile) {} 
+          no_more_files& operator =(const no_more_files& other) noexcept
+          {
+            fFile = other.fFile;
+            return *this;
+          }
+
+          virtual ~no_more_files() = default;
+
+          const char* what() const noexcept
+          {
+            return (fFile + " is the last input file in this Source.").c_str();
+          }
+
+          std::string fFile; //Last file in the Source that threw this exception
+      };
 
     protected:
+      virtual metadata Meta(const bool fileChange);
+      virtual bool NextFile();
+
       //Resources for figuring out what file to process next
       std::vector<std::string> fFileList;
       std::vector<std::string>::iterator fFilePos;
@@ -54,6 +83,12 @@ namespace src
       //Resources for the current file
       std::unique_ptr<TFile> fFile;
       TGeoManager* fGeo; //fGeo is managed by fFile, so this can only be an observer pointer
+
+    public:
+      //Don't make me regret making this public
+      TTreeReader fReader;
+
+    protected:
       TTreeReaderValue<TG4Event> fEvent;
   };
 }
