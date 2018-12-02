@@ -123,12 +123,6 @@ namespace mygl
                               [this]()
                               {
                                 auto meta = fSource->Next();
-                                meta.newFile = true; //Any time we call ReadGeo(), newFile should be true.  
-                                                     //On the first event after loading, the source doesn't 
-                                                     //know that it has a new file because the first file is 
-                                                     //loaded in its constructor. 
-                                                     //TODO: Don't load the first file in Source::Source().  
-                                                     //      Let the first Next() call do that.   
                                 ReadGeo(); 
                                 ReadEvent();
                                 return meta;

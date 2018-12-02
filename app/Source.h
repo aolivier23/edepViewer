@@ -78,7 +78,7 @@ namespace src
 
       //Resources for figuring out what file to process next
       std::vector<std::string> fFileList;
-      std::vector<std::string>::iterator fFilePos;
+      std::vector<std::string>::iterator fNextFile;
 
       //Resources for the current file
       std::unique_ptr<TFile> fFile;

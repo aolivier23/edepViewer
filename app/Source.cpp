@@ -8,46 +8,14 @@
 
 namespace src
 {
-  Source::Source(const std::vector<std::string>& files): fFileList(files), fFilePos(fFileList.begin()), fFile(),
+  Source::Source(const std::vector<std::string>& files): fFileList(files), fNextFile(fFileList.begin()), fFile(),
                                                          fReader(), fEvent(fReader, "Event")
   {
-    if(fFilePos == fFileList.end())
-    {
-      throw std::runtime_error("No files in Source.\n");
-    }
-
-    fFile.reset(TFile::Open((fFilePos)->c_str()));
-    fReader.SetTree("EDepSimEvents", fFile.get());
-    //TODO: Make a copy of this tree that passes some cuts instead?  Requires that those cuts come from user input somehow.  
-    //      Should probably do this in a separate file so EvdWindow can parse the options file for cuts to apply.
-    if(fReader.GetTree()->BuildIndex("RunId", "EventId") <= 0)
-    {
-      std::cerr << "In Source constructor, failed to build TTreeIndex on branches RunId and EventId.\n";
-    }
-
-    auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
-    if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
-    fGeo = geo;
   }
 
-  Source::Source(const std::string& file): fFileList({file}), fFilePos(fFileList.begin()), fFile(), fReader(), 
+  Source::Source(const std::string& file): fFileList({file}), fNextFile(fFileList.begin()), fFile(), fReader(), 
                                            fEvent(fReader, "Event")
   {
-    //TODO: ReadFile()
-    if(fFilePos == fFileList.end())
-    {
-      throw std::runtime_error("No files in Source.\n");
-    }
-
-    std::cout << "Opening file " << *fFilePos << "\n";
-
-    fFile.reset(TFile::Open((fFilePos)->c_str()));
-    fReader.SetTree("EDepSimEvents", fFile.get());
-    fReader.GetTree()->BuildIndex("RunId", "EventId");
-
-    auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
-    if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
-    fGeo = geo;
   }
 
   const TG4Event& Source::Event()
@@ -108,21 +76,21 @@ namespace src
   //You must call fReader.Next() between using this function and dereferencing fEvent.
   bool Source::NextFile()
   {
-    ++fFilePos;
-    if(fFilePos == fFileList.end()) 
+    if(fNextFile == fFileList.end()) 
     {
-      --fFilePos; //Back away from the edge of disaster
+      --fNextFile; //Back away from the edge of disaster
       return false;
     }
 
-    fFile.reset(TFile::Open((fFilePos)->c_str()));
+    fFile.reset(TFile::Open((fNextFile)->c_str()));
     fReader.SetTree("EDepSimEvents", fFile.get());
     fReader.GetTree()->BuildIndex("RunId", "EventId");
 
     auto geo = (TGeoManager*)fFile->Get("EDepSimGeometry");
     if(geo == nullptr) throw std::runtime_error("Failed to get geometry object from file named "+std::string(fFile->GetName())+"\n");
     fGeo = geo;
-    //fReader.Next(); //TODO: Do I need this anymore?
+
+    ++fNextFile; //Update the location of the next file to load
     return true;
   }
 }
