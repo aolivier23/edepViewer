@@ -115,7 +115,6 @@ namespace mygl
     //TODO: Rethink how Source interacts with ExternalDrawers.  
     if(fSource)
     { 
-      std::cout << "Setting future because of a new Source.\n";
       fIsWaiting = true;
       //TODO: Clear all event caches here
       //for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
@@ -162,8 +161,6 @@ namespace mygl
   
   void EvdWindow::make_scenes()
   {
-    std::cout << "Calling function EvdWindow::make_scenes()\n";
-
     //Configure Geometry Scenes
     for(const auto& drawPtr: fGlobalDrawers) drawPtr->RequestScene(fViewer);    
 
@@ -216,7 +213,6 @@ namespace mygl
 
       if(fNextEvent.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) 
       {
-        std::cout << "Event is ready!\n";
         try //Any exceptions from the thread where fNextEvent was "created" will be thrown when I 
             //call fNextEvent.get().  I particularly want to react to no_more_files exceptions.  
             //If I don't get a next event, don't load anything.
@@ -236,6 +232,7 @@ namespace mygl
         }
         catch(const src::Source::no_more_files& e)
         {
+          std::cout << "Out of files to process!\n";
           std::cerr << e.what() << "\n"; //TODO: Put error message into a modal window
           //TODO: Reload previous event?
         }
@@ -339,7 +336,7 @@ namespace mygl
   {
     fIsWaiting = true;
     fNextEvent = std::async(std::launch::async,
-                               [this, &run, &evt]()
+                               [this, run, evt]()
                                {
                                  const auto meta = fSource->GoTo(run, evt);
                                  ReadEvent();

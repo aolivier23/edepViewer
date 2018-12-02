@@ -54,11 +54,15 @@ namespace src
       class no_more_files
       {
         public:
-          no_more_files(const std::string& file) noexcept: fFile(file) {}
-          no_more_files(const no_more_files& other) noexcept: fFile(other.fFile) {} 
+          no_more_files(const std::string& file) noexcept 
+          {
+            fError = file+" is the last input file in this Source.";
+          }
+
+          no_more_files(const no_more_files& other) noexcept: fError(other.fError) {} 
           no_more_files& operator =(const no_more_files& other) noexcept
           {
-            fFile = other.fFile;
+            fError = other.fError;
             return *this;
           }
 
@@ -66,10 +70,10 @@ namespace src
 
           const char* what() const noexcept
           {
-            return (fFile + " is the last input file in this Source.").c_str();
+            return fError.c_str();
           }
 
-          std::string fFile; //Last file in the Source that threw this exception
+          std::string fError; //Last file in the Source that threw this exception
       };
 
     protected:

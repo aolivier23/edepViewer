@@ -55,13 +55,31 @@ namespace src
       fReader.Next();
     }
 
+    const auto oldPos = Meta(false); //Cache where we were before in case of bad things happening
     bool fileChange = false;
     do
     {
       auto index = fReader.GetTree()->GetEntryNumberWithBestIndex(run, evt);
-      if(fReader.SetEntry(index) == TTreeReader::kEntryValid && NextFile()) return Meta(fileChange);
+      if(fReader.SetEntry(index) == TTreeReader::kEntryValid) 
+      {
+        const auto meta = Meta(fileChange);
+        return Meta(fileChange);
+      }
     }
     while((fileChange = NextFile()));
+
+    //Since we failed to find this event in any of our files, put this Source back into the position it was in before
+    fNextFile = std::find(fFileList.begin(), fFileList.end(), oldPos.fileName);
+    auto index = fReader.GetTree()->GetEntryNumberWithBestIndex(oldPos.runID, oldPos.eventID);
+    if(fReader.SetEntry(index) != TTreeReader::kEntryValid) //Uh oh, this is really bad!  Try to crash gracefully.
+    {
+      throw std::runtime_error(("When Source was trying to GoTo("+std::to_string(run)+", "+std::to_string(evt)+"), "
+                                "couldn't find a file with that entry.  So, tried to go back to old state which is "
+                                "("+std::to_string(oldPos.runID)+", "+std::to_string(oldPos.eventID)+") in file "
+                                +oldPos.fileName+".  However, that entry no longer exists.  I recommend you stop the "
+                                "job at this point, but you might be able to survive by getting an expert to reset "
+                                "this Source.\n").c_str());
+    }
 
     //If we get here, we're out of files.  
     throw no_more_files(fFileList.back());
