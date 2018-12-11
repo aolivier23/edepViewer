@@ -32,7 +32,7 @@ namespace fsm
       virtual ~ChooseFile() = default;
 
     protected:
-      virtual std::unique_ptr<State> doPoll(const bool /*allEventsReady*/, evd::Window& /*window*/) override
+      virtual std::unique_ptr<State> doPoll(evd::Window& /*window*/) override
       {
         //Address bar 
         std::string pwd(fCurrent->GetName());

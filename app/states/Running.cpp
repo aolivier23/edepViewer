@@ -41,17 +41,17 @@ namespace fsm
     if(ImGui::Button("Reload")) transition = std::unique_ptr<State>(new Reload());
     ImGui::SameLine();
     if(ImGui::Button("File")) transition = std::unique_ptr<State>(new ChooseFile<NewFile>("*.root"));
-
     //TODO: Status of event processing?
+    ImGui::End();
 
     window.Render(width, height, io);
 
     return transition;
   }
 
-  std::unique_ptr<State> Running::doPoll(const bool allEventsReady, evd::Window& window)
+  std::unique_ptr<State> Running::doPoll(evd::Window& window)
   {
-    if(allEventsReady && window.EventCacheSize() < window.MaxEventCacheSize())
+    if(!window.LastEventStatus().valid() && window.EventCacheSize() < window.MaxEventCacheSize())
     {
       window.ProcessEvent(false);
     }

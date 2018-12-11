@@ -21,7 +21,7 @@ fsm::TryLoadNextEvent::TryLoadNextEvent()
 {
 }
 
-std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(const bool allEventsReady, evd::Window& window)
+std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
 {
   if(window.NextEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout)
   {

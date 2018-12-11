@@ -18,7 +18,7 @@ namespace fsm
       virtual ~Running() = default;
 
     protected:
-      virtual std::unique_ptr<State> doPoll(const bool eventIsReady, evd::Window& window) override;
+      virtual std::unique_ptr<State> doPoll(evd::Window& window) override;
       virtual std::unique_ptr<State> Draw(const int width, const int height, const ImGuiIO& io, evd::Window& window) override;
   };
 }

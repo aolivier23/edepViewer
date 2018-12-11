@@ -29,7 +29,7 @@ namespace fsm
       virtual ~NonSequential() = default;
 
     protected:
-      virtual std::unique_ptr<State> doPoll(const bool allEventsReady, evd::Window& window) override final;
+      virtual std::unique_ptr<State> doPoll(evd::Window& window) override final;
 
       //NonSequential States just want to wait until they are ready
       //to perform some action that culminates in a transition().  

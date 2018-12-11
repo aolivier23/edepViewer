@@ -107,18 +107,19 @@ namespace evd
     fSource.reset(source.release());
     assert(fSource);
     //ReadGeo is called when the current file changes, so make sure external drawers are aware of the file change.
-    /*if(fSource)
+    if(fSource)
     { 
+      ProcessEvent(true);
       //for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
-      fNextEvent = std::async(std::launch::async,
+      /*fNextEvent = std::async(std::launch::async,
                               [this]()
                               {
                                 auto meta = fSource->Next();
                                 ReadGeo(); 
                                 ReadEvent();
                                 return meta;
-                              });
-    }*/
+                              });*/
+    }
   }
 
   void Window::ReadGeo()
@@ -287,6 +288,11 @@ namespace evd
   std::future<src::Source::metadata>& Window::NextEventStatus()
   {
     return fEventCache.front();
+  }
+
+  std::future<src::Source::metadata>& Window::LastEventStatus()
+  {
+    return fEventCache.back();
   }
 
   size_t Window::EventCacheSize() const

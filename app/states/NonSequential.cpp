@@ -21,9 +21,9 @@
 //app includes
 #include "app/Window.h"
 
-std::unique_ptr<fsm::State> fsm::NonSequential::doPoll(const bool allEventsReady, evd::Window& window)
+std::unique_ptr<fsm::State> fsm::NonSequential::doPoll(evd::Window& window)
 {
-  if(allEventsReady)
+  if(window.LastEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::ready)
   {
     window.ClearCache();
     seekToEvent(window);

@@ -72,6 +72,7 @@ namespace evd
 
       //Event cache status
       std::future<src::Source::metadata>& NextEventStatus(); //Get status of next event processing
+      std::future<src::Source::metadata>& LastEventStatus(); //Get status of last event in event queue
       size_t EventCacheSize() const; //Get current number of events that are either in processing or ready
       size_t MaxEventCacheSize() const; //Get the maximum size of the event cache as configured by the user
       src::Source::metadata CurrentEvent() const; //Get the current event

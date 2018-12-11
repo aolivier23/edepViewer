@@ -7,7 +7,10 @@
 
 //Local includes
 #include "FirstEvent.h"
-#include "TryLoadNextEvent.h"
+#include "Running.h"
+
+//app includes
+#include "app/Window.h"
 
 //The core ImGUI function definitions
 #include "imgui.h"
@@ -19,9 +22,13 @@ fsm::FirstEvent::FirstEvent(): State()
 {
 }
 
-std::unique_ptr<fsm::State> fsm::FirstEvent::doPoll(const bool allEventsReady, evd::Window& /*window*/)
+std::unique_ptr<fsm::State> fsm::FirstEvent::doPoll(evd::Window& window)
 {
-  if(allEventsReady) return std::unique_ptr<State>(new TryLoadNextEvent());
+  if(window.NextEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::ready)
+  {
+    window.LoadNextEvent();
+    return std::unique_ptr<State>(new Running());
+  }
   return nullptr;
 }
 

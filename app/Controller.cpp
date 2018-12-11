@@ -17,7 +17,8 @@
 #include <chrono>
 
 evd::Controller::Controller(std::unique_ptr<YAML::Node>&& config, 
-                            std::unique_ptr<src::Source>&& source): fWindow(new Window(std::move(config), std::move(source))), fState(std::unique_ptr<fsm::State>(new fsm::FirstEvent()))
+                            std::unique_ptr<src::Source>&& source): fWindow(new Window(std::move(config), std::move(source))), 
+                                                                    fState(std::unique_ptr<fsm::State>(new fsm::FirstEvent()))
 {
 }
 
@@ -31,9 +32,7 @@ evd::Controller::~Controller()
 
 void evd::Controller::Render(const int width, const int height, const ImGuiIO& ioState)
 {
-  auto newState = fState->poll(width, height, ioState, 
-                               (fWindow->NextEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::ready), 
-                               *fWindow);
+  auto newState = fState->poll(width, height, ioState, *fWindow);
   if(newState) fState = std::move(newState); //Implement State transition if requested
 }
 

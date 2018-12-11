@@ -19,7 +19,7 @@ namespace fsm
       virtual ~TryLoadNextEvent() = default;
 
     protected:
-      virtual std::unique_ptr<State> doPoll(const bool allEventsReady, evd::Window& window) override;
+      virtual std::unique_ptr<State> doPoll(evd::Window& window) override;
   };
 }
 
