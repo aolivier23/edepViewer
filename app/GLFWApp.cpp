@@ -18,12 +18,10 @@
 #include <GLFW/glfw3.h> 
 
 //local include
-#include "EvdWindow.h"
-#include "CmdLine.cpp"
+#include "Controller.h"
 
 int main(const int argc, const char** argv)
 {
-  std::cout << "Start of main()\n";
   //glfwSetErrorCallback(error_callback); //TODO: Throw exception here?  
   if (!glfwInit())
       return 1;
@@ -38,13 +36,9 @@ int main(const int argc, const char** argv)
   glfwMakeContextCurrent(window); //One context to rule them all?
   glfwSwapInterval(1); // Enable vsync
 
-  std::cout << "Loading OpenGL extensions.\n";
-
   //Initialize glad to get opengl extensions.  
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
   gladLoadGL();
-
-  std::cout << "Setting up Dear IMGUI.\n";
 
   // Setup ImGui binding
   ImGui::CreateContext();
@@ -54,9 +48,6 @@ int main(const int argc, const char** argv)
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
   //io.ConfigFlags |= ImGuiConfigFlags_MoveMouse; //Enable mouse movement
-
-  //TODO: Create event display "Window" object here?  Pass it command line args, or make source and configuration file 
-  //      myself?  Leaning towards former option to make switching window creation libraries as easy as possible.  
 
   // Setup style
   //TODO: Make style stuff either part of Window class or write it in a function with style default values.  
@@ -68,10 +59,9 @@ int main(const int argc, const char** argv)
   
   io.Fonts->AddFontFromFileTTF(FONT_DIR "/Roboto-Medium.ttf", 18.0f); //Because the default font is not as readable
 
-  std::cout << "About to create EvdWindow.\n";  
-  mygl::EvdWindow evd(cmd::FindConfig(argc, argv), cmd::FindSource(argc, argv)); //evd(argc, argv);
-
-  std::cout << "EvdWindow initialized.\n";
+  //evd::Controller's constructor indirectly creates some ROOT objects, so it can block if this is the first time ROOT
+  //has been run.  
+  evd::Controller evd(argc, argv);
 
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
   while (!glfwWindowShouldClose(window))

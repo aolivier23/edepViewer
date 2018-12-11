@@ -27,7 +27,6 @@ namespace cmd
     return std::unique_ptr<src::Source>(new src::Source(rootFiles)); //TODO: This line reads a TGeoManager, so I think it blocks
   }
 
-  //TODO: This function needs to change when I switch to yaml
   std::unique_ptr<YAML::Node> FindConfig(const int argc, const char** argv)
   {
     std::unique_ptr<YAML::Node> doc(new YAML::Node());
