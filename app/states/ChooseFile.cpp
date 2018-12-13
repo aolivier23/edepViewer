@@ -9,6 +9,7 @@
 
 //Local includes
 #include "State.h"
+#include "Running.h"
 
 //ROOT includes
 #include "TSystemDirectory.h"
@@ -39,6 +40,10 @@ namespace fsm
     protected:
       virtual std::unique_ptr<State> doPoll(evd::Window& /*window*/) override
       {
+        std::unique_ptr<State> transition;
+        bool drawMe = true;
+        ImGui::Begin("File Browser", &drawMe);
+        
         //Address bar 
         std::string pwd(fCurrent->GetName());
         ImGui::InputText("##Path", fBuffer.data(), fBuffer.size());
@@ -88,10 +93,13 @@ namespace fsm
           std::string name(chosen->GetTitle());
           name += "/";
           name += chosen->GetName();
-          return std::unique_ptr<State>(new TO(name));
+          transition = std::unique_ptr<State>(new TO(name));
         }
+
+        ImGui::End();
+        if(!drawMe) transition = std::unique_ptr<State>(new Running()); //Go back to running state if user clicked X button
       
-        return nullptr;
+        return transition;
       }
 
 

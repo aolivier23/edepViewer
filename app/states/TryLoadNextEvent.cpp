@@ -17,12 +17,8 @@
 //OpenGL functions get provided through this include
 #include "glad/include/glad/glad.h"
 
-//TODO: Remove me
-#include <iostream>
-
 fsm::TryLoadNextEvent::TryLoadNextEvent()
 {
-  std::cout << "Created a TryLoadNextEvent state.\n";
 }
 
 std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
@@ -30,7 +26,6 @@ std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
   const auto status = window.NextEventStatus().wait_for(std::chrono::milliseconds(10));
   if(status != std::future_status::ready) //== std::future_status::timeout)
   {
-    std::cout << "Still loading event in TryLoadNextEvent\n";
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -41,8 +36,6 @@ std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
     return nullptr;
   }
 
-  //std::cout << "Event is done loading with status " << status << " in TryLoadNextEvent!  Transitioning to Running\n";
-  std::cout << "Event is done loading in TryLoadNextEvent.  Transitioning to Running!\n";
   //If the next event is ready, load it into the window and go to the Running state
   try
   {
@@ -50,8 +43,8 @@ std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
   }
   catch(const src::Source::no_more_files& e)
   {
-    std::cout << "Out of files to process!\n";
-    std::cerr << e.what() << "\n"; //TODO: Put error message into a modal window
+    //std::cout << "Out of files to process!\n";
+    //std::cerr << e.what() << "\n"; //Running puts an appropriate message into a window
     window.ClearCache(); //We can't cache anything anyway, last future on cache is junk
     return std::unique_ptr<State>(new Running(true));
   }

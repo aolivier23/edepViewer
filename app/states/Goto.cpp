@@ -9,15 +9,11 @@
 //app includes
 #include "app/Window.h"
 
-//TODO: Remove me
-#include <iostream>
-
 fsm::Goto::Goto(const int run, const int event): NonSequential(), fRun(run), fEvent(event)
 {
 }
 
 void fsm::Goto::seekToEvent(evd::Window& window)
 {
-  std::cout << "Telling Window to ProcessEvent from Goto::seekToEvent()\n";
   window.ProcessEvent(fRun, fEvent);
 }
