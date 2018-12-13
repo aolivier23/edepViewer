@@ -50,7 +50,7 @@ namespace
 namespace evd
 {
   Window::Window(std::unique_ptr<YAML::Node>&& config, std::unique_ptr<src::Source>&& source): fConfig(new YAML::Node()),
-                 fMaxEventCacheSize(1), fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 10., 10., 10.),
+                 fMaxEventCacheSize(5), fViewer(std::unique_ptr<mygl::Camera>(new mygl::PlaneCam(glm::vec3(0., 0., 1000.), glm::vec3(0., 0., -1.), glm::vec3(0.0, 1.0, 0.0), 10000., 100.)), 10., 10., 10.),
     fSource(), fServices(), fCurrentEvent(std::numeric_limits<int>::min(), std::numeric_limits<int>::min(), "DEFAULT", false)
     //, fPrintTexture(nullptr)
   {

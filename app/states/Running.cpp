@@ -56,7 +56,8 @@ namespace fsm
     if(ImGui::Button("Reload")) transition = std::unique_ptr<State>(new Goto(window.CurrentEvent().runID, window.CurrentEvent().eventID));
     ImGui::SameLine();
     if(ImGui::Button("File")) transition = std::unique_ptr<State>(new ChooseFile<NewFile>(".root"));
-    //TODO: Status of event processing?
+    ImGui::SameLine();
+    ImGui::ProgressBar(((float)window.EventCacheSize())/((float)window.MaxEventCacheSize()));
     ImGui::End();
 
     window.Render(width, height, io);
@@ -66,10 +67,25 @@ namespace fsm
 
   std::unique_ptr<State> Running::doPoll(evd::Window& window)
   {
-    if(!fLastEvent && ((window.EventCacheSize() == 0) || !window.LastEventStatus().valid()) && (window.EventCacheSize() < window.MaxEventCacheSize()))
+    if(fLastEvent) return nullptr; //Nothing more to cache
+    if(window.EventCacheSize() == 0)
+    {
+      window.ProcessEvent(false);
+      return nullptr;
+    }
+
+    const auto& status = window.LastEventStatus();
+    if(!status.valid()) //If user is currently viewing the last event
+    {
+      window.ProcessEvent(false);
+      return nullptr;
+    }
+  
+    //If the last event is ready but not being viewed and the cache isn't at maximum size 
+    if(status.wait_for(std::chrono::milliseconds(2)) == std::future_status::ready && (window.EventCacheSize() < window.MaxEventCacheSize()))
     {
       window.ProcessEvent(false);
     }
-    return std::unique_ptr<State>(nullptr); //All transitions Running triggers happen in RenderControlBar()
+    return nullptr; //All transitions Running triggers happen in RenderControlBar()
   }
 }

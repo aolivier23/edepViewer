@@ -41,7 +41,8 @@ std::unique_ptr<fsm::State> fsm::State::Draw(const int width, const int height, 
     ImGui::Button("Reload");
     ImGui::SameLine();
     ImGui::Button("File");
-    //TODO: Status of event pre-loading?
+    ImGui::SameLine();
+    ImGui::ProgressBar(((float)window.EventCacheSize())/((float)window.MaxEventCacheSize()));
   }
   ImGui::End();
 
