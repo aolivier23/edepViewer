@@ -52,6 +52,7 @@ std::unique_ptr<fsm::State> fsm::TryLoadNextEvent::doPoll(evd::Window& window)
   {
     std::cout << "Out of files to process!\n";
     std::cerr << e.what() << "\n"; //TODO: Put error message into a modal window
+    window.ClearCache(); //We can't cache anything anyway, last future on cache is junk
     return std::unique_ptr<State>(new Running(true));
   }
   return std::unique_ptr<State>(new Running());

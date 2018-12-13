@@ -66,7 +66,7 @@ namespace fsm
 
   std::unique_ptr<State> Running::doPoll(evd::Window& window)
   {
-    if(!window.LastEventStatus().valid() && window.EventCacheSize() < window.MaxEventCacheSize())
+    if(!fLastEvent && ((window.EventCacheSize() == 0) || !window.LastEventStatus().valid()) && (window.EventCacheSize() < window.MaxEventCacheSize()))
     {
       window.ProcessEvent(false);
     }

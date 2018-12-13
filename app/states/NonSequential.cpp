@@ -23,7 +23,7 @@
 
 std::unique_ptr<fsm::State> fsm::NonSequential::doPoll(evd::Window& window)
 {
-  if(window.LastEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::ready)
+  if((window.EventCacheSize() == 0) || (window.LastEventStatus().wait_for(std::chrono::milliseconds(10)) == std::future_status::ready))
   {
     window.ClearCache();
     seekToEvent(window);

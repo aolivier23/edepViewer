@@ -273,11 +273,13 @@ namespace evd
 
   std::future<src::Source::metadata>& Window::NextEventStatus()
   {
+    assert(!fEventCache.empty());
     return fEventCache.front();
   }
 
   std::future<src::Source::metadata>& Window::LastEventStatus()
   {
+    assert(!fEventCache.empty());
     return fEventCache.back();
   }
 
