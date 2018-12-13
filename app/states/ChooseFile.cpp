@@ -28,7 +28,12 @@ namespace fsm
   class ChooseFile: public State
   {
     public:
-      ChooseFile(const std::string& extension): fExtension(extension) {}
+      ChooseFile(const std::string& extension): fExtension(extension), fPaths(), fBuffer({})
+      {
+        const std::string pwd(gSystem->pwd());
+        const std::string fileName = pwd.substr(pwd.find_last_of("/"), std::string::npos);
+        fCurrent = new TSystemDirectory(fileName.c_str(), pwd.c_str());
+      }
       virtual ~ChooseFile() = default;
 
     protected:

@@ -27,7 +27,8 @@ std::unique_ptr<fsm::State> fsm::NonSequential::doPoll(evd::Window& window)
   {
     window.ClearCache();
     seekToEvent(window);
-    window.ProcessEvent(true);
+    //window.ProcessEvent(true); //TODO: ProcessEvent() also makes its own changes to the source.  Derived classes should call 
+                               //      ProcessEvent() instead of NonSequential.
     return std::unique_ptr<State>(new TryLoadNextEvent());
   }
 

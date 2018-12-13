@@ -7,16 +7,16 @@
 #include "Running.h"
 #include "Goto.h"
 #include "TryLoadNextEvent.h"
-#include "Reload.h"
 #include "ChooseFile.cpp"
 #include "NewFile.h"
+#include "Disable.cpp"
 
 //app includes
 #include "app/Window.h"
 
 namespace fsm
 {
-  Running::Running(): State()
+  Running::Running(const bool lastEvent): State(), fLastEvent(lastEvent)
   {
   }
 
@@ -36,11 +36,26 @@ namespace fsm
     if(ImGui::InputInt2("(Run, Event)", ids, ImGuiInputTextFlags_EnterReturnsTrue)) transition = std::unique_ptr<State>(new Goto(ids[0], ids[1]));
     ImGui::SameLine();
 
-    if(ImGui::Button("Next")) transition = std::unique_ptr<State>(new TryLoadNextEvent());
+    if(fLastEvent) //Disable Next event button if this is the last event in this Source
+    {
+      detail::Disable disabled(ImGuiCol_Button, ImGuiCol_ButtonHovered, ImGuiCol_ButtonActive);
+      ImGui::Button("Next");
+      if(ImGui::IsItemHovered()) 
+      {
+        ImGui::BeginTooltip();
+        ImGui::Text("You are viewing the last event in the current Source.  To see more events, go to an earlier event or choose a new file.");
+        ImGui::EndTooltip();
+      }
+    }
+    else if(ImGui::Button("Next"))
+    {
+      if(window.EventCacheSize() < 1) window.ProcessEvent(false); //Make sure there's something in the event cache
+      transition = std::unique_ptr<State>(new TryLoadNextEvent());
+    }
     ImGui::SameLine();
-    if(ImGui::Button("Reload")) transition = std::unique_ptr<State>(new Reload());
+    if(ImGui::Button("Reload")) transition = std::unique_ptr<State>(new Goto(window.CurrentEvent().runID, window.CurrentEvent().eventID));
     ImGui::SameLine();
-    if(ImGui::Button("File")) transition = std::unique_ptr<State>(new ChooseFile<NewFile>("*.root"));
+    if(ImGui::Button("File")) transition = std::unique_ptr<State>(new ChooseFile<NewFile>(".root"));
     //TODO: Status of event processing?
     ImGui::End();
 

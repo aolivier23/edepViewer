@@ -14,12 +14,15 @@ namespace fsm
   class Running: public State
   {
     public:
-      Running();
+      Running(const bool lastEvent = false);
       virtual ~Running() = default;
 
     protected:
       virtual std::unique_ptr<State> doPoll(evd::Window& window) override;
       virtual std::unique_ptr<State> Draw(const int width, const int height, const ImGuiIO& io, evd::Window& window) override;
+
+    private:
+      const bool fLastEvent; //If this is the last event in the current file, ignore the Next button
   };
 }
 

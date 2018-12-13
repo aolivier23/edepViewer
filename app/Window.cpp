@@ -111,14 +111,6 @@ namespace evd
     { 
       ProcessEvent(true);
       //for(const auto& draw: fExtDrawers) draw->ConnectTree(fSource->fReader);
-      /*fNextEvent = std::async(std::launch::async,
-                              [this]()
-                              {
-                                auto meta = fSource->Next();
-                                ReadGeo(); 
-                                ReadEvent();
-                                return meta;
-                              });*/
     }
   }
 
@@ -250,31 +242,23 @@ namespace evd
   //fNextEvent must be valid before calling this function
   void Window::LoadNextEvent()
   {
-    try //Any exceptions from the thread where fNextEvent was "created" will be thrown when I 
-        //call fNextEvent.get().  I particularly want to react to no_more_files exceptions.  
-        //If I don't get a next event, don't load anything.
+    //Any exceptions from the thread where fNextEvent was "created" will be thrown when I 
+    //call fNextEvent.get().  I particularly want to react to no_more_files exceptions.  
+    //If I don't get a next event, don't load anything.
+    const auto meta = fEventCache.front().get();
+    fEventCache.pop(); //Now that we're displaying this event, it's no longer in the cache of events to display in the future
+                       //TODO: Move current event to previous event position
+    fCurrentEvent = meta; //Assignment on a separate line because I'm afraid of meta getting assigned when fNextEvent throws
+    mygl::VisID id(0, 0, 0);
+    if(fCurrentEvent.newFile)
     {
-      const auto meta = fEventCache.front().get();
-      fEventCache.pop(); //Now that we're displaying this event, it's no longer in the cache of events to display in the future
-                         //TODO: Move current event to previous event position
-      fCurrentEvent = meta; //Assignment on a separate line because I'm afraid of meta getting assigned when fNextEvent throws
-      mygl::VisID id(0, 0, 0);
-      if(fCurrentEvent.newFile)
-      {
-        for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id);
-      }
-      for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
-      
-      std::map<std::string, std::unique_ptr<mygl::Camera>> cameras;
-      for(const auto& config: fCameraConfigs) config->AppendCameras(cameras);
-      fViewer.LoadCameras(std::move(cameras));
+      for(const auto& geo: fGlobalDrawers) geo->UpdateScene(id);
     }
-    catch(const src::Source::no_more_files& e)
-    {
-      std::cout << "Out of files to process!\n";
-      std::cerr << e.what() << "\n"; //TODO: Put error message into a modal window
-    }
-                                                                                                                                       
+    for(const auto& drawer: fEventDrawers) drawer->UpdateScene(id);
+    
+    std::map<std::string, std::unique_ptr<mygl::Camera>> cameras;
+    for(const auto& config: fCameraConfigs) config->AppendCameras(cameras);
+    fViewer.LoadCameras(std::move(cameras));
     //TODO: UpdateScene() for ExternalDrawers as well
   }
 
@@ -283,6 +267,8 @@ namespace evd
     for(auto& geo: fGlobalDrawers) geo->Clear();
     for(auto& evt: fEventDrawers) evt->Clear();
     for(auto& cam: fCameraConfigs) cam->Clear();
+
+    fEventCache = std::queue<std::future<src::Source::metadata>>();
   }
 
   std::future<src::Source::metadata>& Window::NextEventStatus()
