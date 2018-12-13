@@ -13,8 +13,7 @@ namespace src
   {
   }
 
-  Source::Source(const std::string& file): fFileList({file}), fNextFile(fFileList.begin()), fFile(), fReader(), 
-                                           fEvent(fReader, "Event")
+  Source::Source(const std::string& file): Source(std::vector<std::string>({file}))
   {
   }
 
@@ -36,10 +35,6 @@ namespace src
       if(fReader.Next()) return Meta(fileChange);
     } 
     while((fileChange = NextFile()));
-
-    //Make sure the TTreeReader keeps working even if this is the end of the file.  
-    fReader.Restart();
-    fReader.Next();
 
     //If we get here, we're out of files
     throw no_more_files(fFileList.back());
