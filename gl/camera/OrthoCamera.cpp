@@ -6,6 +6,9 @@
 //For debugging
 #include <iostream>
 
+//imgui
+#include "imgui.h"
+
 //local includes
 #include "OrthoCamera.h"
 
@@ -15,9 +18,6 @@ namespace mygl
   {
     return glm::ortho(-width/2/fZoom, width/2/fZoom, -height/2/fZoom, height/2/fZoom, -fFarPlane, fFarPlane); 
     //return glm::ortho(fLeft/fZoom, fRight/fZoom, fBottom/fZoom, fTop/fZoom, -fFarPlane, fFarPlane);
-    //TODO: I am doing something strange by allowing objects to be drawn at -fFarPlane which should be behind the camera.  
-    //      After examining the viewer's behavior with and without drawing objects "behind" the camera, I decided that I 
-    //      DO want to draw objects behind the camera to prevent cutting off parts of tracks.  
   }
 
   void OrthoCamera::do_scroll(const double scrollSign)
@@ -40,17 +40,14 @@ namespace mygl
       fScrollSpeed *= 10.;
     }
 
-    fZoomEntry.set_text(std::to_string(fZoom));
-    fSpeedEntry.set_text(std::to_string(fScrollSpeed));
+    //fZoomEntry.set_text(std::to_string(fZoom));
+    //fSpeedEntry.set_text(std::to_string(fScrollSpeed));
   }
 
-  void OrthoCamera::set_zoom()
+  void OrthoCamera::do_render()
   {
-    fZoom = std::stof(fZoomEntry.get_text());
-  }
-
-  void OrthoCamera::set_speed()
-  {
-    fScrollSpeed = std::stof(fSpeedEntry.get_text());
+    Camera::do_render();
+    ImGui::InputFloat("Zoom", &fZoom);
+    ImGui::InputFloat("Zoom Speed", &fScrollSpeed);
   }
 }

@@ -58,7 +58,7 @@ void main()
   OffsetVertices(gl_in[0].gl_Position.xy, gl_in[1].gl_Position.xy, gl_in[2].gl_Position.xy, vs_in[1].color);
   OffsetVertices(gl_in[1].gl_Position.xy, gl_in[2].gl_Position.xy, gl_in[3].gl_Position.xy, vs_in[2].color);
   EndPrimitive();
-  
+    
   TopBorderVertices(gl_in[0].gl_Position.xy, gl_in[1].gl_Position.xy, gl_in[2].gl_Position.xy);
   TopBorderVertices(gl_in[1].gl_Position.xy, gl_in[2].gl_Position.xy, gl_in[3].gl_Position.xy);
   EndPrimitive();

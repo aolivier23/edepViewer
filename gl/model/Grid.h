@@ -6,7 +6,8 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
+#include "gl/objects/VAO.h"
 
 #ifndef MYGL_GRID_H
 #define MYGL_GRID_H
@@ -16,21 +17,13 @@ namespace mygl
   class Grid: public Drawable //A Grid is a Drawable
   {
     public:
-      Grid(const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
+      Grid(VAO::model& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace, 
            const glm::vec4& color, const float lineWidth);
-      virtual ~Grid() = default;
+      virtual ~Grid();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 
     private:
-      GLuint fVertVAO; //Location of vertex array object from opengl. 
-      GLuint fVertVBO; //Location of vertex buffer object from opengl.
-      //Exactly 2 vertices in each VAO
- 
-      GLuint fHorizVAO; 
-      GLuint fHorizVBO;
-
-      const glm::vec4 fColor; //The color of this grid, including transparency
       const double fWidth; //Width of the grid
       const double fHorizSpace; //Spacing between lines in the horizontal (x) direction
       const double fHeight; //Height of the grid

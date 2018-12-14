@@ -14,9 +14,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-//gtkmm includes
-#include <gtkmm.h>
-
 namespace mygl
 {
   class PerspCamera: public Camera

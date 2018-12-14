@@ -4,8 +4,8 @@
 //       destroyed.  
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 
-//tinyxml2 includes
-#include <tinyxml2.h>
+//yaml-cpp includes
+#include "yaml-cpp/yaml.h"
 
 //ROOT includes
 #include "TGeoManager.h"
@@ -24,10 +24,10 @@ namespace util
   class Geometry
   {
     public:
-      Geometry(const tinyxml2::XMLElement* config, TGeoManager* man): fFiducialNode(nullptr), fFiducialMatrix(nullptr), 
-                                                                      fManager(man)
+      Geometry(const YAML::Node& config, TGeoManager* man): fFiducialNode(nullptr), fFiducialMatrix(nullptr), 
+                                                            fManager(man)
       {
-        const auto fiducial = config->Attribute("fiducial");
+        const auto fiducial = config["fiducial"].as<std::string>();
         if(fiducial != nullptr) fFiducialName = fiducial;
         else fFiducialName = man->GetTopNode()->GetVolume()->GetName();
         SetFiducial();
@@ -98,11 +98,11 @@ namespace util
       void SetFiducial()
       {
         const auto top = fManager->GetTopNode();
-        auto id = new TGeoIdentity();
+        auto id = gGeoIdentity;
         if(!find_node(top, *id)) //TODO: Error handling?
         {
           fFiducialNode = top;
-          fFiducialMatrix = new TGeoIdentity();
+          fFiducialMatrix = gGeoIdentity;
         }
       }
   };

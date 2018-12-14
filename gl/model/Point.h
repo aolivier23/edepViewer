@@ -7,7 +7,8 @@
 
 //model includes
 #include "gl/model/Drawable.h"
-#include "gl/model/ShaderProg.h"
+#include "gl/objects/ShaderProg.h"
+#include "gl/objects/VAO.h"
 
 //c++ includes
 #include <vector>
@@ -20,14 +21,12 @@ namespace mygl
   class Point: public Drawable //A Point is a Drawable
   {
     public:
-      Point(const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
-      virtual ~Point() = default;
+      Point(VAO::model& vao, const glm::mat4& model, const glm::vec3& point, const glm::vec4& color, const float radius);
+      virtual ~Point();
 
       virtual void DoDraw(mygl::ShaderProg& shader);
 
     private:
-      GLuint fVAO; //Location of vertex array object from opengl. 
-      GLuint fVBO; //Location of vertex buffer object from opengl.
       const GLuint fNVertices; //Number of vertices in this path
 
       const float fRadius;

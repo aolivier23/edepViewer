@@ -1,0 +1,16 @@
+Drawers:
+  Global:
+    Grids:
+    DefaultGeo:
+      MaxDepth: 3
+  Event:
+    LinearTraj:
+    EDepDEdx:
+      dEdxScale:
+        min: 0.
+        max: 8.
+  Camera:
+    VertexCamera:
+Services:
+  Geo :
+    fiducial: "volWorld"

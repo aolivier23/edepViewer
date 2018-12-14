@@ -11,9 +11,6 @@
 //external evd includes
 #include "util/Palette.cpp"
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
-
 //ROOT includes
 #include "TTreeReaderArray.h"
 
@@ -26,6 +23,7 @@
 namespace mygl
 {
   class ColRecord;
+  class TreeModel;
 }
 
 namespace mygl
@@ -33,26 +31,28 @@ namespace mygl
   class MCHitDrawer: public draw::ExternalDrawer
   {
     public:
-      MCHitDrawer(const tinyxml2::XMLElement* config);
+      MCHitDrawer(const YAML::Node& config);
       virtual ~MCHitDrawer() = default;
+
+      virtual void RemoveAll(mygl::Viewer& viewer) override;
 
       virtual void ConnectTree(TTreeReader& reader) override;
 
       class MCHitRecord: public ColRecord
       {
         public:
-          MCHitRecord(): ColRecord()
+          MCHitRecord(): ColRecord(), fEnergy("Energy [MeV]"), fTime("Time [ns]"), fParticle("Particle")
           {
-            add(fEnergy);
-            add(fTime);
-            add(fParticle);
+            Add(fEnergy);
+            Add(fTime);
+            Add(fParticle);
           }
   
-          Gtk::TreeModelColumn<double> fEnergy; //The energy in this MCHit
-          Gtk::TreeModelColumn<double> fTime; //The time of this MCHit
-          Gtk::TreeModelColumn<std::string> fParticle; //The most direct cause of this MCHit.  Could be the names of multiple particles
+          mygl::TreeModel::Column<double> fEnergy; //The energy in this MCHit
+          mygl::TreeModel::Column<double> fTime; //The time of this MCHit
+          mygl::TreeModel::Column<std::string> fParticle; //The most direct cause of this MCHit.  Could be the names of multiple particles
       };
-      MCHitRecord fHitRecord;
+      std::shared_ptr<MCHitRecord> fHitRecord;
 
     protected:
       virtual void doRequestScenes(mygl::Viewer& viewer) override;

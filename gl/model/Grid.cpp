@@ -7,55 +7,47 @@
 
 //model includes
 #include "gl/model/Grid.h"
-#include "gl/model/ShaderProg.h"
 
 namespace mygl
 {
-  Grid::Grid(const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace,
-       const glm::vec4& color, const float lineWidth): Drawable(model), fColor(color), fWidth(width), fHorizSpace(horizSpace), 
-                                                       fHeight(height), fVertSpace(vertSpace), fLineWidth(lineWidth)
+  Grid::Grid(VAO::model& vao, const glm::mat4& model, const double width, const double horizSpace, const double height, const double vertSpace,
+             const glm::vec4& color, const float lineWidth): Drawable(model), fWidth(width), fHorizSpace(horizSpace), 
+                                                             fHeight(height), fVertSpace(vertSpace), fLineWidth(lineWidth)
   {
     //Set up vertical line
-    //Set up vertices for drawing.
-    glGenVertexArrays(1, &fVertVAO);
-    glBindVertexArray(fVertVAO);
+    std::vector<Vertex> points;
+    Vertex vert;
+    vert.position = glm::vec3(0.f, -height/2., 0.f);
+    vert.color = color;
+    points.push_back(vert);
     
-    //Construct buffer for vertices 
-    glGenBuffers(1, &fVertVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, fVertVBO);
-
-    glm::vec3 points[] = {glm::vec3(0.f, -height/2., 0.f), glm::vec3(0.f, -height/2., 0.f), 
-                          glm::vec3(0.f, height/2., 0.f), glm::vec3(0.f, height/2., 0.f)};
-    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(glm::vec3), points, GL_STATIC_DRAW);
+    vert.position = glm::vec3(0.f, -height/2., 0.f);
+    points.push_back(vert);
+   
+    vert.position = glm::vec3(0.f, height/2., 0.f);
+    points.push_back(vert);
+ 
+    vert.position = glm::vec3(0.f, height/2., 0.f);
+    points.push_back(vert);
 
     //Set up vertex attributes expected by vertex shader
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)(0));
+    vert.position = glm::vec3(-width/2., 0.f, 0.f);
+    points.push_back(vert);
 
-    //Set up horizontal line
-    //Set up vertices for drawing.
-    glGenVertexArrays(1, &fHorizVAO);
-    glBindVertexArray(fHorizVAO);
-    
-    //Construct buffer for vertices 
-    glGenBuffers(1, &fHorizVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, fHorizVBO);
+    vert.position = glm::vec3(-width/2., 0.f, 0.f);
+    points.push_back(vert);
 
-    points[0] = glm::vec3(-width/2., 0.f, 0.f);
-    points[1] = glm::vec3(-width/2., 0.f, 0.f);
-    points[2] = glm::vec3(width/2., 0.f, 0.f);
-    points[3] = glm::vec3(width/2., 0.f, 0.f);
+    vert.position = glm::vec3(width/2., 0.f, 0.f);
+    points.push_back(vert);
 
-    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(glm::vec3), points, GL_STATIC_DRAW);
-    
-    //Set up vertex attributes expected by vertex shader
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)(0));
+    vert.position = glm::vec3(width/2., 0.f, 0.f);
+    points.push_back(vert);
+
+    fOffset = vao.Register(points);
   }
 
   void Grid::DoDraw(ShaderProg& shader)
   {
-    shader.SetUniform("userColor", fColor.r, fColor.g, fColor.b, fColor.a);
     shader.SetUniform("width", fLineWidth);
 
     //Draw horizontal lines
@@ -70,16 +62,16 @@ namespace mygl
   void Grid::DrawVertLine(ShaderProg& shader, const double xpos)
   {
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(xpos, 0.f, 0.f)));
-    glBindVertexArray(fVertVAO);
-    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
-    glBindVertexArray(0); //Unbind data after done drawing
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY, fOffset, 4);
   }
 
   void Grid::DrawHorizLine(ShaderProg& shader, const double ypos)
   {
     shader.SetUniform("model", glm::translate(fModel, glm::vec3(0.f, ypos, 0.f)));
-    glBindVertexArray(fHorizVAO);
-    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, 4);
-    glBindVertexArray(0); //Unbind data after done drawing
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY, fOffset+4, 4);
+  }
+
+  Grid::~Grid()
+  {
   }
 }

@@ -5,8 +5,8 @@
 //Author: Andrew Olivier aolivier@ur.rochester.edu
 //Inspired by the conversation at https://codereview.stackexchange.com/questions/119812/compile-time-plugin-system
 
-//tinyxml2 include for configuration
-#include <tinyxml2.h>
+//yaml-cpp include for configuration
+#include "yaml-cpp/yaml.h"
 
 //c++ includes
 #include <memory> //For std::unique_ptr
@@ -25,7 +25,7 @@ namespace plgn
     public:
       virtual ~RegistrarBase() = default;
 
-      virtual std::unique_ptr<BASE> NewPlugin(const tinyxml2::XMLElement* config) = 0;
+      virtual std::unique_ptr<BASE> NewPlugin(const YAML::Node& config) = 0;
   };
 
   template <class BASE>
@@ -50,10 +50,9 @@ namespace plgn
       }
 
       //TODO: Turn string into parameter system interface
-      std::unique_ptr<BASE> Get(const tinyxml2::XMLElement* config)
+      std::unique_ptr<BASE> Get(const std::string& type, const YAML::Node& config)
       {
-        if(config == nullptr) return std::unique_ptr<BASE>(); //Return invalid unique_ptr
-        const auto found = fNameToReg.find(config->Value());
+        const auto found = fNameToReg.find(type);
         if(found != fNameToReg.end()) return found->second->NewPlugin(config); 
         return std::unique_ptr<BASE>(); //Return invalid unique_ptr
       }
@@ -82,7 +81,7 @@ namespace plgn
 
       virtual ~Registrar() = default;
 
-      virtual std::unique_ptr<BASE> NewPlugin(const tinyxml2::XMLElement* config)
+      virtual std::unique_ptr<BASE> NewPlugin(const YAML::Node& config)
       {
         return std::unique_ptr<BASE>(new DERIVED(config));
       }

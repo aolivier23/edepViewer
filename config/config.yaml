@@ -1,0 +1,14 @@
+config:
+  Drawer:
+    Global:
+      DefaultGeo:
+        MaxDepth: "7"
+      Grids:
+    Event:
+      LinearTraj:
+      EDepContributor:
+    Camera:
+      VertexCamera:
+  Services:
+    geo:
+      fiducial: "volWorld"

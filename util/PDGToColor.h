@@ -22,8 +22,8 @@ namespace mygl
 
       virtual glm::vec3 operator [](const int pdg);
 
-      std::map<int, glm::vec3>::const_iterator begin();
-      std::map<int, glm::vec3>::const_iterator end();
+      std::map<int, glm::vec3>::iterator begin();
+      std::map<int, glm::vec3>::iterator end();
 
     protected:
       ColorIter fNextColor;

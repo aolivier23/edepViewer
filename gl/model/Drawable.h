@@ -44,6 +44,7 @@ namespace mygl
       const glm::mat4 fModel; //Describes the origin of the coordinate system in which to place this Drawable
       float fBorderWidth; //Width of silhouette around object.  Setting to 0 presumably disables the border.
       glm::vec4 fBorderColor; //Color of border around object.  
+      unsigned int fOffset; //Offset into vertex or index buffer where data for this Drawable can be found.  User needs to set this 
 
       //All Drawables must implement this.
       virtual void DoDraw(mygl::ShaderProg& shader) = 0;

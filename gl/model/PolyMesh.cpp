@@ -4,7 +4,6 @@
 
 //local includes
 #include "gl/model/PolyMesh.h"
-#include "gl/model/ShaderProg.h"
 
 //ROOT includes
 #include "TGeoVolume.h"
@@ -36,11 +35,11 @@ namespace
 
 namespace mygl
 {
-  PolyMesh::PolyMesh(const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): PolyMesh(model, vol->GetShape(), color)
+  PolyMesh::PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoVolume* vol, const glm::vec4& color): PolyMesh(vao, model, vol->GetShape(), color)
   {
   }
 
-  PolyMesh::PolyMesh(const glm::mat4& model, TGeoShape* shape, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
+  PolyMesh::PolyMesh(VAO::model& vao, const glm::mat4& model, TGeoShape* shape, const glm::vec4& color): Drawable(model), fIndexOffsets(1, nullptr)
   {
     if(shape == nullptr) std::cerr << "Volume is invalid!  Trouble is coming...\n"; //TODO: Throw exception
     const auto& buf = shape->GetBuffer3D(TBuffer3D::kRaw | TBuffer3D::kRawSizes, true);
@@ -100,6 +99,8 @@ namespace mygl
       const auto out = glm::normalize(center-polCenter);
 
       //Sort vertices by angle from the first vertex
+      //TODO: Can I take advantage of TGeoShape::ComputeNormal() to get normals at vertices?  Will ROOT behave reasonably at vertices?  
+      //      How can I use normals to find neighbors of a triangle?
       glm::vec3 prevDir = glm::normalize(ptsVec[*(indicesFound.begin())]-center);
       std::vector<unsigned int> indicesSort(indicesFound.begin(), indicesFound.end());
       std::sort(indicesSort.begin(), indicesSort.end(), [&center, &ptsVec, &prevDir](const size_t first, const size_t second)
@@ -224,20 +225,15 @@ namespace mygl
       }
       std::cout << "\n";
     }*/
-    Init(ptsVec, indices, color);
+    Init(vao, ptsVec, indices, color);
   }
 
   PolyMesh::~PolyMesh()
   {
-    glDeleteVertexArrays(1, &fVAO);
-    glDeleteBuffers(1, &fVBO);
-    glDeleteBuffers(1, &fEBO);
   }
 
   void PolyMesh::DoDraw(ShaderProg& shader)
   {
-    glBindVertexArray(fVAO);
-
     //TODO: GL_TRIANGLES_ADJACENCY or GL_TRIANGLE_STRIP_ADJACENCY
     glMultiDrawElements(GL_TRIANGLE_STRIP_ADJACENCY, (GLsizei*)(&fNVertices[0]), GL_UNSIGNED_INT, (const GLvoid**)(&fIndexOffsets[0]), fNVertices.size());
     //Note 1: See the following tutorial for comments that somewhat explain the kRaw section of TBuffer3D:
@@ -252,6 +248,5 @@ namespace mygl
     //            many graphics cards (including mine at the time) do not support opengl 4.
     //Thus, I am redefining the interface of mygl::PolyMesh.  It will now use GL_TRIANGLE_FAN drawing mode.
     //Try glMultiDrawArrays() (or Elements equivalent) to draw polygons from ROOT.
-    glBindVertexArray(0); //Unbind data after done drawing
   }
 }
