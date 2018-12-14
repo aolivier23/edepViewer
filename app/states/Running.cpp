@@ -58,6 +58,13 @@ namespace fsm
     if(ImGui::Button("File")) transition = std::unique_ptr<State>(new ChooseFile<NewFile>(".root"));
     ImGui::SameLine();
     ImGui::ProgressBar(((float)window.EventCacheSize())/((float)window.MaxEventCacheSize()));
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::Text((std::to_string(window.EventCacheSize())+" events cached out of "
+                   +std::to_string(window.MaxEventCacheSize())+" cache size.").c_str());
+      ImGui::EndTooltip();
+    }
     ImGui::End();
 
     window.Render(width, height, io);

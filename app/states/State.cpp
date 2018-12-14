@@ -43,6 +43,14 @@ std::unique_ptr<fsm::State> fsm::State::Draw(const int width, const int height, 
     ImGui::Button("File");
     ImGui::SameLine();
     ImGui::ProgressBar(((float)window.EventCacheSize())/((float)window.MaxEventCacheSize()));
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::Text((std::to_string(window.EventCacheSize())+" events cached out of "
+                   +std::to_string(window.MaxEventCacheSize())+" cache size.").c_str());
+      ImGui::EndTooltip();
+    }
+
   }
   ImGui::End();
 
