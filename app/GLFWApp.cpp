@@ -60,7 +60,8 @@ int main(const int argc, const char** argv)
   io.Fonts->AddFontFromFileTTF(FONT_DIR "/Roboto-Medium.ttf", 18.0f); //Because the default font is not as readable
 
   //evd::Controller's constructor indirectly creates some ROOT objects, so it can block if this is the first time ROOT
-  //has been run.  
+  //has been run.  If this is causing problems for you, try running "root -l" and waiting for it to finish before you 
+  //run edepViewer after a new login.
   evd::Controller evd(argc, argv);
 
   //Rendering loop.  Needs to depend on library providing the opengl context/window.
